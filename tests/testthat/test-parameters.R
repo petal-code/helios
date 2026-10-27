@@ -234,3 +234,24 @@ test_that("run_simulation() works when a parameter archetype specified", {
   ))
   expect_true(object = is.data.frame(simulation_example))
 })
+
+test_that("set_synthetic_population_size() sets the population to the synthetic population's size", {
+  population <- make_synthetic_population()
+  parameters <- get_parameters(list(
+    number_initial_S = 9990, number_initial_E = 5, number_initial_I = 3, number_initial_R = 2
+  ))
+  parameters <- set_synthetic_population_size(parameters, population)
+  expect_equal(parameters$human_population, 520)
+  expect_equal(parameters$number_initial_S, 510)
+  expect_equal(parameters[c("number_initial_E", "number_initial_I", "number_initial_R")], list(
+    number_initial_E = 5, number_initial_I = 3, number_initial_R = 2
+  ))
+})
+
+test_that("non_residents must be TRUE or FALSE, and needs rti sampling", {
+  expect_false(get_parameters()$non_residents)
+  expect_error(get_parameters(list(non_residents = NA)), "non_residents must be TRUE or FALSE")
+  expect_error(get_parameters(list(non_residents = "yes")), "non_residents must be TRUE or FALSE")
+  expect_error(get_parameters(list(non_residents = TRUE)), "needs school_workplace_sampling")
+  expect_true(get_parameters(list(non_residents = TRUE, school_workplace_sampling = "rti"))$non_residents)
+})

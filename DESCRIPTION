@@ -28,6 +28,7 @@ LazyData: true
 Suggests:
     bench,
     bookdown,
+    digest,
     forcats,
     ggplot2,
     gt,
@@ -38,9 +39,11 @@ Suggests:
     rmarkdown,
     testthat (>= 3.0.0),
     tictoc,
-    tidyr
+    tidyr,
+    withr
 Config/testthat/edition: 3
 Imports:
+    data.table,
     individual (>= 0.1.18),
     dplyr,
     dqrng,
@@ -48,6 +51,7 @@ Imports:
     truncnorm,
     parallel,
     stats,
+    tools,
     utils
 Remotes:
     mrc-ide/individual
@@ -55,4 +59,4 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr
 Depends:
-    R (>= 2.10)
+    R (>= 4.0.0)

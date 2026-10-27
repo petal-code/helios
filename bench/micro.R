@@ -1,14 +1,17 @@
 # Microbenchmarks of population generation and the S -> E process. Timings only: bench::mark()'s
 # memory measurement misses memory allocated by C++ code, so use run_bench.R for peak memory.
 #
-# Usage: Rscript bench/micro.R [--sizes=10000,30000,100000,300000]
+# Usage: Rscript bench/micro.R [--sizes=10000,30000,100000,300000] [--rti=10001]
 #   [--se-sizes=10000,30000,100000] [--household-sizes=2.5,10,50] [--iterations=3]
 #   [--output=bench/out/micro.csv]
+#
+# --rti takes a comma-separated list of FIPS codes (see rti_population()), or "none" to skip.
 source("bench/common.R")
 load_helios()
 
 args <- parse_args(list(
   sizes = paste(DEFAULT_SIZES, collapse = ","),
+  rti = "10001",
   se_sizes = "10000,30000,100000",
   household_sizes = "2.5,10,50",
   iterations = "3",
@@ -23,11 +26,12 @@ time_it <- function(fn) {
 }
 
 results <- list()
-record <- function(benchmark, population, timing) {
+record <- function(benchmark, population, timing, fips = NA) {
   row <- data.frame(
     date = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
     commit = commit,
     benchmark = benchmark,
+    fips = fips,
     human_population = length(population$initial_household_settings),
     n_households = length(population$setting_sizes$household),
     n_settings = sum(lengths(population$setting_sizes)),
@@ -47,6 +51,21 @@ for (human_population in split_numbers(args$sizes)) {
   parameters <- bench_parameters("pandemic", human_population, simulation_time = 1)
   population <- generate_population_data(parameters)
   record("population_reference", population, time_it(function() generate_population_data(parameters)))
+}
+
+# Population generation from an RTI synthetic population. Reading it is timed separately.
+if (args$rti != "none") {
+  for (fips in split_strings(args$rti)) {
+    synthetic_population <- rti_population(fips)
+    parameters <- bench_parameters("pandemic", nrow(synthetic_population), simulation_time = 1)
+    parameters$school_workplace_sampling <- "rti"
+    population <- generate_population_data(parameters, synthetic_population)
+    record("rti_population", population, time_it(function() rti_population(fips)), fips)
+    record(
+      "population_rti", population,
+      time_it(function() generate_population_data(parameters, synthetic_population)), fips
+    )
+  }
 }
 
 # Reassign people to households with the given mean size, keeping everyone's other settings, to show

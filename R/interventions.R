@@ -97,7 +97,7 @@ generate_intervention_switches <- function(parameters_list, population_data) {
 #' @family intervention
 #' @export
 generate_joint_intervention_switches <- function(parameters_list, population_data) {
-  setting_sizes <- population_data$setting_sizes
+  setting_sizes <- coverage_setting_sizes(population_data)
 
   # Defining how coverage is defined (individuals vs square_footage)
   if (parameters_list[["intervention_joint_coverage_target"]] == "individuals") {
@@ -183,7 +183,8 @@ generate_joint_intervention_switches <- function(parameters_list, population_dat
 #' Helper to generate the intervention coverage vector for one setting, as used
 #' in `generate_intervention_switches()`. Coverage is interpreted as the
 #' fraction of total size to cover (size weighted either by number of
-#' individuals or by square footage). Locations are picked until cumulative
+#' individuals or by square footage). Sizes include the non-resident members of
+#' schools and workplaces, when the population has them. Locations are picked until cumulative
 #' size meets the budget, either at random or in decreasing order of riskiness.
 #'
 #' @inheritParams generate_intervention_switches
@@ -199,11 +200,11 @@ generate_setting_intervention_switches <- function(
     setting
 ) {
   if (parameters_list[[paste0("intervention_", setting, "_coverage_target")]] == "individuals") {
-    setting_size <- population_data$setting_sizes[[setting]]
+    setting_size <- coverage_setting_sizes(population_data)[[setting]]
   } else if (
     parameters_list[[paste0("intervention_", setting, "_coverage_target")]] == "square_footage"
   ) {
-    setting_size <- population_data$setting_sizes[[setting]] *
+    setting_size <- coverage_setting_sizes(population_data)[[setting]] *
       parameters_list[[paste0("size_per_individual_", setting)]]
   } else {
     stop("coverage_target must be either individuals or square_footage")
@@ -249,6 +250,17 @@ generate_setting_intervention_switches <- function(
   }
 
   return(intervention_switches)
+}
+
+# The size of each location that intervention coverage is counted in: its members, including any
+# non-resident members of schools and workplaces (see generate_population_data()), who share the
+# room and whose transmission the intervention also reduces
+coverage_setting_sizes <- function(population_data) {
+  sizes <- population_data$setting_sizes
+  for (setting in names(population_data$non_residents)) {
+    sizes[[setting]] <- sizes[[setting]] + population_data$non_residents[[setting]]
+  }
+  sizes
 }
 
 # Wells-Riley ACH-based intervention pipeline

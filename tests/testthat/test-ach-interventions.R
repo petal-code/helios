@@ -636,3 +636,29 @@ test_that("an installed intervention with full coverage reduces every location's
   expect_true(mean(efficacy) > 0)
   expect_true(all(efficacy >= 0 & efficacy < 1))
 })
+
+test_that("intervention coverage counts non-resident members of schools and workplaces", {
+  parameters_list <- set_intervention_ach(
+    parameters_list = with_default_ach(get_parameters()),
+    setting = "workplace",
+    coverage_target = "individuals",
+    coverage_type = "targeted_riskiness",
+    timestep = 1,
+    intervention = make_intervention(name = "test", delta_function = function() 2, coverage = 0.5)
+  )
+  # The riskiest workplace has 2 residents and 98 non-residents; ten others have 10 residents each
+  population_data <- list(
+    setting_sizes = list(workplace = c(2, rep(10, 10))),
+    non_residents = list(workplace = c(98L, rep(0L, 10))),
+    workplace_specific_riskiness = c(2, rep(1, 10))
+  )
+  # It holds half of the 200 members, so covering it alone meets 50% coverage
+  expect_equal(
+    generate_setting_intervention_switches(parameters_list, population_data, "workplace"),
+    c(1, rep(0, 10))
+  )
+
+  # Counting residents only, it's 2 of 102, and 5 more workplaces are needed
+  population_data$non_residents <- NULL
+  expect_equal(sum(generate_setting_intervention_switches(parameters_list, population_data, "workplace")), 6)
+})

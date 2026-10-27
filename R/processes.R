@@ -98,6 +98,19 @@ create_processes <- function(
 
 #' Create process governing susceptible to exposed disease state transition
 #'
+#' In a household, school or workplace, the force of infection on each member is
+#' `riskiness * beta * I / size` for `I` infectious members out of `size`.
+#'
+#' Schools and workplaces can also have non-resident members, who aren't
+#' simulated (see the `non_residents` parameter and
+#' [generate_population_data()]). Nothing is known about them, so they are
+#' assumed to be like the simulated population: at each timestep, the number of
+#' infectious non-residents in each setting is drawn from a binomial
+#' distribution, with the setting's number of non-residents and the proportion of
+#' the simulated population that is infectious. They add to both `I` and `size`.
+#' Non-residents are never infected themselves, so they bring in infection in
+#' proportion to the simulated epidemic and none when it is over.
+#'
 #' @inheritParams create_processes
 #'
 #' @family processes
@@ -121,6 +134,10 @@ create_SE_process <- function(
   school_size <- population_data$setting_sizes$school
   workplace_size <- population_data$setting_sizes$workplace
   lives_alone <- household_size[household] == 1
+
+  # Non-resident members of each school and workplace. Populations generated without them have none.
+  school_non_residents <- non_resident_members(population_data, "school", length(school_size))
+  workplace_non_residents <- non_resident_members(population_data, "workplace", length(workplace_size))
 
   # The leisure location each individual could visit on each day of the week (0 = none), with one
   # column per individual
@@ -180,14 +197,17 @@ create_SE_process <- function(
 
     #=== Workplace FOI ===#
     #=====================#
+    prevalence <- length(I) / N
     workplace_FOI <- location_FOI(
-      workplace, I, riskiness_at("workplace", t), beta_workplace_t, workplace_size
+      workplace, I, riskiness_at("workplace", t), beta_workplace_t, workplace_size,
+      workplace_non_residents, prevalence
     )
 
     #=== School FOI ===#
     #==================#
     school_FOI <- location_FOI(
-      school, I, riskiness_at("school", t), beta_school_t, school_size
+      school, I, riskiness_at("school", t), beta_school_t, school_size,
+      school_non_residents, prevalence
     )
 
     #=== Leisure FOI ===#
@@ -260,11 +280,31 @@ create_SE_process <- function(
 #
 # `location` is each individual's location (0 = none) and `infectious` the indices of infectious
 # individuals. `riskiness` and `size` are each location's riskiness and number of individuals.
-location_FOI <- function(location, infectious, riskiness, beta, size) {
+# `non_residents`, if given, is each location's number of unsimulated non-resident members, NULL
+# if none has any, and each is infectious with probability `prevalence`.
+location_FOI <- function(location, infectious, riskiness, beta, size, non_residents = NULL, prevalence = 0) {
   num_infectious <- tabulate(location[infectious], length(size))
+  if (!is.null(non_residents)) {
+    size <- size + non_residents
+    # One vectorised draw for every location. With no one infectious, none are drawn.
+    if (prevalence > 0) {
+      num_infectious <- num_infectious + stats::rbinom(length(non_residents), non_residents, prevalence)
+    }
+  }
   # Locations nobody attends have a FOI of NaN (0 / 0), but it's never assigned to anyone
   FOI <- riskiness * beta * num_infectious / size
   c(0, FOI)[location + 1]
+}
+
+# Each location's number of non-resident members in `setting`, from population_data$non_residents,
+# or NULL if none has any (including populations generated before non-residents were added)
+non_resident_members <- function(population_data, setting, num_locations) {
+  counts <- population_data$non_residents[[setting]]
+  if (is.null(counts) || !any(counts > 0)) {
+    return(NULL)
+  }
+  stopifnot(length(counts) == num_locations)
+  counts
 }
 
 #' Create process governing exposed to infectious disease state transition

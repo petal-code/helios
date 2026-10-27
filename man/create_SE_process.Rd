@@ -28,7 +28,19 @@ create_SE_process(
 \item{renderer}{An individual-package render object}
 }
 \description{
-Create process governing susceptible to exposed disease state transition
+In a household, school or workplace, the force of infection on each member is
+\code{riskiness * beta * I / size} for \code{I} infectious members out of \code{size}.
+}
+\details{
+Schools and workplaces can also have non-resident members, who aren't
+simulated (see the \code{non_residents} parameter and
+\code{\link[=generate_population_data]{generate_population_data()}}). Nothing is known about them, so they are
+assumed to be like the simulated population: at each timestep, the number of
+infectious non-residents in each setting is drawn from a binomial
+distribution, with the setting's number of non-residents and the proportion of
+the simulated population that is infectious. They add to both \code{I} and \code{size}.
+Non-residents are never infected themselves, so they bring in infection in
+proportion to the simulated epidemic and none when it is over.
 }
 \seealso{
 Other processes: 

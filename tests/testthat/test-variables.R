@@ -364,3 +364,48 @@ test_that("generate_initial_leisure errors when there are too few settings to vi
 #=======================================#
 #===== generate_initial_households =====#
 #=======================================#
+
+test_that("generate_initial_households gives exactly human_population individuals", {
+  for (human_population in c(1, 7, 500)) {
+    parameters_list <- get_parameters(list(
+      human_population = human_population, number_initial_S = human_population,
+      number_initial_E = 0, seed = 1
+    ))
+    set.seed(1)
+    bundled <- generate_initial_households(parameters_list)
+    synthetic <- generate_initial_households(parameters_list, make_synthetic_population())
+
+    for (households in list(bundled, synthetic)) {
+      expect_length(households$individual_households, human_population)
+      expect_length(households$age_class_vector, human_population)
+      expect_setequal(households$individual_households, seq_len(max(households$individual_households)))
+    }
+  }
+})
+
+test_that("generate_initial_households terminates with households of one, or a single household", {
+  parameters_list <- get_parameters(list(human_population = 50, number_initial_S = 50, number_initial_E = 0))
+
+  households <- generate_initial_households(parameters_list, data.frame(household_id = 1:3, age = 30))
+  expect_setequal(households$individual_households, 1:50)
+
+  households <- generate_initial_households(parameters_list, data.frame(household_id = 1, age = rep(30, 4)))
+  expect_equal(max(households$individual_households), 13)
+  expect_equal(tabulate(households$individual_households), c(rep(4, 12), 2))
+})
+
+test_that("generate_initial_households keeps each sampled household together, with its members' ages", {
+  population <- make_synthetic_population()
+  parameters_list <- get_parameters(list(human_population = 1000, number_initial_S = 1000, number_initial_E = 0))
+  set.seed(1)
+  households <- generate_initial_households(parameters_list, population)
+
+  # Each helios household has the age classes of a synthetic household, apart from the last one
+  # sampled, which may be cut short
+  composition <- function(age_classes, household_ids) {
+    tapply(age_classes, household_ids, function(x) paste(sort(x), collapse = " "))
+  }
+  synthetic <- composition(age_class_from_age(population$age), population$household_id)
+  sampled <- composition(households$age_class_vector, households$individual_households)
+  expect_in(sampled[-length(sampled)], synthetic)
+})

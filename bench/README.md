@@ -60,7 +60,8 @@ Rscript bench/micro.R --sizes=10000,30000 --se-sizes=10000,30000
 This times:
 
 * population generation, with households sampled from the reference population
-  (`population_reference`)
+  (`population_reference`) and from RTI synthetic populations (`--rti`, a list of FIPS codes;
+  `rti_population` reads the data and `population_rti` generates the population)
 * the S -> E process's setup (`se_setup`) and one timestep, without and with the daily
   reassignment of leisure visits (`se_step`, `se_step_leisure_day`). People are reassigned to
   households of each `--household-sizes` mean size, to show how the cost depends on the number of

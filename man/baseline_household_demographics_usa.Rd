@@ -19,6 +19,8 @@ A data frame with 777,864 rows and 3 columns.
 }
 \seealso{
 Other data: 
+\code{\link{rti_cache_dir}()},
+\code{\link{rti_population}()},
 \code{\link{schools_usa}}
 }
 \concept{data}

@@ -26,7 +26,8 @@ A 0/1 vector of length equal to the number of locations in the setting.
 Helper to generate the intervention coverage vector for one setting, as used
 in \code{generate_intervention_switches()}. Coverage is interpreted as the
 fraction of total size to cover (size weighted either by number of
-individuals or by square footage). Locations are picked until cumulative
+individuals or by square footage). Sizes include the non-resident members of
+schools and workplaces, when the population has them. Locations are picked until cumulative
 size meets the budget, either at random or in decreasing order of riskiness.
 }
 \seealso{
