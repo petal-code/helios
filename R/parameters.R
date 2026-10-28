@@ -101,9 +101,9 @@
 #' * `wells_riley_respiratory_rate_factor`: respiratory rate multiplied by tidal volume (denoted RR_tv); units = m^3/hour; default = 0.45 (15 breaths/minute at 500 ml)
 #' * `wells_riley_time_in_room`: exposure window used inside the Wells-Riley calculation (denoted t); units = hours; default = 4
 #'
-#' `r` and `pi` are a matched pair: `1/r` = 73 FFU is one Wells-Riley quantum, so `pi` = 365 is 5.0 quanta/hour. Both consumers return ratios and the exponent is small, so this level has limited leverage over efficacy between scenarios A and C (0.60 at A versus 0.52-0.58 across A-C in schools), but a substantially higher emission rate such as scenario D lowers it considerably (0.23 in schools).#'
+#' `r` and `pi` are a matched pair: `1/r` = 73 FFU is one Wells-Riley quantum, so `pi` = 365 is 5.0 quanta/hour. Both consumers return ratios and the exponent is small, so this level has limited leverage over efficacy between scenarios A and C (0.60 at A versus 0.52-0.58 across A-C in schools), but a substantially higher emission rate such as scenario D lowers it considerably (0.23 in schools).
 #'
-#' Intervention Parameters (populated internally by `set_intervention_ach()` and by `generate_intervention_switches()`; users do not normally set these directly. One set of intervention parameters is generated per scope <s> in {joint, workplace, school, leisure, household}):
+#' Intervention Parameters (populated internally by `set_intervention_ach()` and by `generate_intervention_switches()`; users do not normally set these directly. One block per scope, where `<s>` is one of `joint`, `workplace`, `school`, `leisure` or `household`):
 #' * `intervention_<s>_active`: boolean flag set to TRUE when an intervention has been installed in scope <s>. Default = FALSE
 #' * `intervention_<s>_list`: list of intervention objects (each as returned by `make_intervention()`) deployed in scope <s>. Currently single-intervention only — list always has length 1 when active. Default = NULL
 #' * `intervention_<s>_coverage`: fraction of total setting size to cover (numeric in `[0, 1]`); inherited from the intervention object's `coverage` field. Default = NULL

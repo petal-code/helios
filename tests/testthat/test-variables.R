@@ -2,22 +2,67 @@
 #===== create_variables =====#
 #============================#
 
+test_that("create_variables errors if parameter list does not contain seed parameter", {
+  # Establish the list of model parameters:
+  parameters_list <- get_parameters()
+
+  # Remove the seed parameter:
+  parameters_list$seed <- NULL
+
+  # Check that create_variables() errors when seed not in the parameters list:
+  expect_error(
+    object = create_variables(parameters_list = parameters_list),
+    regexp = "parameters list must contain a variable called seed"
+  )
+})
+
+test_that("create_variables generates the same population for the same seed", {
+  # Establish the list of model parameters with a fixed seed:
+  parameters_list <- with_default_ach(get_parameters(overrides = list(seed = 123)))
+
+  # Generate the population twice:
+  first <- create_variables(parameters_list = parameters_list)$variables_list
+  second <- create_variables(parameters_list = parameters_list)$variables_list
+
+  # Check that each variable puts the same people in the same categories:
+  members <- function(variable) {
+    lapply(variable$get_categories(), function(category) {
+      variable$get_index_of(category)$to_vector()
+    })
+  }
+  for (variable in c("age_class", "household", "school", "workplace")) {
+    expect_identical(members(first[[variable]]), members(second[[variable]]))
+  }
+})
+
+test_that("population generators continue the random stream rather than reseeding", {
+  # Establish the list of model parameters with a fixed seed:
+  parameters_list <- get_parameters(overrides = list(seed = 123))
+
+  # Two consecutive draws should differ. If the generator reset the seed from
+  # parameters_list$seed, they would be identical:
+  set.seed(1)
+  first <- generate_initial_age_classes(parameters_list = parameters_list)
+  second <- generate_initial_age_classes(parameters_list = parameters_list)
+  expect_false(identical(first, second))
+})
+
 #===========================================#
 #===== generate_initial_disease_states =====#
 #===========================================#
 
-test_that("generate_initial_disease_states errors if parameter list does not contain number_initially_exposed parameter", {
+test_that("generate_initial_disease_states errors if parameter list does not contain number_initial_E parameter", {
   # Establish the list of model parameters:
   parameters_list <- get_parameters()
 
-  # Remove the number_initially_exposed parameter:
-  parameters_list$number_initially_exposed <- NULL
+  # Remove the number_initial_E parameter:
+  parameters_list$number_initial_E <- NULL
 
-  # Check that generate_initial_disease_states() errors when number_initially_exposed not in the parameters
+  # Check that generate_initial_disease_states() errors when number_initial_E not in the parameters
   # list:
   expect_error(
     object = generate_initial_disease_states(parameters_list = parameters_list),
-    regexp = "parameters list must contain a variable called number_initially_exposed"
+    regexp = "parameters list must contain a variable called number_initial_E"
   )
 })
 
@@ -36,25 +81,10 @@ test_that("generate_initial_disease_states errors if parameter list does not con
   )
 })
 
-test_that("generate_initial_disease_states errors if parameter list does not contain seed parameter", {
-  # Establish the list of model parameters:
-  parameters_list <- get_parameters()
-
-  # Remove the number_initially_exposed parameter:
-  parameters_list$seed <- NULL
-
-  # Check that generate_initial_disease_states() errors when number_initially_exposed not in the parameters
-  # list:
-  expect_error(
-    object = generate_initial_disease_states(parameters_list = parameters_list),
-    regexp = "parameters list must contain a variable called seed"
-  )
-})
-
 test_that("generate_initial_disease_states returns the expected disease states", {
   # Establish the list of model parameters:
   parameters_list <- get_parameters(
-    overrides = list(number_initially_exposed = 47)
+    overrides = list(number_initial_S = 9953, number_initial_E = 47)
   )
 
   # Generate the initial disease states:
@@ -65,13 +95,13 @@ test_that("generate_initial_disease_states returns the expected disease states",
   # Check that the number of exposed individuals matches expectation:
   expect_equal(
     object = sum(initial_disease_states == "E"),
-    parameters_list$number_initially_exposed
+    parameters_list$number_initial_E
   )
 
   # Check that the number of susceptible indiivduals matches expectation:
   expect_equal(
     sum(initial_disease_states == "S"),
-    parameters_list$human_population - parameters_list$number_initially_exposed
+    parameters_list$number_initial_S
   )
 })
 
@@ -155,21 +185,6 @@ test_that("generate_initial_age_classes errors if parameter list does not contai
   )
 })
 
-test_that("generate_initial_age_classes errors if parameter list does not contain seed parameter", {
-  # Establish the list of model parameters:
-  parameters_list <- get_parameters()
-
-  # Remove the seed parameter:
-  parameters_list$seed <- NULL
-
-  # Check that generate_initial_age_classes() errors when seed not in the parameters
-  # list:
-  expect_error(
-    object = generate_initial_age_classes(parameters_list = parameters_list),
-    regexp = "parameters list must contain a variable called seed"
-  )
-})
-
 test_that("generate_initial_age_classes contains only the expected age classes", {
   # Establish the list of model parameters:
   parameters_list <- get_parameters(
@@ -177,7 +192,8 @@ test_that("generate_initial_age_classes contains only the expected age classes",
       initial_proportion_child = 0.5,
       initial_proportion_adult = 0.2,
       initial_proportion_elderly = 0.3,
-      human_population = 1000
+      human_population = 1000,
+      number_initial_S = 995
     )
   )
 
@@ -234,32 +250,6 @@ test_that("generate_initial_schools errors if parameter_list does not contain hu
       age_class_variable = variables_list$age_class
     ),
     regexp = "parameters list must contain a variable called human_population"
-  )
-})
-
-test_that("generate_initial_schools errors if parameter_list does not contain seed", {
-  # Establish the list of model parameters:
-  parameters_list <- with_default_ach(get_parameters())
-
-  # Establish the list of model variables:
-  vars_and_params <- create_variables(parameters_list = parameters_list)
-
-  # Retrieve the variables from the create_variables() outputs:
-  variables_list <- vars_and_params[[1]]
-
-  # Re-establish the model parameters list:
-  parameters_list <- vars_and_params[[2]]
-
-  # Remove seed from the parameters list:
-  parameters_list$seed <- NULL
-
-  # Check that the generate_initial_schools() function errors due to missing seed parameter:
-  expect_error(
-    object = generate_initial_schools(
-      parameters_list = parameters_list,
-      age_class_variable = variables_list$age_class
-    ),
-    regexp = "parameters list must contain a variable called seed"
   )
 })
 
@@ -466,33 +456,6 @@ test_that("generate_initial_workplaces errors if parameter_list does not contain
       school_variable = variables_list$school
     ),
     regexp = "parameters list must contain a variable called human_population"
-  )
-})
-
-test_that("generate_initial_workplaces errors if parameter_list does not contain seed", {
-  # Establish the list of model parameters:
-  parameters_list <- with_default_ach(get_parameters())
-
-  # Establish the list of model variables:
-  vars_and_params <- create_variables(parameters_list = parameters_list)
-
-  # Retrieve the variables from the create_variables() outputs:
-  variables_list <- vars_and_params[[1]]
-
-  # Re-establish the model parameters list:
-  parameters_list <- vars_and_params[[2]]
-
-  # Remove seed from the parameters list:
-  parameters_list$seed <- NULL
-
-  # Check that the generate_initial_schools() function errors due to missing seed parameter:
-  expect_error(
-    object = generate_initial_workplaces(
-      parameters_list = parameters_list,
-      age_class_variable = variables_list$age_class,
-      school_variable = variables_list$school
-    ),
-    regexp = "parameters list must contain a variable called seed"
   )
 })
 
