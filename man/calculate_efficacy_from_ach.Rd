@@ -43,14 +43,14 @@ baseline ACH. Uncovered locations get \code{delta = 0}, which gives
 \code{efficacy = 0} and so leave FOI unchanged downstream.
 
 The intervention's delta per location is determined by the intervention
-object's \code{delta_function} (and \code{delta_params}, \code{variation_function},
+object's \code{delta_function} (and \code{delta_params}, \code{variation},
 \code{variation_params}); see \code{\link[=make_intervention]{make_intervention()}}.
 
 Called once per setting from \code{\link[=generate_intervention_data]{generate_intervention_data()}}.
 }
 \seealso{
 Other intervention: 
-\code{\link{ach_to_efficacy}()},
+\code{\link{delta_to_efficacy}()},
 \code{\link{efficacy_to_delta}()},
 \code{\link{generate_intervention_data}()},
 \code{\link{generate_intervention_switches}()},

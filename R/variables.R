@@ -70,6 +70,13 @@ create_variables <- function(parameters_list, population_data) {
 #' @family variables
 #' @export
 generate_population_data <- function(parameters_list) {
+  # Set the seed once for the whole population. The generators below then
+  # continue one random stream instead of each restarting it.
+  if (!("seed" %in% names(parameters_list))) {
+    stop("parameters list must contain a variable called seed")
+  }
+  seed_rng(parameters_list$seed)
+
   # Disease state variable
   initial_disease_states <- generate_initial_disease_states(parameters_list = parameters_list)
 
@@ -221,7 +228,7 @@ generate_population_data <- function(parameters_list) {
 #' @export
 generate_initial_disease_states <- function(parameters_list) {
   # Checking that the parameters contain the initial human population size, proportion
-  # initially exposed, and a seed:
+  # initially exposed:
   if (!("number_initial_S" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called number_initial_S")
   }
@@ -237,12 +244,6 @@ generate_initial_disease_states <- function(parameters_list) {
   if (!("human_population" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called human_population")
   }
-  if (!("seed" %in% names(parameters_list))) {
-    stop("parameters list must contain a variable called seed")
-  }
-
-  # Set the seed from the parameter list:
-  seed_rng(parameters_list$seed)
 
   # Create a vector of disease states of length human_population:
   initial_disease_states <- rep("S", parameters_list$human_population)
@@ -296,9 +297,6 @@ generate_initial_schools <- function(parameters_list, initial_age_classes) {
   if (!("human_population" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called human_population")
   }
-  if (!("seed" %in% names(parameters_list))) {
-    stop("parameters list must contain a variable called seed")
-  }
   if (!("school_student_staff_ratio" %in% names(parameters_list))) {
     stop(
       "parameters list must contain a variable called school_student_staff_ratio"
@@ -306,9 +304,7 @@ generate_initial_schools <- function(parameters_list, initial_age_classes) {
   }
 
   # Calculating number of children and assigning them to schools
-  seed_rng(parameters_list$seed)
-
-  schools_usa_total <- dplyr::filter(schools_usa, type == "total")
+  schools_usa_total <- dplyr::filter(helios::schools_usa, type == "total")
   empirical_school_sizes <- rep(
     schools_usa_total$size_midpoint,
     schools_usa_total$count
@@ -377,9 +373,6 @@ generate_initial_workplaces <- function(
   if (!("human_population" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called human_population")
   }
-  if (!("seed" %in% names(parameters_list))) {
-    stop("parameters list must contain a variable called seed")
-  }
   if (!("workplace_prop_max" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called workplace_prop_max")
   }
@@ -391,8 +384,6 @@ generate_initial_workplaces <- function(
   }
 
   # Calculating number of unassigned adults and assigning them to workplaces
-  seed_rng(parameters_list$seed)
-
   index_unassigned_adults <- which(initial_age_classes == "adult" & initial_school_settings == 0)
   workplace_sizes <- sample_offset_truncated_power_distribution(
     N = length(index_unassigned_adults),
@@ -428,9 +419,6 @@ generate_initial_leisure <- function(parameters_list, leisure_setting_sizes) {
   if (!("human_population" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called human_population")
   }
-  if (!("seed" %in% names(parameters_list))) {
-    stop("parameters list must contain a variable called seed")
-  }
   if (!("leisure_mean_size" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called leisure_mean_size")
   }
@@ -444,9 +432,6 @@ generate_initial_leisure <- function(parameters_list, leisure_setting_sizes) {
       "parameters list must contain a variable called leisure_mean_number_settings"
     )
   }
-
-  # Setting the seed
-  seed_rng(parameters_list$seed)
 
   # Calculating the number of leisure visits that each person makes per week
   leisure_visits_per_person_per_week <- rpois(
@@ -511,7 +496,7 @@ generate_initial_leisure <- function(parameters_list, leisure_setting_sizes) {
 #' @export
 generate_initial_households <- function(parameters_list) {
   ## Using data from RTI's synthetic population for San Francisco to bootstrap https://fred.publichealth.pitt.edu/syn_pops
-  ref_panel <- as.matrix(baseline_household_demographics_usa)
+  ref_panel <- as.matrix(helios::baseline_household_demographics_usa)
   panel_household_sizes <- rowSums(ref_panel)
 
   ## Sampling random households from the reference panel until there is a place for everyone.

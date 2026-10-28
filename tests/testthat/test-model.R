@@ -34,6 +34,65 @@ test_that("run_simulation() resumed from a saved state matches an uninterrupted 
   expect_equal(resumed, full)
 })
 
+test_that("run_simulation() resumed in several segments, splitting a day, matches an uninterrupted run", {
+  parameters <- small_test_parameters(simulation_time = 6)
+  full <- run_simulation(parameters)$result
+
+  segments <- list()
+  state <- NULL
+  for (simulation_time in c(1, 2.5, 2.5)) {
+    parameters$simulation_time <- simulation_time
+    run <- run_simulation(parameters, state = state)
+    segments[[length(segments) + 1]] <- run$result
+    state <- run$state
+  }
+
+  expect_equal(do.call(rbind, segments), full)
+})
+
+test_that("run_simulation() with seed = NULL saves the seed it drew and can be resumed", {
+  parameters <- small_test_parameters(simulation_time = 3)
+  parameters["seed"] <- list(NULL)
+  part_one <- run_simulation(parameters)
+  part_two <- run_simulation(parameters, state = part_one$state)
+
+  expect_true(is.numeric(part_one$state$seed) && length(part_one$state$seed) == 1)
+  expect_identical(part_two$state$seed, part_one$state$seed)
+
+  # The drawn seed reproduces the run when passed explicitly:
+  parameters$seed <- part_one$state$seed
+  parameters$simulation_time <- 6
+  full <- run_simulation(parameters)$result
+  expect_equal(rbind(part_one$result, part_two$result), full)
+})
+
+test_that("run_simulation() errors when resuming with a different seed", {
+  parameters <- small_test_parameters(simulation_time = 3)
+  part_one <- run_simulation(parameters)
+
+  parameters$seed <- 2
+  expect_error(
+    run_simulation(parameters, state = part_one$state),
+    regexp = "differs from the seed that built the saved population"
+  )
+})
+
+test_that("run_simulation() errors on a malformed state or a resume of less than one timestep", {
+  parameters <- small_test_parameters(simulation_time = 1)
+  part_one <- run_simulation(parameters)
+
+  expect_error(
+    run_simulation(parameters, state = part_one$state$individual),
+    regexp = "state must be the state element returned by run_simulation()"
+  )
+
+  parameters$simulation_time <- 0
+  expect_error(
+    run_simulation(parameters, state = part_one$state),
+    regexp = "simulation_time must cover at least one timestep"
+  )
+})
+
 with_time_varying_betas <- function(parameters, days) {
   parameters$time_varying_transmission_on <- TRUE
   for (beta in c("beta_household", "beta_workplace", "beta_school", "beta_leisure", "beta_community")) {

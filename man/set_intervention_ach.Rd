@@ -57,8 +57,8 @@ will error. Multi-intervention support lives on a separate branch.
 }
 \seealso{
 Other intervention: 
-\code{\link{ach_to_efficacy}()},
 \code{\link{calculate_efficacy_from_ach}()},
+\code{\link{delta_to_efficacy}()},
 \code{\link{efficacy_to_delta}()},
 \code{\link{generate_intervention_data}()},
 \code{\link{generate_intervention_switches}()},

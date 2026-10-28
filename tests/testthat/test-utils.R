@@ -62,3 +62,11 @@ test_that("seed_rng() seeds both base R's and dqrng's random number generators",
 
   expect_identical(first, second)
 })
+
+test_that("seed_rng() leaves base R's stream as set.seed() alone would", {
+  set.seed(42)
+  expected <- stats::runif(5)
+  seed_rng(42)
+
+  expect_identical(stats::runif(5), expected)
+})
