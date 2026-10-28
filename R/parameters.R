@@ -14,7 +14,8 @@
 #' * `number_initial_R`: number of humans initially Recovered (state = R)
 #' * `seed`: a seed to run the simulation with. It seeds both R's generator
 #'   and dqrng's (used for the daily leisure draw). With `NULL`,
-#'   `run_simulation()` draws a seed and saves it in the returned state
+#'   `run_simulation()` draws a seed and saves it in the returned state, and
+#'   `generate_population_data()` draws one and saves it in the population
 #' * `workplace_prop_max`: maximum size of a workplace as a proportion of total adult population size
 #' * `workplace_a`: the a parameter for the Zipf-like distribution on workplace size
 #' * `workplace_c`: the c parameter for the Zipf-like distribution on workplace size

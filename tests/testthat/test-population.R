@@ -53,6 +53,20 @@ test_that("population data invariants", {
   check_population_invariant(with_default_ach(get_parameters()))
 })
 
+test_that("generate_population_data() saves the seed it was built with", {
+  parameters <- with_default_ach(get_parameters(list(
+    seed = 5, human_population = 1000, number_initial_S = 995
+  )))
+  expect_identical(generate_population_data(parameters)$seed, 5)
+
+  # A NULL seed is replaced by a random one, which rebuilds the same population:
+  parameters["seed"] <- list(NULL)
+  population_data <- generate_population_data(parameters)
+  expect_true(is.numeric(population_data$seed) && length(population_data$seed) == 1)
+  parameters$seed <- population_data$seed
+  expect_identical(generate_population_data(parameters), population_data)
+})
+
 test_that("run_simulation() gives the same result whether or not the population is provided", {
   parameters <- with_default_ach(get_parameters(list(simulation_time = 10, seed = 1)))
 

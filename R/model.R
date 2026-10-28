@@ -9,11 +9,14 @@
 #'   this state. `simulation_time` controls the number of *additional* timesteps to
 #'   run (not the absolute end time). With time-varying transmission, beta
 #'   vectors are indexed by day from the start of the original run, so they must
-#'   have a value for every day up to the end of the resumed run. The population
-#'   is rebuilt from the seed saved in the state, so `parameters_list$seed` must
-#'   be `NULL` or that same seed, and the population parameters must not change.
-#'   The random number streams continue from the state, so a run resumed from a
-#'   state matches an uninterrupted run. Default is `NULL` (start fresh).
+#'   have a value for every day up to the end of the resumed run.
+#'   `parameters_list$seed` must be `NULL` or the seed the saved run used. The
+#'   resumed run needs the population the saved run used: pass the same
+#'   `population_data`, or leave it `NULL` to rebuild the population from the
+#'   population seed saved in the state, in which case the population parameters
+#'   must not change. The random number streams continue from the state, so a
+#'   run resumed from a state matches an uninterrupted run. Default is `NULL`
+#'   (start fresh).
 #'
 #' @return A list with two elements:
 #'   \describe{
@@ -25,9 +28,11 @@
 #'       call to resume the simulation. A list with elements `timesteps` (the
 #'       number of timesteps simulated so far), `individual` (the state of the
 #'       individual package's variables, events and base R's random number
-#'       generator), `dqrng` (dqrng's random number state) and `seed` (the seed
-#'       that built the population, drawn at random when
-#'       `parameters_list$seed` is `NULL`).}
+#'       generator), `dqrng` (dqrng's random number state), `seed` (the seed of
+#'       the run, drawn at random when `parameters_list$seed` is `NULL`) and
+#'       `population_seed` (the seed that built the population, which is the
+#'       same as `seed` unless a population built with another seed was passed
+#'       in).}
 #'   }
 #'
 #' The \code{result} data frame always contains the following columns:
@@ -86,7 +91,7 @@ run_simulation <- function(
   }
 
   if (!is.null(state)) {
-    state_elements <- c("timesteps", "individual", "dqrng", "seed")
+    state_elements <- c("timesteps", "individual", "dqrng", "seed", "population_seed")
     if (!is.list(state) || !all(state_elements %in% names(state))) {
       stop(
         "state must be the state element returned by run_simulation(), a list with elements ",
@@ -98,9 +103,9 @@ run_simulation <- function(
     }
   }
 
-  # A resumed run rebuilds the population from the seed and then overwrites its
-  # variables with the saved ones, so it must use the seed that built the saved
-  # population. A fresh run with seed = NULL draws a seed so it can be saved:
+  # The run's seed also seeds the intervention coverage, so a resumed run must
+  # use the seed of the saved run to get the same coverage again. A fresh run
+  # with seed = NULL draws a seed so it can be saved:
   if (is.null(state)) {
     if (is.null(parameters_list$seed)) {
       parameters_list$seed <- sample.int(.Machine$integer.max, 1)
@@ -108,15 +113,29 @@ run_simulation <- function(
   } else {
     if (!is.null(parameters_list$seed) && !isTRUE(parameters_list$seed == state$seed)) {
       stop(
-        "parameters_list$seed (", parameters_list$seed, ") differs from the seed that built ",
-        "the saved population (", state$seed, "). Resume with the same seed or with seed = NULL"
+        "parameters_list$seed (", parameters_list$seed, ") differs from the seed of the ",
+        "saved run (", state$seed, "). Resume with the same seed or with seed = NULL"
       )
     }
     parameters_list$seed <- state$seed
   }
 
+  # A resumed run overwrites the population's variables with the saved ones, so
+  # it needs the population the saved run used. That is either a population
+  # passed in that was built with the saved population seed, or a population
+  # rebuilt from that seed:
   if (is.null(population_data)) {
-    population_data <- generate_population_data(parameters_list)
+    population_parameters <- parameters_list
+    if (!is.null(state)) {
+      population_parameters$seed <- state$population_seed
+    }
+    population_data <- generate_population_data(population_parameters)
+  } else if (!is.null(state) && !isTRUE(population_data$seed == state$population_seed)) {
+    stop(
+      "population_data was built with seed ", population_data$seed, ", but the saved run used ",
+      "a population built with seed ", state$population_seed, ". Resume with that population, ",
+      "or with population_data = NULL to rebuild it"
+    )
   }
 
   # Seed both RNGs from the parameter list. This happens after generating the population, so that the
@@ -187,7 +206,8 @@ run_simulation <- function(
     timesteps = timesteps,
     individual = individual_state,
     dqrng = dqrng::dqrng_get_state(),
-    seed = parameters_list$seed
+    seed = parameters_list$seed,
+    population_seed = population_data$seed
   )
 
   # Only return the timesteps simulated in this call:

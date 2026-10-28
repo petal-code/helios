@@ -73,7 +73,62 @@ test_that("run_simulation() errors when resuming with a different seed", {
   parameters$seed <- 2
   expect_error(
     run_simulation(parameters, state = part_one$state),
-    regexp = "differs from the seed that built the saved population"
+    regexp = "differs from the seed of the saved run"
+  )
+})
+
+test_that("run_simulation() resumed with a population built from another seed matches an uninterrupted run", {
+  # Random coverage depends on the run's seed, so a resume must reuse it as
+  # well as the population:
+  parameters <- set_intervention_ach(
+    small_test_parameters(simulation_time = 6),
+    setting = "workplace",
+    coverage_target = "individuals",
+    coverage_type = "random",
+    timestep = 1,
+    intervention = make_intervention(
+      name = "constant_delta",
+      delta_function = function(delta) delta,
+      delta_params = list(delta = 5),
+      coverage = 0.5
+    )
+  )
+  population_data <- generate_population_data(modifyList(parameters, list(seed = 2)))
+  full <- run_simulation(parameters, population_data = population_data)$result
+
+  parameters$simulation_time <- 3
+  part_one <- run_simulation(parameters, population_data = population_data)
+  expect_identical(part_one$state$seed, 1)
+  expect_identical(part_one$state$population_seed, 2)
+
+  # The population can be passed in again, or rebuilt from the saved seed:
+  passed_again <- run_simulation(parameters, population_data = population_data, state = part_one$state)
+  rebuilt <- run_simulation(parameters, state = part_one$state)
+  expect_equal(rbind(part_one$result, passed_again$result), full)
+  expect_equal(rbind(part_one$result, rebuilt$result), full)
+})
+
+test_that("run_simulation() resumes a run with seed = NULL on a population generated with seed = NULL", {
+  parameters <- small_test_parameters(simulation_time = 3)
+  parameters["seed"] <- list(NULL)
+  population_data <- generate_population_data(parameters)
+  part_one <- run_simulation(parameters, population_data = population_data)
+  expect_identical(part_one$state$population_seed, population_data$seed)
+
+  # Without the population, the resume rebuilds it from the saved seed:
+  passed_again <- run_simulation(parameters, population_data = population_data, state = part_one$state)
+  rebuilt <- run_simulation(parameters, state = part_one$state)
+  expect_identical(rebuilt$result, passed_again$result)
+})
+
+test_that("run_simulation() errors when resuming with a different population", {
+  parameters <- small_test_parameters(simulation_time = 3)
+  part_one <- run_simulation(parameters)
+
+  other_population <- generate_population_data(modifyList(parameters, list(seed = 2)))
+  expect_error(
+    run_simulation(parameters, population_data = other_population, state = part_one$state),
+    regexp = "population_data was built with seed 2, but the saved run used a population built with seed 1"
   )
 })
 
