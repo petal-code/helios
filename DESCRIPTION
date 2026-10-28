@@ -40,7 +40,7 @@ Config/testthat/edition: 3
 Imports:
     individual (>= 0.1.18),
     dplyr,
-    dqrng,
+    dqrng (>= 0.4.0),
     graphics,
     truncnorm,
     parallel,
