@@ -1,0 +1,167 @@
+# Technical model description
+
+This vignette is not up to date with latest changes to the model!
+
+This vignette describes the modelling approach used in
+[`helios`](https://mrc-ide.github.io/helios/). For an introduction to
+practical use of the package, see the [Get
+started](https://mrc-ide.github.io/helios/articles/helios.html)
+vignette.
+
+## Population
+
+The population consists of a fixed number of individuals \\i = 1,
+\ldots, N\\. Each individual has properties. Some properties remain
+constant during the simulation, and others change.
+
+## Age structure
+
+The age categories included in the model are children, adults, and the
+elderly. Each individual has a fixed age category, assumed not to change
+during the simulation. The age category is sampled from a categorical
+distribution at initialisation such that \\ \mathbb{P}(\text{age}\_i =
+k) = p_k, \\ k \in \\\text{child}, \text{adult}, \text{elderly}\\. \\
+
+## Households
+
+Households are comprised of collections of one or more individuals. We
+consider two approaches.
+
+### Parametric
+
+In the parameteric approach, household sizes \\N_j^\text{household}\\
+are drawn from a Poisson distribution with rate parameter
+\\\lambda^\text{household}\\ \\ N_j^\text{household} \sim
+\text{Poisson}(\lambda^\text{household}). \\ Individuals are then
+assigned to households. To ensure that no household contains only
+children, one adult is paired to each child assigned to a household
+without any existing adults.
+
+### Bootstrap
+
+In the bootstrap approach, households and age distributions are sampled
+with replacement from a reference data set. The reference data
+`baseline_household_demographics` are derived from the Office for
+National Statistics 2011 survey as used by Hinch et al. (2021). If the
+bootstrap approach is used, then its age structure will overwrite the
+categorical age structure above.
+
+## Schools
+
+All children attend schools. Two approaches to the number of children
+attending each school are considered.
+
+### Parametric
+
+In the parametric approach, the sizes of schools are drawn from a
+log-normal distribution with mean \\\mu^\text{school}\\ and variance
+\\{\sigma^\text{school}}^2\\ \\ N^\text{school}\_j \sim
+\text{Lognormal}(\mu^\text{school}, {\sigma^\text{school}}^2). \\
+Schools \\j\\ are drawn until \\\sum_j N^\text{school}\_j \geq
+N^\text{child}\\. Any samples \\N^\text{school}\_j \>
+N^\text{school}\_\text{max} \in \mathbb{N}\\ are discarded. The final
+school size is adjusted such that the sum of school sizes corresponds to
+the number of children. Assignment of children to particular schools is
+made using random sampling without replacement.
+
+### Bootstrap
+
+In the bootstrap approach, school sizes are sampled with replacement
+from a reference data set. The reference data `schools_england` are
+obtained from the 2022/23 census of schools in England.
+
+### School staff
+
+A small number of adults attend schools as staff. Each school has a
+fixed staff to student ratio, with the number of staff rounded up to the
+nearest integer.
+
+## Workplaces
+
+Workplaces are attended by adults who are not school staff. Following
+Ferguson et al. (2005), the sizes of workplaces
+\\N^\text{workplace}\_j\\ are drawn from an offset truncated power
+distribution. The cumulative distribution function is \\
+\mathbb{P}(N^\text{workplace}\_j \> N) = \frac{\left( \frac{1 +
+N^\text{workplace}\_\text{max} / a}{1 + m / a} \right) ^ c - 1}{(1 +
+N^\text{workplace}\_\text{max} / a)^c - 1}, \quad \text{for } N \leq
+N^\text{workplace}\_\text{max}, \\ where \\a \> 0, c \> 0\\ and
+\\N^\text{workplace}\_\text{max} \in \mathbb{N}\\. As with the school
+sizes, workplace sizes are drawn until their sum exceeds the number of
+adults who are not school staff. The final workplace is then adjusted
+downward. Assignment of adults to particular workplaces is done using
+random sampling without replacement.
+
+## Leisure
+
+Leisure venues are attended by all individuals. Leisure venue sizes are
+drawn from a negative binomial distribution \\ N^\text{leisure}\_j \sim
+\text{NB}(\mu^\text{leisure}, \kappa^\text{leisure}), \\ with mean
+\\\mu^\text{leisure}\\ and overdispersion parameter
+\\\kappa^\text{leisure}\\. As above, any samples \\N^\text{leisure}\_j
+\> N^\text{leisure}\_\text{max} \in \mathbb{N}\\ are discarded and the
+final sample is adjusted such that \\\sum_j N^\text{leisure}\_j = N\\.
+The number of leisure visits per person per week is drawn from a Poisson
+distribution, truncated at 7 corresponding to one leisure visit every
+day. The locations for each individual’s leisure visits are sampled
+without replacement with probability proportional to leisure venue size.
+The day of the week that each individual visits each sampled leisure
+location are also sampled without replacement.
+
+## Interventions
+
+To be described once implemented!
+
+## Disease states
+
+We consider a SEIR compartmental model with susceptible, exposed,
+infectious, and recovered disease states. At a given time, each
+individual is in exactly one of the states \\\\S, E, I, R\\\\.
+Transitions between states are simulated as follows.
+
+### Transition from state \\S \to E\\
+
+The total force of infection \\\lambda\\ for each individual is a sum of
+household, workplace, school, leisure, and community specific force of
+infections \\ \lambda = \lambda_h + \lambda_w + \lambda_s + \lambda_l.
+\\ The location specific force of infection terms are given as:
+
+- Household \\\lambda_h\\: proportional to the number of infectious
+  individuals in the household multiplied by \\\beta_h\\.
+- Workplace \\\lambda_w\\: proportional to the number of infectious
+  individuals in the workplace multiplied by \\\beta_w\\.
+- School \\\lambda_s\\: proportional to the number of infectious
+  individuals in the school multiplied by \\\beta_s\\.
+- Leisure \\\lambda_l\\: proportional to the number of infectious
+  individuals in the leisure setting multiplied by \\\beta_l\\.
+- Community \\\lambda_c\\: proportional to the total number of
+  infectious individuals multiplied by \\\beta_c\\.
+
+The probability of infection in a given time step \\\delta \> 0\\ is \\
+\mathbb{P}(S \to E) = 1 - \exp(- \lambda \delta) \\
+
+### Transition from state \\E \to I\\
+
+Individuals progress from exposed to infectious with a random delay \\d
+\geq 1\\ such that \\ c \sim \text{Gamma}(2\gamma, 2), \\ d =
+\text{round}(c + 1). \\ where \\\gamma \> 0\\ is the duration exposed
+which we set to 2. The delay \\d\\ is a number of time steps \\\delta\\.
+
+### Transition from state \\I \to R\\
+
+Individuals progress from infectious to recovered after a random disease
+duration \\f \geq 1\\ such that \\ e \sim \text{Gamma}(2\upsilon, 2), \\
+f = \text{round}(e + 1). \\ where \\\upsilon\\ is the duration of
+infectiousness which we set to 4. The disease duration \\f\\ is a number
+of time steps \\\delta\\.
+
+## Bibliography
+
+Ferguson, Neil M, Derek AT Cummings, Simon Cauchemez, et al. 2005.
+“Strategies for Containing an Emerging Influenza Pandemic in Southeast
+Asia.” *Nature* 437 (7056): 209–14.
+
+Hinch, Robert, William JM Probert, Anel Nurtay, et al. 2021.
+“OpenABM-Covid19—an Agent-Based Model for Non-Pharmaceutical
+Interventions Against COVID-19 Including Contact Tracing.” *PLoS
+Computational Biology* 17 (7): e1009146.
