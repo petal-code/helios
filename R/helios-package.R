@@ -8,13 +8,10 @@
 #' @importFrom utils modifyList tail
 NULL
 
-# Package datasets and data frame columns referenced without quotes
+# Data frame columns referenced without quotes. "index" is the typo
+# reported in #166 and can go once that is fixed.
 utils::globalVariables(c(
-  "baseline_household_demographics_uk",
-  "baseline_household_demographics_usa",
   "beta_total",
   "index",
-  "schools_uk",
-  "schools_usa",
   "type"
 ))

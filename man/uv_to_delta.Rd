@@ -10,11 +10,10 @@ uv_to_delta(f, E_avg, k)
 \item{f}{Fraction of the room volume that is irradiated (dimensionless,
 in \verb{[0, 1]}).}
 
-\item{E_avg}{Average fluence rate within the irradiated volume
-(mW/cm^2 or equivalent unit consistent with \code{k}).}
+\item{E_avg}{Average fluence rate within the irradiated volume (µW/cm^2).}
 
-\item{k}{UV inactivation constant for the target pathogen
-(units consistent with \code{E_avg}; product \code{E_avg * k} is per-second).}
+\item{k}{UV inactivation (susceptibility) constant for the target pathogen
+(cm^2/mJ).}
 }
 \value{
 Equivalent ACH contribution from UV-C (units: 1/hour).
@@ -23,13 +22,15 @@ Equivalent ACH contribution from UV-C (units: 1/hour).
 Converts a UV-C intervention's photophysical parameters into an
 equivalent air-change rate (eACH) that can be used as a delta in the
 Wells-Riley framework. The conversion is
-\code{delta = f * E_avg * k * 3.6}, where the factor 3.6 converts
-(per-second) inactivation to (per-hour) eACH.
+\code{delta = f * E_avg * k * 3.6}. The factor 3.6 assumes \code{E_avg} is in
+µW/cm^2 and \code{k} is in cm^2/mJ: it combines the µW to mW conversion (1e-3)
+with the per-second to per-hour conversion (3600). Supplying \code{E_avg} in
+mW/cm^2 would overstate eACH by a factor of 1000.
 }
 \seealso{
 Other intervention: 
-\code{\link{ach_to_efficacy}()},
 \code{\link{calculate_efficacy_from_ach}()},
+\code{\link{delta_to_efficacy}()},
 \code{\link{efficacy_to_delta}()},
 \code{\link{generate_intervention_switches}()},
 \code{\link{generate_joint_intervention_switches}()},

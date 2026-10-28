@@ -75,46 +75,48 @@ Rendering Parameters
 \item \code{render_diagnostics}: FALSE
 }
 
-Setting-Specific ACH Parameters:
+Setting-Specific ACH Parameters (ACH values are numeric, in air changes per hour; the distribution is truncated at 0, so the realised mean ACH is somewhat higher than the \verb{_mean} parameter when the sd is large relative to the mean):
 \itemize{
 \item \code{setting_specific_ach_workplace}: boolean switch set to TRUE if setting-specific ACH parameterised in the workplace setting using \code{set_setting_specific_ach()}; default = FALSE
-\item \code{setting_specific_ach_workplace_mean}: The mean of the  truncated normal distribution from which the setting-specific ACH of individual workplaces is drawn; default =4.8
-\item \code{setting_specific_ach_workplace_sd}: The standard deviation of the truncated normal distribution from which the setting-specific ACH of individual workplaces is drawn; default =1.5
+\item \code{setting_specific_ach_workplace_mean}: The mean of the truncated normal distribution from which the setting-specific ACH of individual workplaces is drawn; default = 3.1
+\item \code{setting_specific_ach_workplace_sd}: The standard deviation of the truncated normal distribution from which the setting-specific ACH of individual workplaces is drawn; default = 2.35
 \item \code{setting_specific_ach_school}: boolean switch set to TRUE if setting-specific ACH parameterised in the school setting using \code{set_setting_specific_ach()}; default = FALSE
-\item \code{setting_specific_ach_school_mean}: The mean of the truncated normal distribution from which the setting-specific ACH of individual schools is drawn; default = 4.0
-\item \code{setting_specific_ach_school_sd}: The standard deviation of the truncated normal distribution from which the setting-specific ACH of individual schools is drawn; default = 1.2
+\item \code{setting_specific_ach_school_mean}: The mean of the truncated normal distribution from which the setting-specific ACH of individual schools is drawn; default = 3.3
+\item \code{setting_specific_ach_school_sd}: The standard deviation of the truncated normal distribution from which the setting-specific ACH of individual schools is drawn; default = 1.95
 \item \code{setting_specific_ach_leisure}: boolean switch set to TRUE if setting-specific ACH parameterised in the leisure setting using \code{set_setting_specific_ach()}; default = FALSE
-\item \code{setting_specific_ach_leisure_mean}: The mean of the truncated normal distribution from which the setting-specific ACH of individual leisure locations is drawn; default = 3.0
-\item \code{setting_specific_ach_leisure_sd}: The standard deviation of the truncated normal distribution from which the setting-specific ACH of individual leisure settings is drawn; default = 1.0
+\item \code{setting_specific_ach_leisure_mean}: The mean of the truncated normal distribution from which the setting-specific ACH of individual leisure locations is drawn; default = 3.5
+\item \code{setting_specific_ach_leisure_sd}: The standard deviation of the truncated normal distribution from which the setting-specific ACH of individual leisure settings is drawn; default = 2.73
 \item \code{setting_specific_ach_household}: boolean switch set to TRUE if setting-specific ACH parameterised in the household setting using \code{set_setting_specific_ach()}; default = FALSE
-\item \code{setting_specific_ach_household_mean}: The mean of the truncated normal distribution from which the setting-specific ACH of individual households is drawn; default = 0.5
-\item \code{setting_specific_ach_household_sd}: The standard deviation of the truncated normal distribution from which the setting-specific ACH of individual households is drawn; default = 0.2
+\item \code{setting_specific_ach_household_mean}: The mean of the truncated normal distribution from which the setting-specific ACH of individual households is drawn; default = 2.0
+\item \code{setting_specific_ach_household_sd}: The standard deviation of the truncated normal distribution from which the setting-specific ACH of individual households is drawn; default = 0.80
 }
 
-Default (Uniform) ACH Parameters (used when \verb{setting_specific_ach_<setting>} is FALSE; if both are unset, \code{generate_setting_specific_ach()} errors):
+Default (Uniform) ACH Parameters (used when \verb{setting_specific_ach_<setting>} is FALSE. If \verb{setting_specific_ach_<setting>} is FALSE and \verb{default_ach_<setting>} is NULL, \code{generate_setting_specific_ach()} errors rather than assuming a baseline):
 \itemize{
-\item \code{default_ach_workplace}: uniform ACH assigned to every workplace location when \code{setting_specific_ach_workplace} is FALSE. Set via \code{\link[=set_default_ach]{set_default_ach()}}. Default = NULL (must be set explicitly).
-\item \code{default_ach_school}: uniform ACH assigned to every school location when \code{setting_specific_ach_school} is FALSE. Default = NULL.
-\item \code{default_ach_leisure}: uniform ACH assigned to every leisure location when \code{setting_specific_ach_leisure} is FALSE. Default = NULL.
-\item \code{default_ach_household}: uniform ACH assigned to every household location when \code{setting_specific_ach_household} is FALSE. Default = NULL.
+\item \code{default_ach_workplace}: uniform ACH assigned to every workplace location when \code{setting_specific_ach_workplace} is FALSE. Set via \code{\link[=set_default_ach]{set_default_ach()}}. Default = 3.1.
+\item \code{default_ach_school}: uniform ACH assigned to every school location when \code{setting_specific_ach_school} is FALSE. Default = 3.3.
+\item \code{default_ach_leisure}: uniform ACH assigned to every leisure location when \code{setting_specific_ach_leisure} is FALSE. Default = 3.5.
+\item \code{default_ach_household}: uniform ACH assigned to every household location when \code{setting_specific_ach_household} is FALSE. Default = 2.0.
 }
 
-Volume Per Person Parameters (used in the Wells-Riley calculation; units: m^3 per person):
+Indoor Air Volume Per Person Parameters (used in the Wells-Riley calculation, which assumes a well-mixed enclosed space; units: m^3 per person):
 \itemize{
-\item \code{volume_per_person_workplace}: average air volume per person in a workplace; default = 27 (assumes ~10 m^2 floor area at 2.7 m height)
-\item \code{volume_per_person_school}: average air volume per person in a school; default = 10 (assumes ~3.33 m^2 floor area at 3 m height)
-\item \code{volume_per_person_leisure}: average air volume per person in a leisure setting; default = 8 (assumes ~2 m^2 floor area at 4 m height)
-\item \code{volume_per_person_household}: average air volume per person in a household; default = 50 (assumes ~20 m^2 floor area at 2.5 m height)
+\item \code{volume_per_person_workplace}: average indoor air volume per person in a workplace; default = 27 (assumes ~10 m^2 floor area at 2.7 m height)
+\item \code{volume_per_person_school}: average indoor air volume per person in a school; default = 10 (assumes ~3.33 m^2 floor area at 3 m height)
+\item \code{volume_per_person_leisure}: average indoor air volume per person in a leisure setting; default = 8 (assumes ~2 m^2 floor area at 4 m height)
+\item \code{volume_per_person_household}: average indoor air volume per person in a household; default = 50 (assumes ~20 m^2 floor area at 2.5 m height)
 }
 
-Wells-Riley Parameters (used by \code{convert_ach_to_riskiness()} to derive per-location riskiness from ACH, and by \code{calculate_efficacy_from_ach()} to derive per-location intervention efficacy from ACH and the intervention delta):
+Wells-Riley Parameters (used by \code{convert_ach_to_riskiness()} to derive per-location riskiness from ACH, and by \code{calculate_efficacy_from_ach()} to derive per-location intervention efficacy from ACH and the intervention delta - the extra equivalent ACH an intervention adds to covered locations, see \code{\link[=make_intervention]{make_intervention()}}):
 \itemize{
-\item \code{wells_riley_emission_rate}: rate at which an infectious individual emits airborne infectious units; units = FFU/hour; default = 27
-\item \code{wells_riley_decay_rate}: natural decay rate of airborne pathogens (denoted k_D); units = 1/hour; default = 0.64
-\item \code{wells_riley_infection_prob_per_ffu}: probability of infection per inhaled FFU (denoted r); default = 1.37e-2
-\item \code{wells_riley_respiratory_rate_factor}: respiratory rate multiplied by tidal volume (denoted RR_tv); units = m^3/hour; default = 0.45
+\item \code{wells_riley_emission_rate}: rate at which an infectious individual emits airborne infectious units (denoted pi); units = FFU (focus-forming units)/hour; default = 365 (Blatchley & Cui 2023, Table 2, scenario C: speaking; scenario D, singing, is 2335)
+\item \code{wells_riley_decay_rate}: natural decay rate of airborne pathogens (denoted k_D); units = 1/hour; default = 0.64 (Blatchley & Cui 2023)
+\item \code{wells_riley_infection_prob_per_ffu}: probability of infection per inhaled FFU (focus-forming unit) (denoted r); units = 1/FFU; default = 1.37e-2, an exponential fit to Killingley et al. (2022), in which 10 TCID50 (55 FFU) infected 18 of 34 volunteers: \code{-log(1 - 18/34) / 55}
+\item \code{wells_riley_respiratory_rate_factor}: respiratory rate multiplied by tidal volume (denoted RR_tv); units = m^3/hour; default = 0.45 (15 breaths/minute at 500 ml)
 \item \code{wells_riley_time_in_room}: exposure window used inside the Wells-Riley calculation (denoted t); units = hours; default = 4
 }
+
+\code{r} and \code{pi} are a matched pair: \code{1/r} = 73 FFU is one Wells-Riley quantum, so \code{pi} = 365 is 5.0 quanta/hour. Both consumers return ratios and the exponent is small, so this level has limited leverage over efficacy between scenarios A and C (0.60 at A versus 0.52-0.58 across A-C in schools), but a substantially higher emission rate such as scenario D lowers it considerably (0.23 in schools).
 
 Intervention Parameters (populated internally by \code{set_intervention_ach()} and by \code{generate_intervention_switches()}; users do not normally set these directly. One block per scope, where \verb{<s>} is one of \code{joint}, \code{workplace}, \code{school}, \code{leisure} or \code{household}):
 \itemize{
@@ -124,7 +126,7 @@ Intervention Parameters (populated internally by \code{set_intervention_ach()} a
 \item \verb{intervention_<s>_coverage_target}: what the coverage fraction applies to. Either "individuals" or "square_footage". Default = NULL
 \item \verb{intervention_<s>_coverage_type}: how locations are selected for coverage. Either "random" (uniform sampling) or "targeted_riskiness" (locations ranked in decreasing order of riskiness). Default = NULL
 \item \verb{intervention_<s>_timestep}: first simulation timestep at which the intervention's efficacy is applied in the FOI calculation. Default = NULL
-\item \verb{intervention_<setting>_covered} (per-setting scopes only — workplace/school/leisure/household): 0/1 vector of length equal to the number of locations in the setting, populated by the dispatcher to mark which locations received the intervention. Default = NULL
+\item \verb{intervention_<setting>_covered} (per-setting scopes only — workplace/school/leisure/household): 0/1 switch vector of length equal to the number of locations in the setting, populated by \code{generate_intervention_switches()} to mark which locations received the intervention. Default = NULL
 }
 
 Setting-Specific Room Size Per Individual Parameters:

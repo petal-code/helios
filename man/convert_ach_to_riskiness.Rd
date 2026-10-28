@@ -22,7 +22,7 @@ or \code{"household"}. Used to select the appropriate \verb{volume_per_person_*}
 }
 \value{
 Numeric vector of per-location riskiness values, same length as
-\code{ach_values}, anchored so the median location has riskiness ~ 1.
+\code{ach_values}, anchored so mean riskiness across locations is exactly 1.
 }
 \description{
 Applies the Wells-Riley framework to convert each location's baseline ACH
@@ -32,12 +32,14 @@ For each location \code{i}:
 \deqn{p_{inf}(i) = 1 - \exp(-r \cdot C_{ss}(i) \cdot RR_{tv} \cdot t)}
 \deqn{C_{ss}(i) = (I \cdot \pi) / (\alpha_i \cdot V), \quad \alpha_i = ACH_i + k_D}
 
-Riskiness is then normalised so a typical location has value 1:
-\deqn{riskiness_i = p_{inf}(i) / p_{inf}(ACH_{median})}
+Riskiness is then normalised so that the mean across locations is exactly 1:
+\deqn{riskiness_i = p_{inf}(i) / \overline{p_{inf}}}
+where \eqn{\overline{p_{inf}}} is the mean of \eqn{p_{inf}} over all
+locations in the setting.
 
 Because the Wells-Riley exponent is small for our parameter values,
-\verb{1 - exp(-x) \\approx x}, and the cancellation simplifies riskiness to
-approximately \code{(ACH_ref + kD) / (ACH_i + kD)} — i.e., it depends only on
+\verb{1 - exp(-x) \\approx x}, and riskiness simplifies to approximately
+\code{(1 / (ACH_i + kD)) / mean(1 / (ACH_j + kD))}, i.e. it depends only on
 ACH. The constants \code{I}, \code{pi}, \code{RR_tv}, \code{t}, and \code{V} cancel.
 
 Called once per setting during \code{\link[=create_variables]{create_variables()}} init, immediately
@@ -47,6 +49,7 @@ per-setting FOI.
 }
 \seealso{
 Other setting-specific ACH: 
+\code{\link{ach_to_p_inf}()},
 \code{\link{generate_setting_specific_ach}()},
 \code{\link{set_default_ach}()},
 \code{\link{set_setting_specific_ach}()}

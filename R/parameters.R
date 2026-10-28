@@ -69,38 +69,41 @@
 #' Rendering Parameters
 #' * `render_diagnostics`: FALSE
 #'
-#' Setting-Specific ACH Parameters:
+#' Setting-Specific ACH Parameters (ACH values are numeric, in air changes per hour; the distribution is truncated at 0, so the realised mean ACH is somewhat higher than the `_mean` parameter when the sd is large relative to the mean):
 #' * `setting_specific_ach_workplace`: boolean switch set to TRUE if setting-specific ACH parameterised in the workplace setting using `set_setting_specific_ach()`; default = FALSE
-#' * `setting_specific_ach_workplace_mean`: The mean of the  truncated normal distribution from which the setting-specific ACH of individual workplaces is drawn; default =4.8
-#' * `setting_specific_ach_workplace_sd`: The standard deviation of the truncated normal distribution from which the setting-specific ACH of individual workplaces is drawn; default =1.5
+#' * `setting_specific_ach_workplace_mean`: The mean of the truncated normal distribution from which the setting-specific ACH of individual workplaces is drawn; default = 3.1
+#' * `setting_specific_ach_workplace_sd`: The standard deviation of the truncated normal distribution from which the setting-specific ACH of individual workplaces is drawn; default = 2.35
 #' * `setting_specific_ach_school`: boolean switch set to TRUE if setting-specific ACH parameterised in the school setting using `set_setting_specific_ach()`; default = FALSE
-#' * `setting_specific_ach_school_mean`: The mean of the truncated normal distribution from which the setting-specific ACH of individual schools is drawn; default = 4.0
-#' * `setting_specific_ach_school_sd`: The standard deviation of the truncated normal distribution from which the setting-specific ACH of individual schools is drawn; default = 1.2
+#' * `setting_specific_ach_school_mean`: The mean of the truncated normal distribution from which the setting-specific ACH of individual schools is drawn; default = 3.3
+#' * `setting_specific_ach_school_sd`: The standard deviation of the truncated normal distribution from which the setting-specific ACH of individual schools is drawn; default = 1.95
 #' * `setting_specific_ach_leisure`: boolean switch set to TRUE if setting-specific ACH parameterised in the leisure setting using `set_setting_specific_ach()`; default = FALSE
-#' * `setting_specific_ach_leisure_mean`: The mean of the truncated normal distribution from which the setting-specific ACH of individual leisure locations is drawn; default = 3.0
-#' * `setting_specific_ach_leisure_sd`: The standard deviation of the truncated normal distribution from which the setting-specific ACH of individual leisure settings is drawn; default = 1.0
+#' * `setting_specific_ach_leisure_mean`: The mean of the truncated normal distribution from which the setting-specific ACH of individual leisure locations is drawn; default = 3.5
+#' * `setting_specific_ach_leisure_sd`: The standard deviation of the truncated normal distribution from which the setting-specific ACH of individual leisure settings is drawn; default = 2.73
 #' * `setting_specific_ach_household`: boolean switch set to TRUE if setting-specific ACH parameterised in the household setting using `set_setting_specific_ach()`; default = FALSE
-#' * `setting_specific_ach_household_mean`: The mean of the truncated normal distribution from which the setting-specific ACH of individual households is drawn; default = 0.5
-#' * `setting_specific_ach_household_sd`: The standard deviation of the truncated normal distribution from which the setting-specific ACH of individual households is drawn; default = 0.2
+#' * `setting_specific_ach_household_mean`: The mean of the truncated normal distribution from which the setting-specific ACH of individual households is drawn; default = 2.0
+#' * `setting_specific_ach_household_sd`: The standard deviation of the truncated normal distribution from which the setting-specific ACH of individual households is drawn; default = 0.80
 #'
-#' Default (Uniform) ACH Parameters (used when `setting_specific_ach_<setting>` is FALSE; if both are unset, `generate_setting_specific_ach()` errors):
-#' * `default_ach_workplace`: uniform ACH assigned to every workplace location when `setting_specific_ach_workplace` is FALSE. Set via [set_default_ach()]. Default = NULL (must be set explicitly).
-#' * `default_ach_school`: uniform ACH assigned to every school location when `setting_specific_ach_school` is FALSE. Default = NULL.
-#' * `default_ach_leisure`: uniform ACH assigned to every leisure location when `setting_specific_ach_leisure` is FALSE. Default = NULL.
-#' * `default_ach_household`: uniform ACH assigned to every household location when `setting_specific_ach_household` is FALSE. Default = NULL.
+
+#' Default (Uniform) ACH Parameters (used when `setting_specific_ach_<setting>` is FALSE. If `setting_specific_ach_<setting>` is FALSE and `default_ach_<setting>` is NULL, `generate_setting_specific_ach()` errors rather than assuming a baseline):
+#' * `default_ach_workplace`: uniform ACH assigned to every workplace location when `setting_specific_ach_workplace` is FALSE. Set via [set_default_ach()]. Default = 3.1.
+#' * `default_ach_school`: uniform ACH assigned to every school location when `setting_specific_ach_school` is FALSE. Default = 3.3.
+#' * `default_ach_leisure`: uniform ACH assigned to every leisure location when `setting_specific_ach_leisure` is FALSE. Default = 3.5.
+#' * `default_ach_household`: uniform ACH assigned to every household location when `setting_specific_ach_household` is FALSE. Default = 2.0.
 #'
-#' Volume Per Person Parameters (used in the Wells-Riley calculation; units: m^3 per person):
-#' * `volume_per_person_workplace`: average air volume per person in a workplace; default = 27 (assumes ~10 m^2 floor area at 2.7 m height)
-#' * `volume_per_person_school`: average air volume per person in a school; default = 10 (assumes ~3.33 m^2 floor area at 3 m height)
-#' * `volume_per_person_leisure`: average air volume per person in a leisure setting; default = 8 (assumes ~2 m^2 floor area at 4 m height)
-#' * `volume_per_person_household`: average air volume per person in a household; default = 50 (assumes ~20 m^2 floor area at 2.5 m height)
+#' Indoor Air Volume Per Person Parameters (used in the Wells-Riley calculation, which assumes a well-mixed enclosed space; units: m^3 per person):
+#' * `volume_per_person_workplace`: average indoor air volume per person in a workplace; default = 27 (assumes ~10 m^2 floor area at 2.7 m height)
+#' * `volume_per_person_school`: average indoor air volume per person in a school; default = 10 (assumes ~3.33 m^2 floor area at 3 m height)
+#' * `volume_per_person_leisure`: average indoor air volume per person in a leisure setting; default = 8 (assumes ~2 m^2 floor area at 4 m height)
+#' * `volume_per_person_household`: average indoor air volume per person in a household; default = 50 (assumes ~20 m^2 floor area at 2.5 m height)
 #'
-#' Wells-Riley Parameters (used by `convert_ach_to_riskiness()` to derive per-location riskiness from ACH, and by `calculate_efficacy_from_ach()` to derive per-location intervention efficacy from ACH and the intervention delta):
-#' * `wells_riley_emission_rate`: rate at which an infectious individual emits airborne infectious units; units = FFU/hour; default = 27
-#' * `wells_riley_decay_rate`: natural decay rate of airborne pathogens (denoted k_D); units = 1/hour; default = 0.64
-#' * `wells_riley_infection_prob_per_ffu`: probability of infection per inhaled FFU (denoted r); default = 1.37e-2
-#' * `wells_riley_respiratory_rate_factor`: respiratory rate multiplied by tidal volume (denoted RR_tv); units = m^3/hour; default = 0.45
+#' Wells-Riley Parameters (used by `convert_ach_to_riskiness()` to derive per-location riskiness from ACH, and by `calculate_efficacy_from_ach()` to derive per-location intervention efficacy from ACH and the intervention delta - the extra equivalent ACH an intervention adds to covered locations, see [make_intervention()]):
+#' * `wells_riley_emission_rate`: rate at which an infectious individual emits airborne infectious units (denoted pi); units = FFU (focus-forming units)/hour; default = 365 (Blatchley & Cui 2023, Table 2, scenario C: speaking; scenario D, singing, is 2335)
+#' * `wells_riley_decay_rate`: natural decay rate of airborne pathogens (denoted k_D); units = 1/hour; default = 0.64 (Blatchley & Cui 2023)
+#' * `wells_riley_infection_prob_per_ffu`: probability of infection per inhaled FFU (focus-forming unit) (denoted r); units = 1/FFU; default = 1.37e-2, an exponential fit to Killingley et al. (2022), in which 10 TCID50 (55 FFU) infected 18 of 34 volunteers: `-log(1 - 18/34) / 55`
+#' * `wells_riley_respiratory_rate_factor`: respiratory rate multiplied by tidal volume (denoted RR_tv); units = m^3/hour; default = 0.45 (15 breaths/minute at 500 ml)
 #' * `wells_riley_time_in_room`: exposure window used inside the Wells-Riley calculation (denoted t); units = hours; default = 4
+#'
+#' `r` and `pi` are a matched pair: `1/r` = 73 FFU is one Wells-Riley quantum, so `pi` = 365 is 5.0 quanta/hour. Both consumers return ratios and the exponent is small, so this level has limited leverage over efficacy between scenarios A and C (0.60 at A versus 0.52-0.58 across A-C in schools), but a substantially higher emission rate such as scenario D lowers it considerably (0.23 in schools).
 #'
 #' Intervention Parameters (populated internally by `set_intervention_ach()` and by `generate_intervention_switches()`; users do not normally set these directly. One block per scope, where `<s>` is one of `joint`, `workplace`, `school`, `leisure` or `household`):
 #' * `intervention_<s>_active`: boolean flag set to TRUE when an intervention has been installed in scope <s>. Default = FALSE
@@ -109,7 +112,7 @@
 #' * `intervention_<s>_coverage_target`: what the coverage fraction applies to. Either "individuals" or "square_footage". Default = NULL
 #' * `intervention_<s>_coverage_type`: how locations are selected for coverage. Either "random" (uniform sampling) or "targeted_riskiness" (locations ranked in decreasing order of riskiness). Default = NULL
 #' * `intervention_<s>_timestep`: first simulation timestep at which the intervention's efficacy is applied in the FOI calculation. Default = NULL
-#' * `intervention_<setting>_covered` (per-setting scopes only — workplace/school/leisure/household): 0/1 vector of length equal to the number of locations in the setting, populated by the dispatcher to mark which locations received the intervention. Default = NULL
+#' * `intervention_<setting>_covered` (per-setting scopes only — workplace/school/leisure/household): 0/1 switch vector of length equal to the number of locations in the setting, populated by `generate_intervention_switches()` to mark which locations received the intervention. Default = NULL
 #'
 #' Setting-Specific Room Size Per Individual Parameters:
 #' * `size_per_individual_workplace`: The volume or surface area for each individual in the workplace setting type; default = 1 (in which case "square_footage" coverage_target gives same results as "individuals" coverage_target)
@@ -175,34 +178,37 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     duration_immune = NULL,
     prob_inf_external = NULL,
 
+    # TODO: Add the source reference(s) for the setting-specific ACH mean/sd
+    # values below and the default_ach_<setting> values, both here and in the
+    # "Setting-Specific ACH Parameters" section of the roxygen documentation.
+
     # Setting-Specific ACH Parameters: Workplace
     setting_specific_ach_workplace = FALSE,
-    setting_specific_ach_workplace_mean = NULL,
-    setting_specific_ach_workplace_sd = NULL,
+    setting_specific_ach_workplace_mean = 3.1,
+    setting_specific_ach_workplace_sd = 2.35,
 
 
     # Setting-Specific ACH Parameters: School
     setting_specific_ach_school = FALSE,
-    setting_specific_ach_school_mean = NULL,
-    setting_specific_ach_school_sd = NULL,
+    setting_specific_ach_school_mean = 3.3,
+    setting_specific_ach_school_sd = 1.95,
 
     # Setting-Specific ACH Parameters: Leisure
     setting_specific_ach_leisure = FALSE,
-    setting_specific_ach_leisure_mean = NULL,
-    setting_specific_ach_leisure_sd = NULL,
+    setting_specific_ach_leisure_mean = 3.5,
+    setting_specific_ach_leisure_sd = 2.73,
 
     # Setting-Specific ACH Parameters: Household
     setting_specific_ach_household = FALSE,
-    setting_specific_ach_household_mean = NULL,
-    setting_specific_ach_household_sd = NULL,
+    setting_specific_ach_household_mean = 2.0,
+    setting_specific_ach_household_sd = 0.80,
 
     # Default (uniform) ACH per setting, used when setting_specific_ach_<setting>
-    # is FALSE. NULL means "not configured" — generate_setting_specific_ach()
-    # will error if both the switch is FALSE and the default is NULL.
-    default_ach_workplace = NULL,
-    default_ach_school    = NULL,
-    default_ach_leisure   = NULL,
-    default_ach_household = NULL,
+    # is FALSE. Overridden by set_default_ach().
+    default_ach_workplace = 3.1,
+    default_ach_school    = 3.3,
+    default_ach_leisure   = 3.5,
+    default_ach_household = 2.0,
 
     # Volume per person parameters (density values, m^3, room heights are assumptions)
     volume_per_person_workplace = 27, #10m^2 *2.7m
@@ -210,12 +216,13 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     volume_per_person_leisure = 8, # 2m^2*4M
     volume_per_person_household = 50, # 20m^2 * 2.5m
 
-    # W-R parameters
-    wells_riley_emission_rate = 27, # FFU/hour
+    # W-R parameters (sources in the roxygen block above). r and pi are a
+    # matched pair: 1/r = 73 FFU per quantum, so pi = 365 is 5.0 quanta/hour.
+    wells_riley_emission_rate = 365, # pi, FFU/hour; Blatchley Table 2 scenario C
     wells_riley_decay_rate = 0.64, # k_D, natural decay rate (1/hr)
-    wells_riley_infection_prob_per_ffu = 1.37e-2, # r, infection probability per FFU
-    wells_riley_respiratory_rate_factor = 0.45, # RR_tv
-    wells_riley_time_in_room = 4,# t, hours spent in room
+    wells_riley_infection_prob_per_ffu = 1.37e-2, # r, per FFU; -log(1-18/34)/55
+    wells_riley_respiratory_rate_factor = 0.45, # RR_tv, m^3/hr
+    wells_riley_time_in_room = 4, # t, hours spent in room
 
 
   # Intervention parameters (Wells-Riley ACH-based efficacy):

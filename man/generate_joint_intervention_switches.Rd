@@ -16,7 +16,7 @@ Helper to generate joint intervention coverage across the workplace, school,
 and leisure pool (household is excluded from joint deployment by convention).
 Pools location sizes into a single budget, picks locations until cumulative
 size meets the target coverage, and splits the result back into per-setting
-coverage vectors stored at \verb{intervention_<setting>_covered}.
+0/1 switch vectors stored at \verb{intervention_<setting>_covered}.
 }
 \details{
 Also propagates the joint intervention list and timestep into the per-setting
@@ -25,8 +25,8 @@ per-setting code path.
 }
 \seealso{
 Other intervention: 
-\code{\link{ach_to_efficacy}()},
 \code{\link{calculate_efficacy_from_ach}()},
+\code{\link{delta_to_efficacy}()},
 \code{\link{efficacy_to_delta}()},
 \code{\link{generate_intervention_switches}()},
 \code{\link{generate_setting_intervention_switches}()},

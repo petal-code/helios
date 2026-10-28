@@ -10,14 +10,12 @@ make_intervention(
   delta_function = NULL,
   delta_params = list(),
   variation = FALSE,
-  variation_function = NULL,
   variation_params = list(),
   coverage = NULL
 )
 }
 \arguments{
-\item{name}{A character string used as a human-readable label for the
-intervention.}
+\item{name}{A character string label for the intervention.}
 
 \item{delta_depends_on_baseline_ach}{Logical. If \code{FALSE} (default),
 \code{delta_function} is called with no arguments — the same delta is applied
@@ -25,29 +23,29 @@ to every covered location. If \code{TRUE}, \code{delta_function} is called with 
 location's baseline ACH as its first argument — delta varies per location.}
 
 \item{delta_function}{A function returning the eACH that the intervention
-adds. Required (not NULL). When \code{delta_depends_on_baseline_ach = FALSE},
+adds. When \code{delta_depends_on_baseline_ach = FALSE}, \code{delta_function}
 should take no arguments other than those in \code{delta_params}. When
 \code{delta_depends_on_baseline_ach = TRUE}, the first argument must be the
-baseline ACH.}
+baseline ACH. Required (must not be NULL).}
 
 \item{delta_params}{A named list of additional arguments passed to
 \code{delta_function}. Default = \code{list()}.}
 
-\item{variation}{Logical. If \code{TRUE}, location-to-location noise is added
-to the delta using \code{variation_function}. Default = \code{FALSE}.}
+\item{variation}{Logical. If \code{TRUE}, each location's delta is multiplied by
+an independent lognormal draw with mean 1, so that unit-to-unit variation
+does not shift the mean delta. Default = \code{FALSE}.}
 
-\item{variation_function}{A noise-generating function (e.g. \code{rnorm})
-called as \verb{variation_function(n_locations, <variation_params>)}.}
-
-\item{variation_params}{A named list of additional arguments passed to
-\code{variation_function}. Default = \code{list()}.}
+\item{variation_params}{A named list supplying \code{sdlog}, the standard
+deviation on the log scale of the lognormal multiplier (dimensionless;
+approximately the relative error for small values). Required when
+\code{variation = TRUE}. Default = \code{list()}.}
 
 \item{coverage}{Numeric in \verb{[0, 1]}. Fraction of total setting size to
 cover when the intervention is installed.}
 }
 \value{
-A named list with the eight fields above, used as the intervention
-object consumed by \code{\link[=set_intervention_ach]{set_intervention_ach()}} and downstream pipeline.
+A named list with the seven fields above, used as the intervention
+object used by \code{\link[=set_intervention_ach]{set_intervention_ach()}} and the downstream pipeline.
 }
 \description{
 Defines a single intervention that can be installed into one or more
@@ -56,12 +54,12 @@ per-location ventilation is encoded by \code{delta_function}, which returns
 the extra equivalent ACH (eACH) the intervention adds to each covered
 location. The function can either return a constant (same delta for every
 covered location) or a value that depends on the location's baseline ACH.
-Optional unit-to-unit variation can be added via \code{variation_function}.
+Optional unit-to-unit variation can be added via \code{variation}.
 }
 \seealso{
 Other intervention: 
-\code{\link{ach_to_efficacy}()},
 \code{\link{calculate_efficacy_from_ach}()},
+\code{\link{delta_to_efficacy}()},
 \code{\link{efficacy_to_delta}()},
 \code{\link{generate_intervention_switches}()},
 \code{\link{generate_joint_intervention_switches}()},

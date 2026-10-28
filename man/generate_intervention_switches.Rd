@@ -12,7 +12,7 @@ generate_intervention_switches(parameters_list, variables_list)
 \item{variables_list}{A list of model variables as generated using \code{create_variables()}}
 }
 \description{
-Dispatcher that determines which locations have an intervention deployed.
+Determines which locations have an intervention deployed.
 If \code{intervention_joint_active} is TRUE, coverage is computed across the
 workplace/school/leisure pool using \code{generate_joint_intervention_switches()}.
 Otherwise, per-setting coverage is computed for each setting whose
@@ -21,8 +21,8 @@ Otherwise, per-setting coverage is computed for each setting whose
 }
 \seealso{
 Other intervention: 
-\code{\link{ach_to_efficacy}()},
 \code{\link{calculate_efficacy_from_ach}()},
+\code{\link{delta_to_efficacy}()},
 \code{\link{efficacy_to_delta}()},
 \code{\link{generate_joint_intervention_switches}()},
 \code{\link{generate_setting_intervention_switches}()},

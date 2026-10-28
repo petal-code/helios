@@ -5,6 +5,13 @@
 #' @family variables
 #' @export
 create_variables <- function(parameters_list) {
+  # Set the seed once for the whole population. The generators below then
+  # continue one random stream instead of each restarting it.
+  if (!("seed" %in% names(parameters_list))) {
+    stop("parameters list must contain a variable called seed")
+  }
+  seed_rng(parameters_list$seed)
+
   # Disease state variable
   disease_states <- c("S", "E", "I_mild", "I_hosp", "R", "D")
   initial_disease_states <- generate_initial_disease_states(
@@ -238,8 +245,8 @@ create_variables <- function(parameters_list) {
     setting = "leisure"
   )
 
-  # If any intervention is active (per-setting or joint), dispatch to the
-  # intervention switches generator. For joint mode, this also propagates the
+  # If any intervention is active (per-setting or joint), call
+  # generate_intervention_switches(). For joint mode, this also propagates the
   # joint intervention list, timestep, and active flags to each per-setting
   # slot, so the per-setting efficacy blocks below run uniformly.
   if (
@@ -255,11 +262,13 @@ create_variables <- function(parameters_list) {
   }
 
   # Calculate location-specific efficacy from ACH using W-R for each setting
-  # with an active intervention. The coverage vector
-  # (intervention_<setting>_covered) was already populated by the dispatcher
-  # above and is consumed inside calculate_efficacy_from_ach to zero out delta
+  # with an active intervention. The coverage vector is a switch
+  # (intervention_<setting>_covered) was already populated by
+  # generate_intervention_switches() above and is used inside
+  # calculate_efficacy_from_ach to zero out delta
   # for uncovered locations.
-  if (isTRUE(parameters_list$intervention_workplace_active)) {
+
+    if (isTRUE(parameters_list$intervention_workplace_active)) {
     parameters_list$workplace_specific_efficacy <- calculate_efficacy_from_ach(
       ach_values      = parameters_list$workplace_specific_ach,
       parameters_list = parameters_list,
@@ -323,12 +332,6 @@ generate_initial_disease_states <- function(parameters_list) {
   if (!("human_population" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called human_population")
   }
-  if (!("seed" %in% names(parameters_list))) {
-    stop("parameters list must contain a variable called seed")
-  }
-
-  # Set the seed from the parameter list:
-  seed_rng(parameters_list$seed)
 
   # Create a vector of disease states of length human_population:
   initial_disease_states <- rep("S", parameters_list$human_population)
@@ -393,9 +396,6 @@ generate_initial_age_classes <- function(parameters_list) {
   if (!("human_population" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called human_population")
   }
-  if (!("seed" %in% names(parameters_list))) {
-    stop("parameters list must contain a variable called seed")
-  }
 
   # Check the initial age class proportions sum to 1:
   if (
@@ -408,9 +408,6 @@ generate_initial_age_classes <- function(parameters_list) {
   ) {
     stop("initial age class proportions do not sum to 1")
   }
-
-  # Set the seed stored in the parameter list:
-  seed_rng(parameters_list$seed)
 
   # Store age group proportions in a single vector:
   age_group_proportions <- c(
@@ -443,9 +440,6 @@ generate_initial_schools <- function(parameters_list, age_class_variable) {
   if (!("human_population" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called human_population")
   }
-  if (!("seed" %in% names(parameters_list))) {
-    stop("parameters list must contain a variable called seed")
-  }
   if (!("school_meanlog" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called school_meanlog")
   }
@@ -457,8 +451,6 @@ generate_initial_schools <- function(parameters_list, age_class_variable) {
       "parameters list must contain a variable called school_student_staff_ratio"
     )
   }
-
-  seed_rng(parameters_list$seed)
 
   # Assign children to schools
   num_children <- age_class_variable$get_size_of("child")
@@ -517,9 +509,6 @@ generate_initial_schools_bootstrap <- function(
   if (!("human_population" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called human_population")
   }
-  if (!("seed" %in% names(parameters_list))) {
-    stop("parameters list must contain a variable called seed")
-  }
   if (!("school_student_staff_ratio" %in% names(parameters_list))) {
     stop(
       "parameters list must contain a variable called school_student_staff_ratio"
@@ -532,13 +521,11 @@ generate_initial_schools_bootstrap <- function(
   }
 
   # Calculating number of children and assigning them to schools
-  seed_rng(parameters_list$seed)
-
   if (parameters_list$school_distribution_country == "UK") {
-    empirical_school_sizes <- schools_uk$`headcount of pupils`
+    empirical_school_sizes <- helios::schools_uk$`headcount of pupils`
     empirical_school_sizes <- empirical_school_sizes[empirical_school_sizes > 0]
   } else if (parameters_list$school_distribution_country == "USA") {
-    schools_usa_total <- dplyr::filter(schools_usa, type == "total")
+    schools_usa_total <- dplyr::filter(helios::schools_usa, type == "total")
     empirical_school_sizes <- rep(
       schools_usa_total$size_midpoint,
       schools_usa_total$count
@@ -614,9 +601,6 @@ generate_initial_workplaces <- function(
   if (!("human_population" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called human_population")
   }
-  if (!("seed" %in% names(parameters_list))) {
-    stop("parameters list must contain a variable called seed")
-  }
   if (!("workplace_prop_max" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called workplace_prop_max")
   }
@@ -645,7 +629,6 @@ generate_initial_workplaces <- function(
   }
 
   # Calculating number of unassigned adults and assigning them to workplaces
-  seed_rng(parameters_list$seed)
   index_not_school <- school_variable$get_index_of(values = c("0"))$to_vector()
   index_adults <- age_class_variable$get_index_of("adult")$to_vector()
   index_unassigned_adults <- intersect(index_not_school, index_adults)
@@ -693,9 +676,6 @@ generate_initial_leisure <- function(parameters_list, leisure_setting_sizes) {
   if (!("human_population" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called human_population")
   }
-  if (!("seed" %in% names(parameters_list))) {
-    stop("parameters list must contain a variable called seed")
-  }
   if (!("leisure_mean_size" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called leisure_mean_size")
   }
@@ -709,9 +689,6 @@ generate_initial_leisure <- function(parameters_list, leisure_setting_sizes) {
       "parameters list must contain a variable called leisure_mean_number_settings"
     )
   }
-
-  # Setting the seed
-  seed_rng(parameters_list$seed)
 
   # Calculating the number of leisure visits that each person makes per week
   leisure_visits_per_person_per_week <- rpois(
@@ -774,15 +751,9 @@ generate_initial_households <- function(parameters_list, age_class_variable) {
   if (!("human_population" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called human_population")
   }
-  if (!("seed" %in% names(parameters_list))) {
-    stop("parameters list must contain a variable called seed")
-  }
   if (!("mean_household_size" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called mean_household_size")
   }
-
-  # Setting seed
-  seed_rng(parameters_list$seed)
 
   ## Checking population size N is the same as implied by age_class_variable
   if (
@@ -900,10 +871,10 @@ generate_initial_households_bootstrap <- function(parameters_list) {
 
   ## Using data from RTI's synthetic population for San Francisco to bootstrap https://fred.publichealth.pitt.edu/syn_pops
   if (country == "USA") {
-    ref_panel <- baseline_household_demographics_usa
+    ref_panel <- helios::baseline_household_demographics_usa
   } else if (country == "UK") {
     ## Using Hinch et al's synthetic population from ONS
-    ref_panel <- baseline_household_demographics_uk
+    ref_panel <- helios::baseline_household_demographics_uk
   }
 
   # Creating blank age-class vectors and household assignment vectors to populate

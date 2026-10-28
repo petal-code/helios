@@ -1,7 +1,7 @@
 #' Update model parameters with intervention switches
 #'
 #' @description
-#' Dispatcher that determines which locations have an intervention deployed.
+#' Determines which locations have an intervention deployed.
 #' If `intervention_joint_active` is TRUE, coverage is computed across the
 #' workplace/school/leisure pool using `generate_joint_intervention_switches()`.
 #' Otherwise, per-setting coverage is computed for each setting whose
@@ -15,6 +15,9 @@
 #' @export
 generate_intervention_switches <- function(parameters_list, variables_list) {
   setting_types <- c("workplace", "school", "leisure", "household")
+
+  # Joint and per-setting interventions are mutually exclusive: error if both
+  # have been configured
   if (
     isTRUE(parameters_list$intervention_joint_active) &
     any(unlist(parameters_list[paste0("intervention_", setting_types, "_active")]))
@@ -25,11 +28,15 @@ generate_intervention_switches <- function(parameters_list, variables_list) {
   }
 
   if (isTRUE(parameters_list$intervention_joint_active)) {
+    # Joint intervention: allocate coverage across the pooled workplace,
+    # school and leisure locations in a single pass
     parameters_list <- generate_joint_intervention_switches(
       parameters_list,
       variables_list
     )
   } else {
+    # Per-setting interventions: allocate coverage separately for each setting
+    # that has an active intervention; settings without one are skipped
     for (setting in setting_types) {
       if (isTRUE(parameters_list[[paste0("intervention_", setting, "_active")]])) {
         parameters_list <- generate_setting_intervention_switches(
@@ -50,7 +57,7 @@ generate_intervention_switches <- function(parameters_list, variables_list) {
 #' and leisure pool (household is excluded from joint deployment by convention).
 #' Pools location sizes into a single budget, picks locations until cumulative
 #' size meets the target coverage, and splits the result back into per-setting
-#' coverage vectors stored at `intervention_<setting>_covered`.
+#' 0/1 switch vectors stored at `intervention_<setting>_covered`.
 #'
 #' Also propagates the joint intervention list and timestep into the per-setting
 #' state so that downstream efficacy calculation runs uniformly via the
@@ -108,21 +115,31 @@ generate_joint_intervention_switches <- function(parameters_list, variables_list
       }
     }
   } else if (parameters_list[["intervention_joint_coverage_type"]] == "targeted_riskiness") {
-    riskiness_list <- list(
-      "workplace" = parameters_list$workplace_specific_riskiness,
-      "school"    = parameters_list$school_specific_riskiness,
-      "leisure"   = parameters_list$leisure_specific_riskiness
+    # Rank by absolute Wells-Riley infection probability rather than by
+    # per-setting riskiness. Riskiness is normalised against each setting's own
+    # mean, so equal riskiness values in different settings do not represent
+    # equal absolute risk and are not comparable once pooled across settings.
+    p_inf_list <- list(
+      "workplace" = ach_to_p_inf(
+        parameters_list$workplace_specific_ach, parameters_list, "workplace"
+      ),
+      "school"    = ach_to_p_inf(
+        parameters_list$school_specific_ach, parameters_list, "school"
+      ),
+      "leisure"   = ach_to_p_inf(
+        parameters_list$leisure_specific_ach, parameters_list, "leisure"
+      )
     )
-    riskiness_flat   <- unlist(riskiness_list, use.names = FALSE)
-    riskiness_sorted <- sort(
-      x = riskiness_flat,
+    p_inf_flat   <- unlist(p_inf_list, use.names = FALSE)
+    p_inf_sorted <- sort(
+      x = p_inf_flat,
       decreasing = TRUE,
       index.return = TRUE
     )
     final_index <- min(which(
-      cumsum(setting_size_flat[riskiness_sorted$ix]) >= total_with_intervention
+      cumsum(setting_size_flat[p_inf_sorted$ix]) >= total_with_intervention
     ))
-    indices <- riskiness_sorted$ix[1:final_index]
+    indices <- p_inf_sorted$ix[1:final_index]
   } else {
     stop(
       "intervention_joint_coverage_type must be either random or targeted_riskiness"
@@ -159,7 +176,8 @@ generate_joint_intervention_switches <- function(parameters_list, variables_list
 
 #' Generate intervention switches for a particular setting
 #'
-#' Helper to generate the intervention coverage vector for one setting, as used
+#' Helper to generate the 0/1 switch vector indicating which locations in one
+#' setting receive the intervention (1 = covered, 0 = not covered), as used
 #' in `generate_intervention_switches()`. Coverage is interpreted as the
 #' fraction of total size to cover (size weighted either by number of
 #' individuals or by square footage). Locations are picked until cumulative
@@ -176,6 +194,9 @@ generate_setting_intervention_switches <- function(
     variables_list,
     setting
 ) {
+  # Size of each location, measured either as the number of individuals or as
+  # floor area (individuals multiplied by size_per_individual_<setting>).
+  # Leisure sizes are stored in parameters_list rather than variables_list.
   if (parameters_list[[paste0("intervention_", setting, "_coverage_target")]] == "individuals") {
     if (setting == "leisure") {
       setting_size <- parameters_list$setting_sizes$leisure
@@ -196,12 +217,13 @@ generate_setting_intervention_switches <- function(
     stop("coverage_target must be either individuals or square_footage")
   }
 
-  total <- sum(setting_size)
+  total_setting_size <- sum(setting_size)
   intervention_switches <- rep(0, length(setting_size))
   interventions <- parameters_list[[paste0("intervention_", setting, "_list")]]
-  total_with_intervention <- floor(interventions[[1]]$coverage * total)
+  total_with_intervention <- floor(interventions[[1]]$coverage * total_setting_size)
 
-
+  # Select locations until their cumulative size meets the coverage budget,
+  # either in random order or in decreasing order of riskiness
   if (parameters_list[[paste0("intervention_", setting, "_coverage_type")]] == "random") {
     sum <- 0
     indices <- c()
@@ -251,32 +273,32 @@ generate_setting_intervention_switches <- function(
 #' the extra equivalent ACH (eACH) the intervention adds to each covered
 #' location. The function can either return a constant (same delta for every
 #' covered location) or a value that depends on the location's baseline ACH.
-#' Optional unit-to-unit variation can be added via `variation_function`.
+#' Optional unit-to-unit variation can be added via `variation`.
 #'
-#' @param name A character string used as a human-readable label for the
-#' intervention.
+#' @param name A character string label for the intervention.
 #' @param delta_depends_on_baseline_ach Logical. If `FALSE` (default),
 #' `delta_function` is called with no arguments — the same delta is applied
 #' to every covered location. If `TRUE`, `delta_function` is called with the
 #' location's baseline ACH as its first argument — delta varies per location.
 #' @param delta_function A function returning the eACH that the intervention
-#' adds. Required (not NULL). When `delta_depends_on_baseline_ach = FALSE`,
+#' adds. When `delta_depends_on_baseline_ach = FALSE`, `delta_function`
 #' should take no arguments other than those in `delta_params`. When
 #' `delta_depends_on_baseline_ach = TRUE`, the first argument must be the
-#' baseline ACH.
+#' baseline ACH. Required (must not be NULL).
 #' @param delta_params A named list of additional arguments passed to
 #' `delta_function`. Default = `list()`.
-#' @param variation Logical. If `TRUE`, location-to-location noise is added
-#' to the delta using `variation_function`. Default = `FALSE`.
-#' @param variation_function A noise-generating function (e.g. `rnorm`)
-#' called as `variation_function(n_locations, <variation_params>)`.
-#' @param variation_params A named list of additional arguments passed to
-#' `variation_function`. Default = `list()`.
+#' @param variation Logical. If `TRUE`, each location's delta is multiplied by
+#' an independent lognormal draw with mean 1, so that unit-to-unit variation
+#' does not shift the mean delta. Default = `FALSE`.
+#' @param variation_params A named list supplying `sdlog`, the standard
+#' deviation on the log scale of the lognormal multiplier (dimensionless;
+#' approximately the relative error for small values). Required when
+#' `variation = TRUE`. Default = `list()`.
 #' @param coverage Numeric in `[0, 1]`. Fraction of total setting size to
 #' cover when the intervention is installed.
 #'
-#' @return A named list with the eight fields above, used as the intervention
-#' object consumed by [set_intervention_ach()] and downstream pipeline.
+#' @return A named list with the seven fields above, used as the intervention
+#' object used by [set_intervention_ach()] and the downstream pipeline.
 #'
 #' @family intervention
 #' @export
@@ -285,16 +307,24 @@ make_intervention <- function(name,
                               delta_function    = NULL,
                               delta_params      = list(),
                               variation                = FALSE,
-                              variation_function       = NULL,
                               variation_params         = list(),
                               coverage                 = NULL) {
+  if (isTRUE(variation)) {
+    sdlog <- variation_params$sdlog
+    if (is.null(sdlog) || !is.numeric(sdlog) || length(sdlog) != 1 || sdlog < 0) {
+      stop(
+        "Error: variation_params must supply a single non-negative 'sdlog' ",
+        "when variation is TRUE"
+      )
+    }
+  }
+
   list(
     name                     = name,
     delta_depends_on_baseline_ach = delta_depends_on_baseline_ach,
     delta_function    = delta_function,
     delta_params      = delta_params,
     variation                = variation,
-    variation_function       = variation_function,
     variation_params         = variation_params,
     coverage                 = coverage
   )
@@ -407,7 +437,7 @@ set_intervention_ach <- function(parameters_list,
 #' `efficacy = 0` and so leave FOI unchanged downstream.
 #'
 #' The intervention's delta per location is determined by the intervention
-#' object's `delta_function` (and `delta_params`, `variation_function`,
+#' object's `delta_function` (and `delta_params`, `variation`,
 #' `variation_params`); see [make_intervention()].
 #'
 #' Called once at simulation init from [create_variables()].
@@ -435,8 +465,7 @@ calculate_efficacy_from_ach <- function(ach_values, parameters_list, setting) {
   t    <- parameters_list$wells_riley_time_in_room
   V    <- parameters_list[[paste0("volume_per_person_", setting)]]
 
-  n           <- length(ach_values)
-  total_delta <- rep(0, n)
+  n <- length(ach_values)
 
   interventions <- parameters_list[[paste0("intervention_", setting, "_list")]]
 
@@ -448,9 +477,9 @@ calculate_efficacy_from_ach <- function(ach_values, parameters_list, setting) {
   # branch (clumped vs. independent coverage still to be settled).
   intervention <- interventions[[1]]
 
-  # Coverage vector: 1 if location is covered, 0 if not. NULL = full coverage
+  # 0/1 switch vector: 1 if location is covered, 0 if not. NULL = full coverage
   # (used by unit tests that bypass set_intervention_ach).
-  coverage_vector <- parameters_list[[paste0("intervention_", setting, "_covered")]]
+  coverage_switches <- parameters_list[[paste0("intervention_", setting, "_covered")]]
 
   # Call delta_function to get the delta for each location
   if (intervention$delta_depends_on_baseline_ach) {
@@ -468,27 +497,38 @@ calculate_efficacy_from_ach <- function(ach_values, parameters_list, setting) {
     )
   }
 
-  # Add location-to-location variation if requested
-  if (intervention$variation && !is.null(intervention$variation_function)) {
-    noise   <- do.call(intervention$variation_function,
-                       c(list(n), intervention$variation_params))
-    delta_i <- pmax(0, delta_i + noise)
+  # Add location-to-location variation if requested. The multiplier is lognormal
+  # with meanlog = -sdlog^2 / 2, which gives E[multiplier] = 1, so variation does
+  # not shift the mean delta. Additive noise truncated at zero would inflate it.
+  # A lognormal is strictly positive, so no clamping is required.
+  if (intervention$variation) {
+    sdlog   <- intervention$variation_params$sdlog
+    delta_i <- delta_i * stats::rlnorm(n, meanlog = -sdlog^2 / 2, sdlog = sdlog)
   }
 
   # Zero out delta for uncovered locations
-  if (!is.null(coverage_vector)) {
-    delta_i <- delta_i * coverage_vector
+  if (!is.null(coverage_switches)) {
+    delta_i <- delta_i * coverage_switches
   }
 
-  total_delta <- delta_i
-
   alpha_pre  <- ach_values + kD
-  alpha_post <- ach_values + kD + total_delta
+  alpha_post <- ach_values + kD + delta_i
 
   p_pre  <- 1 - exp(-r * (I * pi / (alpha_pre  * V)) * RRtv * t)
   p_post <- 1 - exp(-r * (I * pi / (alpha_post * V)) * RRtv * t)
 
-  return(1 - p_post / p_pre)
+  efficacy <- 1 - p_post / p_pre
+
+  # A negative efficacy would be applied downstream as an FOI multiplier greater
+  # than one, silently amplifying transmission, so fail loudly instead.
+  if (any(!is.finite(efficacy)) || any(efficacy < 0) || any(efficacy > 1)) {
+    stop(
+      "Error: computed efficacy outside [0, 1] - check that delta_function ",
+      "returns non-negative values for every location"
+    )
+  }
+
+  return(efficacy)
 }
 
 
@@ -502,15 +542,16 @@ calculate_efficacy_from_ach <- function(ach_values, parameters_list, setting) {
 #' Converts a UV-C intervention's photophysical parameters into an
 #' equivalent air-change rate (eACH) that can be used as a delta in the
 #' Wells-Riley framework. The conversion is
-#' `delta = f * E_avg * k * 3.6`, where the factor 3.6 converts
-#' (per-second) inactivation to (per-hour) eACH.
+#' `delta = f * E_avg * k * 3.6`. The factor 3.6 assumes `E_avg` is in
+#' µW/cm^2 and `k` is in cm^2/mJ: it combines the µW to mW conversion (1e-3)
+#' with the per-second to per-hour conversion (3600). Supplying `E_avg` in
+#' mW/cm^2 would overstate eACH by a factor of 1000.
 #'
 #' @param f Fraction of the room volume that is irradiated (dimensionless,
 #' in `[0, 1]`).
-#' @param E_avg Average fluence rate within the irradiated volume
-#' (mW/cm^2 or equivalent unit consistent with `k`).
-#' @param k UV inactivation constant for the target pathogen
-#' (units consistent with `E_avg`; product `E_avg * k` is per-second).
+#' @param E_avg Average fluence rate within the irradiated volume (µW/cm^2).
+#' @param k UV inactivation (susceptibility) constant for the target pathogen
+#' (cm^2/mJ).
 #'
 #' @return Equivalent ACH contribution from UV-C (units: 1/hour).
 #'
@@ -540,7 +581,7 @@ uv_to_delta <- function(f, E_avg, k) {
 #' @param kD Natural decay rate of the airborne pathogen (1/hour).
 #' Default = 0.64.
 #' @param r Probability of infection per inhaled FFU. Default = 1.37e-2.
-#' @param pi Emission rate of infectious units (FFU/hour). Default = 27.
+#' @param pi Emission rate of infectious units (FFU/hour). Default = 365.
 #' @param I Number of infectious individuals in the location. Default = 1
 #' (and cancels in the efficacy ratio).
 #' @param RRtv Respiratory rate * tidal volume (m^3/hour). Default = 0.45.
@@ -553,27 +594,28 @@ uv_to_delta <- function(f, E_avg, k) {
 #'
 #' @family intervention
 #' @export
-ach_to_efficacy <- function(baseline_ach,
-                            delta = 0,
-                            V,
-                            kD   = 0.64,
-                            r    = 1.37e-2,
-                            pi   = 27,
-                            I    = 1,
-                            RRtv = 0.45,
-                            t    = 4) {
+delta_to_efficacy <- function(baseline_ach,
+                              delta = 0,
+                              V,
+                              kD   = 0.64,
+                              r    = 1.37e-2,
+                              pi   = 365,
+                              I    = 1,
+                              RRtv = 0.45,
+                              t    = 4) {
   A <- r * I * pi * RRtv * t / V
   alpha_pre  <- baseline_ach + kD
   alpha_post <- baseline_ach + kD + delta
   p_pre  <- 1 - exp(-A / alpha_pre)
   p_post <- 1 - exp(-A / alpha_post)
-  return(1 - p_post / p_pre)
+  efficacy <- 1 - p_post / p_pre
+  return(efficacy)
 }
 
 #' Wells-Riley delta-eACH required to hit a target efficacy
 #'
 #' @description
-#' Inverse of [ach_to_efficacy()]. Given a desired efficacy at a hypothetical
+#' Inverse of [delta_to_efficacy()]. Given a desired efficacy at a hypothetical
 #' location with a specified baseline ACH and air volume per person, returns
 #' the delta-eACH the intervention needs to add to produce that efficacy.
 #' Useful for calibrating constant-delta interventions to match a target
@@ -594,7 +636,7 @@ ach_to_efficacy <- function(baseline_ach,
 #' @param kD Natural decay rate of the airborne pathogen (1/hour).
 #' Default = 0.64.
 #' @param r Probability of infection per inhaled FFU. Default = 1.37e-2.
-#' @param pi Emission rate of infectious units (FFU/hour). Default = 27.
+#' @param pi Emission rate of infectious units (FFU/hour). Default = 365.
 #' @param I Number of infectious individuals. Default = 1.
 #' @param RRtv Respiratory rate * tidal volume (m^3/hour). Default = 0.45.
 #' @param t Exposure window (hours). Default = 4.
@@ -609,7 +651,7 @@ efficacy_to_delta <- function(target_efficacy,
                               V,
                               kD   = 0.64,
                               r    = 1.37e-2,
-                              pi   = 27,
+                              pi   = 365,
                               I    = 1,
                               RRtv = 0.45,
                               t    = 4) {

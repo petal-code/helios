@@ -24,19 +24,6 @@ per-location baseline ACH values (1/hour).
 Returns a numeric vector of length \code{number_of_locations} giving the
 baseline ACH (air changes per hour) for each location in \code{setting}.
 
-Three branches, depending on how the user has configured ACH for the
-setting:
-\itemize{
-\item If \verb{setting_specific_ach_<setting>} is TRUE (via
-\code{\link[=set_setting_specific_ach]{set_setting_specific_ach()}}) — draws per-location ACH from a truncated
-normal distribution with the configured mean and sd. Heterogeneous case.
-\item Else if \verb{default_ach_<setting>} is non-NULL (via \code{\link[=set_default_ach]{set_default_ach()}}) —
-returns the same value at every location. Uniform case.
-\item Else — errors out. There is no silent default; the user must explicitly
-choose one of the two paths above to prevent unconfigured baselines
-producing spurious intervention efficacy downstream.
-}
-
 Called once per setting during \code{\link[=create_variables]{create_variables()}} init. The returned
 vector is stored at \verb{<setting>_specific_ach} in \code{parameters_list} and is
 subsequently consumed by \code{\link[=convert_ach_to_riskiness]{convert_ach_to_riskiness()}} and (when an
@@ -44,6 +31,7 @@ intervention is active) by \code{\link[=calculate_efficacy_from_ach]{calculate_e
 }
 \seealso{
 Other setting-specific ACH: 
+\code{\link{ach_to_p_inf}()},
 \code{\link{convert_ach_to_riskiness}()},
 \code{\link{set_default_ach}()},
 \code{\link{set_setting_specific_ach}()}

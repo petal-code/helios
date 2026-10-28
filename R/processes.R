@@ -484,6 +484,9 @@ create_EI_process <- function(
   parameters_list,
   renderer
 ) {
+  # Report 0 hospitalisations on timesteps where nobody is newly exposed
+  renderer$set_default("H_new", 0)
+
   function(t) {
     # Get exposed individuals not yet scheduled into either EI event
     E <- variables_list$disease_state$get_index_of("E")

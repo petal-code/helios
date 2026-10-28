@@ -10,7 +10,7 @@ efficacy_to_delta(
   V,
   kD = 0.64,
   r = 0.0137,
-  pi = 27,
+  pi = 365,
   I = 1,
   RRtv = 0.45,
   t = 4
@@ -29,7 +29,7 @@ Default = 0.64.}
 
 \item{r}{Probability of infection per inhaled FFU. Default = 1.37e-2.}
 
-\item{pi}{Emission rate of infectious units (FFU/hour). Default = 27.}
+\item{pi}{Emission rate of infectious units (FFU/hour). Default = 365.}
 
 \item{I}{Number of infectious individuals. Default = 1.}
 
@@ -42,7 +42,7 @@ The required delta-eACH (1/hour), suitable for use as the return
 value of a constant-delta \code{delta_function} in \code{\link[=make_intervention]{make_intervention()}}.
 }
 \description{
-Inverse of \code{\link[=ach_to_efficacy]{ach_to_efficacy()}}. Given a desired efficacy at a hypothetical
+Inverse of \code{\link[=delta_to_efficacy]{delta_to_efficacy()}}. Given a desired efficacy at a hypothetical
 location with a specified baseline ACH and air volume per person, returns
 the delta-eACH the intervention needs to add to produce that efficacy.
 Useful for calibrating constant-delta interventions to match a target
@@ -58,8 +58,8 @@ equal to) \code{target_efficacy}.
 }
 \seealso{
 Other intervention: 
-\code{\link{ach_to_efficacy}()},
 \code{\link{calculate_efficacy_from_ach}()},
+\code{\link{delta_to_efficacy}()},
 \code{\link{generate_intervention_switches}()},
 \code{\link{generate_joint_intervention_switches}()},
 \code{\link{generate_setting_intervention_switches}()},
