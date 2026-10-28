@@ -14,16 +14,26 @@ run_simulation(parameters_list, state = NULL)
 this state. \code{simulation_time} controls the number of \emph{additional} timesteps to
 run (not the absolute end time). With time-varying transmission, beta
 vectors are indexed by day from the start of the original run, so they must
-have a value for every day up to the end of the resumed run. Default is
-\code{NULL} (start fresh).}
+have a value for every day up to the end of the resumed run. The population
+is rebuilt from the seed saved in the state, so \code{parameters_list$seed} must
+be \code{NULL} or that same seed, and the population parameters must not change.
+The random number streams continue from the state, so a run resumed from a
+state matches an uninterrupted run. Default is \code{NULL} (start fresh).}
 }
 \value{
 A list with two elements:
 \describe{
 \item{result}{A data frame of simulation outputs with one row per
-timestep. The columns are described below.}
+timestep simulated in this call. When resuming, \code{timestep} counts from
+the start of the original run, so the results of successive calls can be
+joined with \code{rbind()}. The columns are described below.}
 \item{state}{The final simulation state, which can be passed to a subsequent
-call to resume the simulation.}
+call to resume the simulation. A list with elements \code{timesteps} (the
+number of timesteps simulated so far), \code{individual} (the state of the
+individual package's variables, events and base R's random number
+generator), \code{dqrng} (dqrng's random number state) and \code{seed} (the seed
+that built the population, drawn at random when
+\code{parameters_list$seed} is \code{NULL}).}
 }
 
 The \code{result} data frame always contains the following columns:
