@@ -132,16 +132,9 @@ create_SE_process <- function(
   )
   num_leisure <- length(population_data$leisure_specific_riskiness)
 
-  # Each location's riskiness at timestep t, reduced by the setting's intervention once it's in place.
-  # The intervention data has efficacy and a timestep only for settings with an active intervention,
-  # including those a joint intervention covers.
+  # Each location's riskiness at timestep t, reduced by the setting's intervention once it's in place
   riskiness_at <- function(setting, t) {
-    riskiness <- population_data[[paste0(setting, "_specific_riskiness")]]
-    efficacy <- intervention_data$efficacy[[setting]]
-    if (!is.null(efficacy) && t > intervention_data$timestep[[setting]]) {
-      riskiness <- riskiness * (1 - efficacy)
-    }
-    riskiness
+    setting_riskiness(population_data, intervention_data, setting, t)
   }
 
   ## Process Function
@@ -317,6 +310,18 @@ check_settings <- function(population_data, intervention_data, N) {
       )
     }
   }
+}
+
+# Each location's riskiness in `setting` at timestep t, reduced by the setting's intervention once
+# it's in place. The intervention data has efficacy and a timestep only for settings with an active
+# intervention, including those a joint intervention covers.
+setting_riskiness <- function(population_data, intervention_data, setting, t) {
+  riskiness <- population_data[[paste0(setting, "_specific_riskiness")]]
+  efficacy <- intervention_data$efficacy[[setting]]
+  if (!is.null(efficacy) && t > intervention_data$timestep[[setting]]) {
+    riskiness <- riskiness * (1 - efficacy)
+  }
+  riskiness
 }
 
 # The force of infection on each individual from the locations of one setting type

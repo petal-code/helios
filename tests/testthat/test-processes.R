@@ -75,3 +75,52 @@ test_that("create_SE_process() refuses settings that don't agree with each other
   broken$intervention_data$efficacy$workplace <- broken$intervention_data$efficacy$workplace[-1]
   expect_error(create_SE_from(broken), "efficacy\\$workplace must have one value")
 })
+
+#============================#
+#===== FOI calculations =====#
+#============================#
+
+test_that("location_FOI() shares each location's infectious individuals among its members", {
+  # Location 1 has two members, one of them infectious, location 2 has one member and location 3
+  # none. The fourth individual has no location.
+  FOI <- location_FOI(
+    location = c(1, 1, 2, 0), infectious = 1, riskiness = c(2, 1, 1), beta = 0.5, size = c(2, 1, 0)
+  )
+  expect_identical(FOI, c(0.5, 0.5, 0, 0))
+})
+
+test_that("setting_riskiness() applies a joint intervention after its timestep", {
+  parameters_list <- with_default_ach(get_parameters(overrides = list(
+    human_population = 1000,
+    number_initial_S = 990,
+    number_initial_E = 10,
+    seed = 1
+  )))
+  parameters_list <- set_intervention_ach(
+    parameters_list,
+    setting = "joint",
+    coverage_target = "individuals",
+    coverage_type = "targeted_riskiness",
+    timestep = 3,
+    intervention = make_intervention(
+      name = "constant_delta",
+      delta_function = function(delta) delta,
+      delta_params = list(delta = 5),
+      coverage = 1
+    )
+  )
+  population_data <- generate_population_data(parameters_list)
+  intervention_data <- generate_intervention_data(parameters_list, population_data)
+
+  for (setting in c("workplace", "school", "leisure")) {
+    riskiness <- population_data[[paste0(setting, "_specific_riskiness")]]
+    efficacy <- intervention_data$efficacy[[setting]]
+    expect_identical(setting_riskiness(population_data, intervention_data, setting, 3), riskiness)
+    expect_identical(setting_riskiness(population_data, intervention_data, setting, 4), riskiness * (1 - efficacy))
+  }
+  # A joint intervention doesn't cover households:
+  expect_identical(
+    setting_riskiness(population_data, intervention_data, "household", 4),
+    population_data$household_specific_riskiness
+  )
+})
