@@ -138,10 +138,6 @@ run_simulation <- function(
     )
   }
 
-  # Seed both RNGs from the parameter list. This happens after generating the population, so that the
-  # simulation is the same whether or not the population was provided:
-  seed_rng(parameters_list$seed)
-
   # simulation_loop() takes an absolute end timestep, so when resuming, run
   # simulation_time's worth of timesteps on from where the saved state ended:
   start_timestep <- if (is.null(state)) 0 else state$timesteps
@@ -161,7 +157,10 @@ run_simulation <- function(
     }
   }
 
-  # Determine intervention coverage and efficacy for this population:
+  # Determine intervention coverage and efficacy for this population. This also
+  # sets up the random stream that the simulation continues (see
+  # generate_intervention_data()), so the simulation is the same whether or not
+  # the population was provided:
   intervention_data <- generate_intervention_data(parameters_list, population_data)
 
   # Generate the model variables:

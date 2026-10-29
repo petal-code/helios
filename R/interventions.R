@@ -6,6 +6,13 @@
 #' kept separate from [generate_population_data()] so that the same population
 #' can be reused with different interventions.
 #'
+#' It seeds the random number generators itself, so its result does not depend
+#' on earlier random draws, and it is the intervention data that
+#' [run_simulation()] uses. When `parameters_list$seed` is the seed the
+#' population was built with, it continues the population's random stream, as
+#' if the population and the intervention were drawn in one go. Otherwise it
+#' starts a new stream from `parameters_list$seed`.
+#'
 #' @inheritParams generate_intervention_switches
 #'
 #' @return A list with two elements:
@@ -20,6 +27,16 @@
 #' @family intervention
 #' @export
 generate_intervention_data <- function(parameters_list, population_data) {
+  # Continuing the population's stream, rather than reseeding with the same
+  # seed, keeps the intervention and simulation draws from repeating the draws
+  # that built the population. A population without a saved state, eg. one
+  # saved by an earlier version, falls back to a new stream:
+  if (!is.null(population_data$rng_state) && isTRUE(parameters_list$seed == population_data$seed)) {
+    set_rng_state(population_data$rng_state)
+  } else {
+    seed_rng(parameters_list$seed)
+  }
+
   switches <- generate_intervention_switches(parameters_list, population_data)
 
   # The coverage vector is used inside calculate_efficacy_from_ach to zero out

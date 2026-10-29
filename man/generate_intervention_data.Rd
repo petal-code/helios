@@ -28,6 +28,13 @@ Determines which locations have an intervention deployed, and the resulting
 per-location efficacy for each setting with an active intervention. This is
 kept separate from \code{\link[=generate_population_data]{generate_population_data()}} so that the same population
 can be reused with different interventions.
+
+It seeds the random number generators itself, so its result does not depend
+on earlier random draws, and it is the intervention data that
+\code{\link[=run_simulation]{run_simulation()}} uses. When \code{parameters_list$seed} is the seed the
+population was built with, it continues the population's random stream, as
+if the population and the intervention were drawn in one go. Otherwise it
+starts a new stream from \code{parameters_list$seed}.
 }
 \seealso{
 Other intervention: 

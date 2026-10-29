@@ -70,7 +70,9 @@ create_variables <- function(parameters_list, population_data) {
 #' @return A named list describing the population. Its `seed` element is the
 #'   seed the population was built with: `parameters_list$seed`, or a seed drawn
 #'   at random when that is `NULL`. With it, [run_simulation()] can rebuild the
-#'   population when a saved run is resumed.
+#'   population when a saved run is resumed. Its `rng_state` element is the
+#'   state of the random number generators after the population was drawn, so
+#'   that [generate_intervention_data()] can continue the same random stream.
 #' @family variables
 #' @export
 generate_population_data <- function(parameters_list) {
@@ -226,7 +228,8 @@ generate_population_data <- function(parameters_list) {
 
     setting_sizes = setting_sizes,
 
-    seed = parameters_list$seed
+    seed = parameters_list$seed,
+    rng_state = get_rng_state()
   ))
 }
 

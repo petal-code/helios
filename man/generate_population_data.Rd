@@ -13,7 +13,9 @@ generate_population_data(parameters_list)
 A named list describing the population. Its \code{seed} element is the
 seed the population was built with: \code{parameters_list$seed}, or a seed drawn
 at random when that is \code{NULL}. With it, \code{\link[=run_simulation]{run_simulation()}} can rebuild the
-population when a saved run is resumed.
+population when a saved run is resumed. Its \code{rng_state} element is the
+state of the random number generators after the population was drawn, so
+that \code{\link[=generate_intervention_data]{generate_intervention_data()}} can continue the same random stream.
 }
 \description{
 This will sample individuals' initial state and assign them to households and

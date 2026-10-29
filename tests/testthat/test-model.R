@@ -12,12 +12,72 @@ small_test_parameters <- function(simulation_time) {
   parameters
 }
 
+# Random coverage and variation both draw random numbers before the simulation
+# starts, so this exercises the whole random stream:
+with_random_workplace_intervention <- function(parameters) {
+  set_intervention_ach(
+    parameters,
+    setting = "workplace",
+    coverage_target = "individuals",
+    coverage_type = "random",
+    timestep = 1,
+    intervention = make_intervention(
+      name = "constant_delta",
+      delta_function = function(delta) delta,
+      delta_params = list(delta = 5),
+      variation = TRUE,
+      variation_params = list(sdlog = 0.5),
+      coverage = 0.5
+    )
+  )
+}
+
 test_that("run_simulation() is reproducible for a given seed", {
   parameters <- small_test_parameters(simulation_time = 5)
 
   first <- run_simulation(parameters)$result
   second <- run_simulation(parameters)$result
 
+  expect_identical(first, second)
+})
+
+test_that("run_simulation() gives the pinned result for a fixed seed", {
+  # These numbers change whenever the random stream changes, which changes
+  # every seeded run, so update them only on purpose. They match #167, where
+  # the population, the intervention and the simulation drew from one stream.
+  parameters <- with_random_workplace_intervention(small_test_parameters(simulation_time = 15))
+  parameters$number_initial_S <- 970
+  parameters$number_initial_E <- 30
+  result <- run_simulation(parameters)$result
+
+  final <- result[nrow(result), c("S_count", "E_count", "I_mild_count", "I_hosp_count", "R_count", "D_count")]
+  expect_equal(
+    unlist(final),
+    c(S_count = 438, E_count = 240, I_mild_count = 207, I_hosp_count = 6, R_count = 108, D_count = 1)
+  )
+  expect_equal(
+    result$E_new,
+    c(0, 0, 0, 1, 2, 6, 9, 6, 18, 12, 4, 9, 13, 15, 14, 26, 24, 22, 24, 32, 31, 29, 34, 30, 27, 41, 29, 41, 33, 36)
+  )
+})
+
+test_that("generate_intervention_data() does not depend on earlier random draws", {
+  parameters <- with_random_workplace_intervention(small_test_parameters(simulation_time = 5))
+  population_data <- generate_population_data(parameters)
+
+  set.seed(10)
+  first <- generate_intervention_data(parameters, population_data)
+  set.seed(20)
+  stats::runif(5)
+  second <- generate_intervention_data(parameters, population_data)
+  expect_identical(first, second)
+
+  # The same holds when the run's seed differs from the population's:
+  parameters$seed <- 2
+  set.seed(10)
+  first <- generate_intervention_data(parameters, population_data)
+  set.seed(20)
+  second <- generate_intervention_data(parameters, population_data)
   expect_identical(first, second)
 })
 
@@ -80,19 +140,7 @@ test_that("run_simulation() errors when resuming with a different seed", {
 test_that("run_simulation() resumed with a population built from another seed matches an uninterrupted run", {
   # Random coverage depends on the run's seed, so a resume must reuse it as
   # well as the population:
-  parameters <- set_intervention_ach(
-    small_test_parameters(simulation_time = 6),
-    setting = "workplace",
-    coverage_target = "individuals",
-    coverage_type = "random",
-    timestep = 1,
-    intervention = make_intervention(
-      name = "constant_delta",
-      delta_function = function(delta) delta,
-      delta_params = list(delta = 5),
-      coverage = 0.5
-    )
-  )
+  parameters <- with_random_workplace_intervention(small_test_parameters(simulation_time = 6))
   population_data <- generate_population_data(modifyList(parameters, list(seed = 2)))
   full <- run_simulation(parameters, population_data = population_data)$result
 

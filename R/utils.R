@@ -147,3 +147,32 @@ seed_rng <- function(seed) {
   set.seed(seed)
   dqrng::dqset.seed(seed)
 }
+
+#' get_rng_state
+#'
+#' @description
+#' Returns the state of both random number generators used by helios, so that
+#' their streams can be continued later with [set_rng_state()].
+#'
+#' @return A list with elements `base` (base R's `.Random.seed`) and `dqrng`
+#'   (as returned by `dqrng::dqrng_get_state()`)
+#' @noRd
+get_rng_state <- function() {
+  list(
+    base = get(".Random.seed", envir = globalenv()),
+    dqrng = dqrng::dqrng_get_state()
+  )
+}
+
+#' set_rng_state
+#'
+#' @description
+#' Restores the state of both random number generators, as returned by
+#' [get_rng_state()].
+#'
+#' @param rng_state A list with elements `base` and `dqrng`
+#' @noRd
+set_rng_state <- function(rng_state) {
+  assign(".Random.seed", rng_state$base, envir = globalenv())
+  dqrng::dqrng_set_state(rng_state$dqrng)
+}
