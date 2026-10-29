@@ -112,11 +112,16 @@ create_SE_process <- function(
 ) {
   ## Pre-calculating the things that only have to be calculated once
 
-  # Per-location intervention efficacy (NULL for settings without an active intervention):
+  # Per-location intervention efficacy, and the timestep after which it applies
+  # (both NULL for settings without an active intervention):
   household_efficacy <- intervention_data$efficacy$household
   workplace_efficacy <- intervention_data$efficacy$workplace
   school_efficacy <- intervention_data$efficacy$school
   leisure_efficacy <- intervention_data$efficacy$leisure
+  household_intervention_timestep <- intervention_data$timestep$household
+  workplace_intervention_timestep <- intervention_data$timestep$workplace
+  school_intervention_timestep <- intervention_data$timestep$school
+  leisure_intervention_timestep <- intervention_data$timestep$leisure
 
   ##### HOUSEHOLDS #####
   # Calculate the number of households:
@@ -227,9 +232,9 @@ create_SE_process <- function(
         )
 
         #  Calculate the FOI for the i-th household - with and without AQI installed
-        if (parameters_list$intervention_household_active) {
+        if (!is.null(household_efficacy)) {
           if (
-            t > parameters_list$intervention_household_timestep
+            t > household_intervention_timestep
           ) {
             spec_household_FOI <- population_data$household_specific_riskiness[
               i
@@ -278,9 +283,9 @@ create_SE_process <- function(
       )
 
       # Calculate the workplace-specific FOI of the i-th workplace - with and without AQI installed
-      if (parameters_list$intervention_workplace_active) {
+      if (!is.null(workplace_efficacy)) {
         if (
-          t > parameters_list$intervention_workplace_timestep
+          t > workplace_intervention_timestep
         ) {
           spec_workplace_FOI <- population_data$workplace_specific_riskiness[
             i
@@ -326,9 +331,9 @@ create_SE_process <- function(
       )
 
       # Calculate the school-specific FOI for the i-th school - with and without AQI installed
-      if (parameters_list$intervention_school_active) {
+      if (!is.null(school_efficacy)) {
         if (
-          t > parameters_list$intervention_school_timestep
+          t > school_intervention_timestep
         ) {
           spec_school_FOI <- population_data$school_specific_riskiness[i] *
             (1 - school_efficacy[i]) *
@@ -390,9 +395,9 @@ create_SE_process <- function(
       spec_leisure_I_size <- individual::bitset_count_and(I, spec_leisure)
 
       # Calculate the leisure-specific FOI for the i-th leisure location - with and without AQI installed
-      if (parameters_list$intervention_leisure_active) {
+      if (!is.null(leisure_efficacy)) {
         if (
-          t > parameters_list$intervention_leisure_timestep
+          t > leisure_intervention_timestep
         ) {
           spec_leisure_FOI <- population_data$leisure_specific_riskiness[i] *
             (1 - leisure_efficacy[i]) *
@@ -481,6 +486,9 @@ create_EI_process <- function(
   parameters_list,
   renderer
 ) {
+  # Report 0 hospitalisations on timesteps where nobody is newly exposed
+  renderer$set_default("H_new", 0)
+
   function(t) {
     # Get exposed individuals not yet scheduled into either EI event
     E <- variables_list$disease_state$get_index_of("E")
