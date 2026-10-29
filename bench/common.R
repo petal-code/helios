@@ -75,8 +75,10 @@ measure <- function(expr) {
   list(value = value, seconds = proc.time()[["elapsed"]] - start, peak_mb = peak_rss_mb())
 }
 
+# The current commit, or NA if git fails, eg. outside a git checkout
 git_commit <- function() {
   commit <- system2("git", c("rev-parse", "--short", "HEAD"), stdout = TRUE)
+  if (length(commit) != 1) return(NA_character_)
   dirty <- length(system2("git", c("status", "--porcelain", "--untracked-files=no"), stdout = TRUE)) > 0
   if (dirty) paste0(commit, "-dirty") else commit
 }
