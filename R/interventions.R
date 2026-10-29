@@ -13,6 +13,10 @@
 #' if the population and the intervention were drawn in one go. Otherwise it
 #' starts a new stream from `parameters_list$seed`.
 #'
+#' It errors if `population_data` was built from different values of the
+#' population parameters than `parameters_list` (see
+#' [generate_population_data()]).
+#'
 #' @inheritParams generate_intervention_switches
 #'
 #' @return A list with three elements:
@@ -32,6 +36,8 @@
 #' @family intervention
 #' @export
 generate_intervention_data <- function(parameters_list, population_data) {
+  check_population_data(parameters_list, population_data)
+
   # Continuing the population's stream, rather than reseeding with the same
   # seed, keeps the intervention and simulation draws from repeating the draws
   # that built the population. A population without a saved state, eg. one

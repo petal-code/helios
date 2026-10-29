@@ -16,6 +16,15 @@ at random when that is \code{NULL}. With it, \code{\link[=run_simulation]{run_si
 population when a saved run is resumed. Its \code{rng_state} element is the
 state of the random number generators after the population was drawn, so
 that \code{\link[=generate_intervention_data]{generate_intervention_data()}} can continue the same random stream.
+Its \code{parameters} element holds the values of the parameters the population
+was built from. The list has class \code{helios_population}.
+
+A population can be reused, eg. with different interventions or seeds,
+but only with parameters that have the same values for all the parameters
+it was built from. These include the population size, the initial disease
+states, the setting sizes, the ACH settings, the volumes per person and
+the Wells-Riley parameters, but not the seed. \code{\link[=generate_intervention_data]{generate_intervention_data()}}
+and \code{\link[=run_simulation]{run_simulation()}} error otherwise.
 }
 \description{
 This will sample individuals' initial state and assign them to households and

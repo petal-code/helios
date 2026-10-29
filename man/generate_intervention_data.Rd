@@ -40,6 +40,10 @@ on earlier random draws, and it is the intervention data that
 population was built with, it continues the population's random stream, as
 if the population and the intervention were drawn in one go. Otherwise it
 starts a new stream from \code{parameters_list$seed}.
+
+It errors if \code{population_data} was built from different values of the
+population parameters than \code{parameters_list} (see
+\code{\link[=generate_population_data]{generate_population_data()}}).
 }
 \seealso{
 Other intervention: 
