@@ -14,7 +14,7 @@ human_population <- as.numeric(args$size)
 days <- as.numeric(args$days)
 output <- args$output
 if (is.na(output)) {
-  output <- sprintf("bench/out/profile-%s-%d.html", args$scenario, human_population)
+  output <- sprintf("bench/out/profile-%s-%s.html", args$scenario, args$size)
 }
 dir.create(dirname(output), showWarnings = FALSE, recursive = TRUE)
 
@@ -25,7 +25,8 @@ if (args$scenario == "endemic") {
   burnin <- readRDS(path)
 }
 
-profile <- tempfile(fileext = ".out")
+# The raw profile is kept next to the report, to reopen with profvis::profvis(prof_input = ...)
+profile <- paste0(tools::file_path_sans_ext(output), ".Rprof")
 Rprof(profile, interval = 0.01, line.profiling = TRUE, filter.callframes = TRUE)
 if (args$scenario == "endemic") {
   invisible(run_simulation(parameters, burnin$population, state = burnin$state))
@@ -36,7 +37,13 @@ Rprof(NULL)
 
 print(head(summaryRprof(profile)$by.total, 20))
 output <- normalizePath(output, mustWork = FALSE)
-htmlwidgets::saveWidget(profvis::profvis(prof_input = profile), output)
-# The report is self-contained, so the libraries saveWidget() copies alongside it aren't needed
-unlink(sub("\\.html$", "_files", output), recursive = TRUE)
-message("profile saved to ", output)
+# A self-contained report needs pandoc. Without it, the report uses the libraries saveWidget()
+# copies to a _files directory alongside it
+self_contained <- rmarkdown::pandoc_available()
+htmlwidgets::saveWidget(profvis::profvis(prof_input = profile), output, selfcontained = self_contained)
+if (self_contained) {
+  unlink(sub("\\.html$", "_files", output), recursive = TRUE)
+  message("profile saved to ", output)
+} else {
+  message("profile saved to ", output, " and its _files directory (pandoc not found)")
+}

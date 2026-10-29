@@ -75,3 +75,7 @@ Rscript bench/profile.R --scenario=pandemic --size=10000 --days=30
 This profiles a scenario with `Rprof`, prints the functions taking the most time, and saves an
 interactive flame graph to `bench/out/profile-<scenario>-<size>.html`, to open in a browser. Time
 spent in C++ code is attributed to the R function calling it, such as `bitset_count_and_cpp`.
+
+The report is a single file if pandoc is available. Otherwise it needs the `_files` directory saved
+next to it. The raw profile is saved next to it too, as a `.Rprof` file, which
+`profvis::profvis(prof_input = ...)` or `summaryRprof()` can read again.
