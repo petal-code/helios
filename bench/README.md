@@ -1,9 +1,10 @@
 # Benchmarks and profiling
 
 Scripts for measuring how long helios takes and how much memory it needs, and where that time is
-spent. They run on Linux, from the repository root, against the working tree (via
-`pkgload::load_all()`), so they measure the code as it currently is. They need the `bench`,
-`pkgload` and `profvis` packages.
+spent. They run from the repository root, against the working tree (via `pkgload::load_all()`),
+so they measure the code as it currently is. They need the packages listed under
+`Config/Needs/bench` in `DESCRIPTION`. `run_bench.R` and `burnin.R` measure memory through Linux's
+`/proc`, so they need Linux. `micro.R` and `profile.R` run anywhere.
 
 Results are appended to CSV files in `bench/out/`, tagged with the date and commit, so runs from
 different commits can be compared.
@@ -29,6 +30,13 @@ Rscript bench/burnin.R --sizes=10000,30000
 Rscript bench/run_bench.R --sizes=10000,30000
 ```
 
+Burn-ins are cached in `tools::R_user_dir("helios", "cache")`, in its `bench` directory (on Linux,
+`~/.cache/R/helios/bench`). Each file name ends with a hash of `R/`, `data/`, `DESCRIPTION`,
+`bench/common.R` and the installed version of individual. So a change to any of them needs a new
+burn-in, and the burn-ins of other commits stay there, ready to compare. Old ones aren't deleted,
+so delete them by hand. A burn-in of 3,000 people takes about 135 KB, and the size grows with the
+population.
+
 Each case runs in a fresh R process, so its memory peak isn't affected by earlier cases. Sizes up
 to 30,000 are run 3 times and larger ones once, unless `--reps` is given; the summary reports
 medians. Timings vary between otherwise identical runs, so close other programs and compare medians.
@@ -43,7 +51,9 @@ C++ code, such as individual's variables, which R's own memory tools (`gc()`, `b
 Each case is capped at 20 GB by default (`--mem-max=24G` to change it, or `--mem-max=none` for no
 cap), using `systemd-run`. A case over the cap is killed rather than making the machine swap, and
 is recorded as `killed at 20G`. Larger sizes of that scenario are then skipped, as they would be
-killed too.
+killed too. A case that fails for another reason is recorded as `error`, and larger sizes are
+still run. `run_bench.R` and `burnin.R` then exit with status 1. They stop before running any case
+if `systemd-run --user` can't be used, unless `--mem-max=none` is given.
 
 To cap memory for another script, run it with:
 
@@ -75,3 +85,7 @@ Rscript bench/profile.R --scenario=pandemic --size=10000 --days=30
 This profiles a scenario with `Rprof`, prints the functions taking the most time, and saves an
 interactive flame graph to `bench/out/profile-<scenario>-<size>.html`, to open in a browser. Time
 spent in C++ code is attributed to the R function calling it, such as `bitset_count_and_cpp`.
+
+The report is a single file if pandoc is available. Otherwise it needs the `_files` directory saved
+next to it. The raw profile is saved next to it too, as a `.Rprof` file, which
+`profvis::profvis(prof_input = ...)` or `summaryRprof()` can read again.
