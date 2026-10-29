@@ -111,6 +111,7 @@ create_SE_process <- function(
   renderer
 ) {
   N <- parameters_list$human_population
+  check_settings(population_data, intervention_data, N)
 
   # Each individual's household, school and workplace (0 = none), and the number of individuals in
   # each location. These don't change during the simulation.
@@ -255,6 +256,68 @@ create_SE_process <- function(
   }
 }
 
+
+# Check that the settings in `population_data` and `intervention_data` agree with each other, as the
+# force of infection relies on it. Populations from generate_population_data() always agree, but
+# one edited afterwards might not, and would otherwise give a wrong force of infection silently.
+#
+# Each individual has a household (ids from 1), and a school and workplace (ids from 0, for none).
+# Each location's size is its number of individuals. Each individual's leisure locations exist,
+# and every location has one riskiness value, and one efficacy value in settings with an
+# intervention.
+check_settings <- function(population_data, intervention_data, N) {
+  for (setting in c("household", "school", "workplace", "leisure")) {
+    num_locations <- length(population_data$setting_sizes[[setting]])
+    if (length(population_data[[paste0(setting, "_specific_riskiness")]]) != num_locations) {
+      stop(
+        "population_data$", setting, "_specific_riskiness must have one value for each of the ",
+        num_locations, " locations in population_data$setting_sizes$", setting
+      )
+    }
+  }
+
+  for (setting in c("household", "school", "workplace")) {
+    location <- population_data[[paste0("initial_", setting, "_settings")]]
+    size <- population_data$setting_sizes[[setting]]
+    first <- if (setting == "household") 1 else 0
+    if (length(location) != N || anyNA(location) || any(location < first | location > length(size))) {
+      stop(
+        "population_data$initial_", setting, "_settings must have an id from ", first, " to ",
+        length(size), " for each of the ", N, " individuals"
+      )
+    }
+    if (any(tabulate(location, length(size)) != size)) {
+      stop(
+        "population_data$setting_sizes$", setting, " must be the number of individuals in each ",
+        setting, " in population_data$initial_", setting, "_settings"
+      )
+    }
+  }
+
+  num_leisure <- length(population_data$setting_sizes$leisure)
+  leisure <- unlist(population_data$initial_leisure_settings, use.names = FALSE)
+  if (
+    length(population_data$initial_leisure_settings) != N ||
+      anyNA(leisure) ||
+      any(leisure < 0 | leisure > num_leisure)
+  ) {
+    stop(
+      "population_data$initial_leisure_settings must have ids from 0 to ", num_leisure,
+      " for each of the ", N, " individuals"
+    )
+  }
+
+  for (setting in names(intervention_data$efficacy)) {
+    num_locations <- length(population_data$setting_sizes[[setting]])
+    if (length(intervention_data$efficacy[[setting]]) != num_locations) {
+      stop(
+        "intervention_data$efficacy$", setting, " must have one value for each of the ",
+        num_locations, " locations in population_data$setting_sizes$", setting,
+        ". Generate the intervention data from this population"
+      )
+    }
+  }
+}
 
 # The force of infection on each individual from the locations of one setting type
 #
