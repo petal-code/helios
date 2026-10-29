@@ -23,7 +23,14 @@ reps_for <- function(human_population) {
   if (human_population <= 30000) 3L else 1L
 }
 
+# Rows of this run, for the summary. Each row is also appended to the output as soon as its case
+# finishes, so an interrupted run keeps the cases it completed.
 rows <- tempfile(fileext = ".csv")
+record <- function(row) {
+  append_csv(row, rows)
+  append_csv(row, args$output)
+}
+
 for (scenario in scenarios) {
   for (human_population in sizes) {
     if (scenario == "endemic" && !file.exists(burnin_path(human_population))) {
@@ -33,11 +40,14 @@ for (scenario in scenarios) {
     failed <- FALSE
     for (rep in seq_len(reps_for(human_population))) {
       message(sprintf("%s N=%d rep %d", scenario, human_population, rep))
+      case_row <- tempfile(fileext = ".csv")
       status <- run_capped(
-        "bench/case.R", c(scenario, human_population, rep, rows), args$mem_max
+        "bench/case.R", c(scenario, human_population, rep, case_row), args$mem_max
       )
-      if (status != "ok") {
-        append_csv(data.frame(
+      if (status == "ok") {
+        record(utils::read.csv(case_row))
+      } else {
+        record(data.frame(
           date = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
           commit = git_commit(),
           scenario = scenario,
@@ -50,7 +60,7 @@ for (scenario in scenarios) {
           run_seconds = NA,
           run_peak_mb = NA,
           seconds_per_day = NA
-        ), rows)
+        ))
         failed <- TRUE
         break
       }
@@ -62,7 +72,6 @@ for (scenario in scenarios) {
 
 if (!file.exists(rows)) quit(save = "no")
 results <- utils::read.csv(rows)
-append_csv(results, args$output)
 
 # Summarise this run: medians over reps, with the endemic timing scaled to the full horizon
 ok <- results[results$status == "ok", ]
