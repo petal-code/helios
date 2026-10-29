@@ -10,13 +10,15 @@ args <- parse_args(list(
   mem_max = DEFAULT_MEM_MAX,
   refresh = "false"
 ))
+refresh <- as.logical(args$refresh)
+if (is.na(refresh)) stop("--refresh must be true or false, not ", args$refresh, call. = FALSE)
 sizes <- sort(split_numbers(args$sizes))
 check_platform(args$mem_max)
 
 failed <- FALSE
 for (human_population in sizes) {
   path <- burnin_path(human_population)
-  if (file.exists(path) && !as.logical(args$refresh)) {
+  if (file.exists(path) && !refresh) {
     message("keeping burn-in for N=", human_population, ": ", path)
     next
   }

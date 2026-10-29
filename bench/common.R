@@ -139,7 +139,9 @@ check_platform <- function(mem_max) {
 # process that exceeds the cap is killed rather than swapping. Returns "ok", "killed" (usually for
 # running out of memory) or "error".
 run_capped <- function(script, args, mem_max) {
-  command <- capped_command(c("Rscript", script, args), mem_max)
+  # The Rscript of this R, rather than whichever is first on the PATH
+  rscript <- file.path(R.home("bin"), "Rscript")
+  command <- capped_command(c(rscript, script, args), mem_max)
   status <- system2(command[1], shQuote(command[-1]))
   # R reports a process killed by SIGKILL as status 9, and a shell reports it as 128 + 9
   if (status %in% c(9, 137)) {
@@ -149,8 +151,16 @@ run_capped <- function(script, args, mem_max) {
   if (status == 0) "ok" else "error"
 }
 
+# Append `rows` to the CSV file at `path`. Stops if the file has other columns, eg. from another
+# version of the scripts, rather than adding misaligned rows.
 append_csv <- function(rows, path) {
   dir.create(dirname(path), showWarnings = FALSE, recursive = TRUE)
-  exists <- file.exists(path)
+  exists <- file.exists(path) && file.size(path) > 0
+  if (exists) {
+    columns <- names(utils::read.csv(path, nrows = 1, check.names = FALSE))
+    if (!identical(columns, names(rows))) {
+      stop(path, " has other columns: move it away or pass another --output", call. = FALSE)
+    }
+  }
   utils::write.table(rows, path, sep = ",", row.names = FALSE, col.names = !exists, append = exists)
 }

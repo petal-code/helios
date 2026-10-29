@@ -1,9 +1,10 @@
 # Benchmarks and profiling
 
 Scripts for measuring how long helios takes and how much memory it needs, and where that time is
-spent. They run on Linux, from the repository root, against the working tree (via
-`pkgload::load_all()`), so they measure the code as it currently is. They need the `bench`,
-`pkgload` and `profvis` packages.
+spent. They run from the repository root, against the working tree (via `pkgload::load_all()`),
+so they measure the code as it currently is. They need the `bench`, `pkgload` and `profvis`
+packages. `run_bench.R` and `burnin.R` measure memory through Linux's `/proc`, so they need Linux.
+`micro.R` and `profile.R` run anywhere.
 
 Results are appended to CSV files in `bench/out/`, tagged with the date and commit, so runs from
 different commits can be compared.

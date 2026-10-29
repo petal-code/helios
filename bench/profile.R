@@ -42,7 +42,10 @@ output <- normalizePath(output, mustWork = FALSE)
 # A self-contained report needs pandoc. Without it, the report uses the libraries saveWidget()
 # copies to a _files directory alongside it
 self_contained <- rmarkdown::pandoc_available()
-htmlwidgets::saveWidget(profvis::profvis(prof_input = profile), output, selfcontained = self_contained)
+htmlwidgets::saveWidget(
+  profvis::profvis(prof_input = profile), output,
+  selfcontained = self_contained
+)
 if (self_contained) {
   unlink(sub("\\.html$", "_files", output), recursive = TRUE)
   message("profile saved to ", output)
