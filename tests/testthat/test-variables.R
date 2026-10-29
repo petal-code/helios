@@ -319,7 +319,8 @@ test_that("generate_initial_workplaces errors if parameter_list does not contain
 #====================================#
 
 test_that("generate_initial_leisure visits distinct settings on distinct days, weighted by size", {
-  parameters_list <- get_parameters(list(human_population = 20000, number_initial_S = 20000, number_initial_E = 0, seed = 1))
+  set.seed(1)
+  parameters_list <- get_parameters(list(human_population = 20000, number_initial_S = 20000, number_initial_E = 0))
   leisure_setting_sizes <- c(1, 2, 5, 10, 20, 50, 100, 200)
   leisure <- generate_initial_leisure(parameters_list, leisure_setting_sizes)
 
@@ -338,7 +339,8 @@ test_that("generate_initial_leisure visits distinct settings on distinct days, w
 })
 
 test_that("generate_initial_leisure errors when there are too few settings to visit", {
-  parameters_list <- get_parameters(list(human_population = 1000, number_initial_S = 1000, number_initial_E = 0, seed = 1))
+  set.seed(1)
+  parameters_list <- get_parameters(list(human_population = 1000, number_initial_S = 1000, number_initial_E = 0))
   expect_error(generate_initial_leisure(parameters_list, c(5, 0, 3)), "too few leisure settings")
 })
 
