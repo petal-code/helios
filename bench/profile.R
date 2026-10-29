@@ -21,7 +21,9 @@ dir.create(dirname(output), showWarnings = FALSE, recursive = TRUE)
 parameters <- bench_parameters(args$scenario, human_population, simulation_time = days)
 if (args$scenario == "endemic") {
   path <- burnin_path(human_population)
-  if (!file.exists(path)) stop("no burn-in for N=", human_population, ": run bench/burnin.R first")
+  if (!file.exists(path)) {
+    stop("no burn-in for N=", human_population, " with this code: run bench/burnin.R")
+  }
   burnin <- readRDS(path)
 }
 

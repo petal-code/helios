@@ -36,7 +36,9 @@ skipped <- character()
 for (scenario in scenarios) {
   for (human_population in sizes) {
     if (scenario == "endemic" && !file.exists(burnin_path(human_population))) {
-      message("skipping endemic N=", human_population, ": no burn-in, run bench/burnin.R first")
+      message(
+        "skipping endemic N=", human_population, ": no burn-in with this code, run bench/burnin.R"
+      )
       next
     }
     killed <- FALSE

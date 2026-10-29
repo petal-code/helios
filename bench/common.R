@@ -48,10 +48,23 @@ bench_parameters <- function(scenario, human_population, simulation_time, seed =
   parameters
 }
 
+# A short hash of the code and data a burn-in depends on, so that each version of the code has its
+# own burn-ins
+code_hash <- function() {
+  files <- sort(c(list.files(c("R", "data"), full.names = TRUE), "DESCRIPTION", "bench/common.R"))
+  sums <- c(
+    paste(files, tools::md5sum(files)),
+    paste("individual", utils::packageVersion("individual"))
+  )
+  path <- tempfile()
+  writeLines(sums, path)
+  substr(unname(tools::md5sum(path)), 1, 8)
+}
+
 burnin_path <- function(human_population, seed = 1) {
   file.path(
     tools::R_user_dir("helios", "cache"), "bench",
-    sprintf("endemic-%d-seed%d.rds", human_population, seed)
+    sprintf("endemic-%d-seed%d-%s.rds", human_population, seed, code_hash())
   )
 }
 

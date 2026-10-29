@@ -29,6 +29,13 @@ Rscript bench/burnin.R --sizes=10000,30000
 Rscript bench/run_bench.R --sizes=10000,30000
 ```
 
+Burn-ins are cached in `tools::R_user_dir("helios", "cache")`, in its `bench` directory (on Linux,
+`~/.cache/R/helios/bench`). Each file name ends with a hash of `R/`, `data/`, `DESCRIPTION`,
+`bench/common.R` and the installed version of individual. So a change to any of them needs a new
+burn-in, and the burn-ins of other commits stay there, ready to compare. Old ones aren't deleted,
+so delete them by hand. A burn-in of 3,000 people takes about 135 KB, and the size grows with the
+population.
+
 Each case runs in a fresh R process, so its memory peak isn't affected by earlier cases. Sizes up
 to 30,000 are run 3 times and larger ones once, unless `--reps` is given; the summary reports
 medians. Timings vary between otherwise identical runs, so close other programs and compare medians.
