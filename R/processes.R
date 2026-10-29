@@ -188,8 +188,8 @@ create_SE_process <- function(
     #=====================#
     if ((t * parameters_list$dt) == floor((t * parameters_list$dt))) {
       # At the start of each day, sample which of the week's leisure locations each individual visits
-      # that day (0 = they stay home). Uses dqrng for speed; it is seeded alongside base R's RNG by
-      # seed_rng()
+      # that day (0 = they stay home). Uses dqrng for speed. Its stream is seeded, continued and
+      # saved together with base R's, so seeded and resumed runs draw the same visits.
       visit_day <- dqrng::dqsample.int(n = 7, size = N, replace = TRUE)
       leisure_visit <- leisure_week[cbind(visit_day, seq_len(N))]
       variables_list$specific_leisure$queue_update(leisure_visit)

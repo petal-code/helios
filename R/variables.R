@@ -103,7 +103,7 @@ generate_population_data <- function(parameters_list) {
   initial_leisure_settings <- generate_initial_leisure(
     parameters_list = parameters_list,
     leisure_setting_sizes = leisure_setting_sizes
-  ) # returns list to initialise RaggedInteger
+  ) # a list with each individual's leisure location on each day of the week (0 = none)
 
   # Due to the sampling method used, some leisure settings for which sizes have been drawn are not
   # visited by anyone. Drop those settings and renumber the remaining ones as 1..n, keeping 0 as
