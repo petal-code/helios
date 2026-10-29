@@ -31,6 +31,7 @@ calculation (via \code{\link[=calculate_efficacy_from_ach]{calculate_efficacy_fr
 }
 \seealso{
 Other setting-specific ACH: 
+\code{\link{ach_to_p_inf}()},
 \code{\link{convert_ach_to_riskiness}()},
 \code{\link{generate_setting_specific_ach}()},
 \code{\link{set_default_ach}()}

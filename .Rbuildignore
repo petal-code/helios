@@ -17,3 +17,4 @@
 ^inst/Direct ACH tests$
 ^inst/scripts_informal_testing_new_features$
 ^bench$
+^air\.toml$

@@ -131,14 +131,14 @@ create_SE_process <- function(
   )
   num_leisure <- length(population_data$leisure_specific_riskiness)
 
-  # Each location's riskiness at timestep t, reduced by the setting's intervention once it's in place
+  # Each location's riskiness at timestep t, reduced by the setting's intervention once it's in place.
+  # The intervention data has efficacy and a timestep only for settings with an active intervention,
+  # including those a joint intervention covers.
   riskiness_at <- function(setting, t) {
     riskiness <- population_data[[paste0(setting, "_specific_riskiness")]]
-    if (
-      parameters_list[[paste0("intervention_", setting, "_active")]] &&
-        t > parameters_list[[paste0("intervention_", setting, "_timestep")]]
-    ) {
-      riskiness <- riskiness * (1 - intervention_data$efficacy[[setting]])
+    efficacy <- intervention_data$efficacy[[setting]]
+    if (!is.null(efficacy) && t > intervention_data$timestep[[setting]]) {
+      riskiness <- riskiness * (1 - efficacy)
     }
     riskiness
   }
@@ -282,6 +282,9 @@ create_EI_process <- function(
   parameters_list,
   renderer
 ) {
+  # Report 0 hospitalisations on timesteps where nobody is newly exposed
+  renderer$set_default("H_new", 0)
+
   function(t) {
     # Get exposed individuals not yet scheduled into either EI event
     E <- variables_list$disease_state$get_index_of("E")

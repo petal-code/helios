@@ -26,31 +26,34 @@ URL: https://github.com/mrc-ide/helios, https://mrc-ide.github.io/helios/
 Encoding: UTF-8
 LazyData: true
 Suggests:
-    bench,
     bookdown,
     forcats,
     ggplot2,
     gt,
     knitr,
-    pkgload,
-    profvis,
     purrr,
     rmarkdown,
     testthat (>= 3.0.0),
     tictoc,
     tidyr
 Config/testthat/edition: 3
+Config/Needs/bench:
+    bench,
+    htmlwidgets,
+    pkgload,
+    profvis,
+    rmarkdown
 Imports:
     individual (>= 0.1.18),
     dplyr,
-    dqrng,
+    dqrng (>= 0.4.0),
     graphics,
     truncnorm,
     parallel,
     stats,
     utils
 Remotes:
-    mrc-ide/individual
+    mrc-ide/individual@v0.1.19
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr
