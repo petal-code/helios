@@ -43,7 +43,9 @@ C++ code, such as individual's variables, which R's own memory tools (`gc()`, `b
 Each case is capped at 20 GB by default (`--mem-max=24G` to change it, or `--mem-max=none` for no
 cap), using `systemd-run`. A case over the cap is killed rather than making the machine swap, and
 is recorded as `killed at 20G`. Larger sizes of that scenario are then skipped, as they would be
-killed too.
+killed too. A case that fails for another reason is recorded as `error`, and larger sizes are
+still run. `run_bench.R` and `burnin.R` then exit with status 1. They stop before running any case
+if `systemd-run --user` can't be used, unless `--mem-max=none` is given.
 
 To cap memory for another script, run it with:
 

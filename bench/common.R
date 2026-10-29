@@ -98,18 +98,35 @@ parse_args <- function(defaults, args = commandArgs(trailingOnly = TRUE)) {
 split_numbers <- function(x) as.numeric(strsplit(x, ",")[[1]])
 split_strings <- function(x) strsplit(x, ",")[[1]]
 
+# `command` capped at `mem_max` (eg. "20G", or "none" for no cap)
+capped_command <- function(command, mem_max) {
+  if (mem_max == "none") return(command)
+  c(
+    "systemd-run", "--user", "--scope", "--quiet",
+    paste0("--property=MemoryMax=", mem_max), "--property=MemorySwapMax=0",
+    command
+  )
+}
+
+# Stop before running any case if peak memory can't be measured here, or memory can't be capped
+check_platform <- function(mem_max) {
+  if (file.access("/proc/self/clear_refs", 2) != 0) {
+    stop("peak memory is measured through /proc/self, so the benchmarks need Linux", call. = FALSE)
+  }
+  command <- capped_command("true", mem_max)
+  if (mem_max != "none" && suppressWarnings(system2(command[1], command[-1])) != 0) {
+    stop(
+      "can't cap memory with systemd-run --user here: pass --mem-max=none for no cap",
+      call. = FALSE
+    )
+  }
+}
+
 # Run an R script in a fresh process, capped at `mem_max` (eg. "20G", or "none" for no cap). A
 # process that exceeds the cap is killed rather than swapping. Returns "ok", "killed" (usually for
 # running out of memory) or "error".
 run_capped <- function(script, args, mem_max) {
-  command <- c("Rscript", script, args)
-  if (mem_max != "none") {
-    command <- c(
-      "systemd-run", "--user", "--scope", "--quiet",
-      paste0("--property=MemoryMax=", mem_max), "--property=MemorySwapMax=0",
-      command
-    )
-  }
+  command <- capped_command(c("Rscript", script, args), mem_max)
   status <- system2(command[1], shQuote(command[-1]))
   # R reports a process killed by SIGKILL as status 9, and a shell reports it as 128 + 9
   if (status %in% c(9, 137)) {
