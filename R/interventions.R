@@ -15,14 +15,19 @@
 #'
 #' @inheritParams generate_intervention_switches
 #'
-#' @return A list with two elements:
+#' @return A list with three elements:
 #'   \describe{
 #'     \item{switches}{The coverage switches, as returned by
 #'       [generate_intervention_switches()].}
 #'     \item{efficacy}{A named list containing, for each setting with an active
 #'       intervention, the per-location efficacy as returned by
 #'       [calculate_efficacy_from_ach()].}
+#'     \item{timestep}{A named list containing, for each setting with an active
+#'       intervention, its `intervention_<setting>_timestep`: efficacy is
+#'       applied at the timesteps after it.}
 #'   }
+#'   A joint intervention counts as active in the workplace, school and leisure
+#'   settings, with the joint intervention list and timestep.
 #'
 #' @family intervention
 #' @export
@@ -39,21 +44,36 @@ generate_intervention_data <- function(parameters_list, population_data) {
 
   switches <- generate_intervention_switches(parameters_list, population_data)
 
-  # The coverage vector is used inside calculate_efficacy_from_ach to zero out
-  # delta for uncovered locations.
-  efficacy <- list()
-  for (setting in c("workplace", "school", "leisure", "household")) {
-    if (isTRUE(parameters_list[[paste0("intervention_", setting, "_active")]])) {
-      efficacy[[setting]] <- calculate_efficacy_from_ach(
-        ach_values = population_data[[paste0(setting, "_specific_ach")]],
-        parameters_list = parameters_list,
-        setting = setting,
-        coverage_vector = switches[[setting]]
-      )
+  # A joint intervention is configured in the intervention_joint_* slots only.
+  # Apply its intervention list and timestep to each setting it covers, in a
+  # local copy of the parameters, so that efficacy and the timestep are worked
+  # out per setting in the same way for both kinds of intervention:
+  setting_parameters <- parameters_list
+  if (isTRUE(parameters_list$intervention_joint_active)) {
+    for (setting in c("workplace", "school", "leisure")) {
+      setting_parameters[[paste0("intervention_", setting, "_active")]] <- TRUE
+      setting_parameters[[paste0("intervention_", setting, "_list")]] <- parameters_list$intervention_joint_list
+      setting_parameters[[paste0("intervention_", setting, "_timestep")]] <- parameters_list$intervention_joint_timestep
     }
   }
 
-  list(switches = switches, efficacy = efficacy)
+  # The coverage vector is used inside calculate_efficacy_from_ach to zero out
+  # delta for uncovered locations.
+  efficacy <- list()
+  timestep <- list()
+  for (setting in c("workplace", "school", "leisure", "household")) {
+    if (isTRUE(setting_parameters[[paste0("intervention_", setting, "_active")]])) {
+      efficacy[[setting]] <- calculate_efficacy_from_ach(
+        ach_values = population_data[[paste0(setting, "_specific_ach")]],
+        parameters_list = setting_parameters,
+        setting = setting,
+        coverage_vector = switches[[setting]]
+      )
+      timestep[[setting]] <- setting_parameters[[paste0("intervention_", setting, "_timestep")]]
+    }
+  }
+
+  list(switches = switches, efficacy = efficacy, timestep = timestep)
 }
 
 #' Generate intervention coverage switches
@@ -79,6 +99,17 @@ generate_intervention_data <- function(parameters_list, population_data) {
 #' @export
 generate_intervention_switches <- function(parameters_list, population_data) {
   setting_types <- c("workplace", "school", "leisure", "household")
+
+  # Joint and per-setting interventions are mutually exclusive: error if both
+  # have been configured
+  if (
+    isTRUE(parameters_list$intervention_joint_active) &
+    any(unlist(parameters_list[paste0("intervention_", setting_types, "_active")]))
+  ) {
+    stop(
+      "If intervention_joint_active is set to TRUE, setting-type specific intervention switches must be set to FALSE"
+    )
+  }
 
   if (isTRUE(parameters_list$intervention_joint_active)) {
     # Joint intervention: allocate coverage across the pooled workplace,
@@ -388,8 +419,7 @@ make_intervention <- function(name,
 #' @return The input `parameters_list` with the `intervention_<setting>_*`
 #' slots populated. For `setting = "joint"`, the `intervention_joint_coverage`
 #' slot is additionally populated from the intervention object's `coverage`
-#' field, and the intervention list and timestep are propagated to the
-#' workplace, school and leisure slots, whose `_active` flags are switched on.
+#' field.
 #'
 #' @family intervention
 #' @export
@@ -434,8 +464,10 @@ set_intervention_ach <- function(parameters_list,
     )
   }
 
-  joint_setting_types <- c("workplace", "school", "leisure")
-  setting_types <- c(joint_setting_types, "household")
+  # Catch a mix of joint and per-setting interventions here, where it is set
+  # up. generate_intervention_switches() checks again for parameters set by
+  # hand:
+  setting_types <- c("workplace", "school", "leisure", "household")
   if (
     (setting == "joint" && any(unlist(parameters_list[paste0("intervention_", setting_types, "_active")]))) ||
       (setting != "joint" && isTRUE(parameters_list$intervention_joint_active))
@@ -453,15 +485,6 @@ set_intervention_ach <- function(parameters_list,
 
   if (setting == "joint") {
     parameters_list[["intervention_joint_coverage"]] <- interventions[[1]]$coverage
-
-    # Propagate the joint intervention list and timestep to each per-setting
-    # slot, and switch each setting's _active flag on so the per-setting
-    # efficacy calculation and FOI run through the same code path.
-    for (s in joint_setting_types) {
-      parameters_list[[paste0("intervention_", s, "_active")]]   <- TRUE
-      parameters_list[[paste0("intervention_", s, "_list")]]     <- interventions
-      parameters_list[[paste0("intervention_", s, "_timestep")]] <- timestep
-    }
   }
 
   return(parameters_list)

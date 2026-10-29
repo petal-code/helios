@@ -37,8 +37,7 @@ intervention's efficacy is applied in the FOI calculation.}
 The input \code{parameters_list} with the \verb{intervention_<setting>_*}
 slots populated. For \code{setting = "joint"}, the \code{intervention_joint_coverage}
 slot is additionally populated from the intervention object's \code{coverage}
-field, and the intervention list and timestep are propagated to the
-workplace, school and leisure slots, whose \verb{_active} flags are switched on.
+field.
 }
 \description{
 Stores a single intervention object (as produced by \code{\link[=make_intervention]{make_intervention()}})

@@ -607,6 +607,99 @@ test_that("set_intervention_ach() errors when both joint and a per-setting inter
   )
 })
 
+# A joint intervention covering every location, so that each location's
+# efficacy is known:
+set_full_joint_intervention <- function(parameters_list, delta, timestep) {
+  set_intervention_ach(
+    parameters_list = parameters_list,
+    setting = "joint",
+    coverage_target = "individuals",
+    coverage_type = "targeted_riskiness",
+    timestep = timestep,
+    intervention = make_intervention(
+      name = "constant_delta",
+      delta_function = function(delta) delta,
+      delta_params = list(delta = delta),
+      coverage = 1
+    )
+  )
+}
+
+expect_full_joint_efficacy <- function(parameters_list, delta, timestep) {
+  population_data <- generate_population_data(parameters_list)
+  intervention_data <- generate_intervention_data(parameters_list, population_data)
+
+  expect_named(intervention_data$efficacy, c("workplace", "school", "leisure"))
+  for (setting in c("workplace", "school", "leisure")) {
+    expected <- delta_to_efficacy(
+      baseline_ach = 4,
+      delta = delta,
+      V = parameters_list[[paste0("volume_per_person_", setting)]]
+    )
+    efficacy <- intervention_data$efficacy[[setting]]
+    expect_equal(efficacy, rep(expected, length(efficacy)))
+    expect_identical(intervention_data$timestep[[setting]], timestep)
+  }
+}
+
+test_that("set_intervention_ach() errors when a joint intervention follows a per-setting one", {
+  parameters_list <- with_default_ach(get_parameters())
+  intervention <- make_intervention(
+    name = "test_intervention",
+    delta_function = function(delta) delta,
+    delta_params = list(delta = 5),
+    coverage = 0.5
+  )
+  parameters_list <- set_intervention_ach(
+    parameters_list = parameters_list,
+    setting = "workplace",
+    coverage_target = "individuals",
+    coverage_type = "random",
+    timestep = 1,
+    intervention = intervention
+  )
+  expect_error(
+    object = set_full_joint_intervention(parameters_list, delta = 5, timestep = 1),
+    regexp = "Joint interventions cannot be enabled together with setting-type specific interventions"
+  )
+})
+
+test_that("a joint intervention can be set up again, and the last one applies", {
+  parameters_list <- with_default_ach(get_parameters(list(human_population = 2000, number_initial_S = 1995)))
+  parameters_list <- set_full_joint_intervention(parameters_list, delta = 2, timestep = 1)
+  parameters_list <- set_full_joint_intervention(parameters_list, delta = 8, timestep = 5)
+
+  # The joint intervention stays in the joint slots:
+  for (setting in c("workplace", "school", "leisure", "household")) {
+    expect_false(parameters_list[[paste0("intervention_", setting, "_active")]])
+  }
+  expect_full_joint_efficacy(parameters_list, delta = 8, timestep = 5)
+})
+
+test_that("a joint intervention set up by hand applies to workplaces, schools and leisure", {
+  parameters_list <- with_default_ach(get_parameters(list(human_population = 2000, number_initial_S = 1995)))
+  parameters_list$intervention_joint_active <- TRUE
+  parameters_list$intervention_joint_list <- list(make_intervention(
+    name = "constant_delta",
+    delta_function = function(delta) delta,
+    delta_params = list(delta = 3),
+    coverage = 1
+  ))
+  parameters_list$intervention_joint_coverage <- 1
+  parameters_list$intervention_joint_coverage_target <- "individuals"
+  parameters_list$intervention_joint_coverage_type <- "targeted_riskiness"
+  parameters_list$intervention_joint_timestep <- 2
+
+  expect_full_joint_efficacy(parameters_list, delta = 3, timestep = 2)
+
+  # Mixing it with a per-setting intervention by hand is still caught:
+  parameters_list$intervention_household_active <- TRUE
+  expect_error(
+    object = generate_intervention_data(parameters_list, generate_population_data(parameters_list)),
+    regexp = "setting-type specific intervention switches must be set to FALSE"
+  )
+})
+
 test_that("generate_joint_intervention_switches() pools workplace, school, and leisure coverage and excludes household", {
   coverage <- 0.5
   parameters_list <- with_default_ach(get_parameters())
