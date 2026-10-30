@@ -1,30 +1,7 @@
 # Make any changes to the saved data for the package here
-library(readr)
 library(readxl)
 library(dplyr)
 library(janitor)
-
-baseline_household_demographics_uk <- read_csv(
-  "data-raw/Hinch_et_al_baseline_household_demographics.csv"
-)
-baseline_household_demographics_uk$child <- baseline_household_demographics_uk$a_0_9 +
-  baseline_household_demographics_uk$a_10_19
-baseline_household_demographics_uk$adult <- baseline_household_demographics_uk$a_20_29 +
-  baseline_household_demographics_uk$a_30_39 +
-  baseline_household_demographics_uk$a_40_49 +
-  baseline_household_demographics_uk$a_50_59 +
-  baseline_household_demographics_uk$a_60_69
-baseline_household_demographics_uk$elderly <- baseline_household_demographics_uk$a_70_79 +
-  baseline_household_demographics_uk$a_80
-baseline_household_demographics_uk <- baseline_household_demographics_uk[, c(
-  "child",
-  "adult",
-  "elderly"
-)]
-usethis::use_data(baseline_household_demographics_uk, overwrite = TRUE)
-
-schools_uk <- read_csv("data-raw/spc_school_level_underlying_data_23112023.csv")
-usethis::use_data(schools_uk, overwrite = TRUE)
 
 # Just the most recent years data (2019 / 2020)
 schools_usa <- readxl::read_xls("data-raw/tabn216.40.xls") |>

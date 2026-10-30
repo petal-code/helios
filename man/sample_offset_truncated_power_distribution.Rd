@@ -26,7 +26,6 @@ adjusted to ensure that the total sum of samples equals to \code{N}.
 }
 \seealso{
 Other sampling: 
-\code{\link{sample_log_normal}()},
 \code{\link{sample_negbinom}()}
 }
 \concept{sampling}

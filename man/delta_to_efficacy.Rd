@@ -59,6 +59,7 @@ household = 50) and must be supplied explicitly.
 Other intervention: 
 \code{\link{calculate_efficacy_from_ach}()},
 \code{\link{efficacy_to_delta}()},
+\code{\link{generate_intervention_data}()},
 \code{\link{generate_intervention_switches}()},
 \code{\link{generate_joint_intervention_switches}()},
 \code{\link{generate_setting_intervention_switches}()},

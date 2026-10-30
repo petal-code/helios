@@ -24,7 +24,6 @@ are not strictly speaking from a negative binomial distribution.
 }
 \seealso{
 Other sampling: 
-\code{\link{sample_log_normal}()},
 \code{\link{sample_offset_truncated_power_distribution}()}
 }
 \concept{sampling}

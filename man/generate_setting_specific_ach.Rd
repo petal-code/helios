@@ -14,7 +14,7 @@ generate_setting_specific_ach(parameters_list, setting, number_of_locations)
 or \code{"household"}.}
 
 \item{number_of_locations}{Integer. Number of locations in the setting
-(determined from \code{variables_list} upstream).}
+(determined during population generation).}
 }
 \value{
 Numeric vector of length \code{number_of_locations} containing the
@@ -24,8 +24,8 @@ per-location baseline ACH values (1/hour).
 Returns a numeric vector of length \code{number_of_locations} giving the
 baseline ACH (air changes per hour) for each location in \code{setting}.
 
-Called once per setting during \code{\link[=create_variables]{create_variables()}} init. The returned
-vector is stored at \verb{<setting>_specific_ach} in \code{parameters_list} and is
+Called once per setting by \code{\link[=generate_population_data]{generate_population_data()}}. The returned
+vector is stored at \verb{<setting>_specific_ach} in the population data and is
 subsequently consumed by \code{\link[=convert_ach_to_riskiness]{convert_ach_to_riskiness()}} and (when an
 intervention is active) by \code{\link[=calculate_efficacy_from_ach]{calculate_efficacy_from_ach()}}.
 }

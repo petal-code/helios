@@ -4,8 +4,8 @@
 #' Returns a numeric vector of length `number_of_locations` giving the
 #' baseline ACH (air changes per hour) for each location in `setting`.
 #'
-#' Called once per setting during [create_variables()] init. The returned
-#' vector is stored at `<setting>_specific_ach` in `parameters_list` and is
+#' Called once per setting by [generate_population_data()]. The returned
+#' vector is stored at `<setting>_specific_ach` in the population data and is
 #' subsequently consumed by [convert_ach_to_riskiness()] and (when an
 #' intervention is active) by [calculate_efficacy_from_ach()].
 #'
@@ -14,7 +14,7 @@
 #' @param setting Character. One of `"workplace"`, `"school"`, `"leisure"`,
 #' or `"household"`.
 #' @param number_of_locations Integer. Number of locations in the setting
-#' (determined from `variables_list` upstream).
+#' (determined during population generation).
 #'
 #' @return Numeric vector of length `number_of_locations` containing the
 #' per-location baseline ACH values (1/hour).
@@ -118,9 +118,9 @@ ach_to_p_inf <- function(ach_values, parameters_list, setting) {
 #' `(1 / (ACH_i + kD)) / mean(1 / (ACH_j + kD))`, i.e. it depends only on
 #' ACH. The constants `I`, `pi`, `RR_tv`, `t`, and `V` cancel.
 #'
-#' Called once per setting during [create_variables()] init, immediately
+#' Called once per setting by [generate_population_data()], immediately
 #' after [generate_setting_specific_ach()]. The result is stored at
-#' `<setting>_specific_riskiness` and used by `processes.R` to scale the
+#' `<setting>_specific_riskiness` in the population data and used by `processes.R` to scale the
 #' per-setting FOI.
 #'
 #' @param ach_values Numeric vector of per-location baseline ACH values

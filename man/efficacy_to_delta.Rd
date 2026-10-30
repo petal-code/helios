@@ -60,6 +60,7 @@ equal to) \code{target_efficacy}.
 Other intervention: 
 \code{\link{calculate_efficacy_from_ach}()},
 \code{\link{delta_to_efficacy}()},
+\code{\link{generate_intervention_data}()},
 \code{\link{generate_intervention_switches}()},
 \code{\link{generate_joint_intervention_switches}()},
 \code{\link{generate_setting_intervention_switches}()},

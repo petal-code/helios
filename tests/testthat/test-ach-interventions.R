@@ -315,12 +315,12 @@ test_that("calculate_efficacy_from_ach() zeroes out efficacy for uncovered locat
   )
 
   coverage_vector <- c(1, 0, 1, 0, 1)
-  parameters$intervention_workplace_covered <- coverage_vector
 
   efficacy <- calculate_efficacy_from_ach(
     ach_values = rep(4, 5),
     parameters_list = parameters,
-    setting = "workplace"
+    setting = "workplace",
+    coverage_vector = coverage_vector
   )
 
   expect_equal(efficacy[coverage_vector == 0], c(0, 0))
@@ -541,14 +541,15 @@ test_that("generate_intervention_switches() with coverage_target as individuals 
     coverage_type = "random"
   )
 
-  x <- create_variables(parameters_list)
+  population_data <- generate_population_data(parameters_list)
+  intervention_data <- generate_intervention_data(parameters_list, population_data)
 
   expect_vector(
-    x$parameters_list$household_specific_efficacy,
+    intervention_data$efficacy$household,
     ptype = double(),
-    size = length(x$parameters_list$household_specific_ach)
+    size = length(population_data$household_specific_ach)
   )
-  expect_true(any(x$parameters_list$household_specific_efficacy > 0))
+  expect_true(any(intervention_data$efficacy$household > 0))
 })
 
 test_that("generate_intervention_switches() with coverage_target as square_footage and coverage_type as targeted_riskiness allocates the expected total coverage for workplaces", {
@@ -560,15 +561,16 @@ test_that("generate_intervention_switches() with coverage_target as square_foota
     coverage_type = "targeted_riskiness"
   )
 
-  x <- create_variables(parameters_list)
+  population_data <- generate_population_data(parameters_list)
+  intervention_data <- generate_intervention_data(parameters_list, population_data)
 
-  covered <- x$parameters_list$intervention_workplace_covered
+  covered <- intervention_data$switches$workplace
   expect_true(all(covered %in% c(0, 1)))
   expect_true(any(covered == 1))
 
   # Targeted-riskiness should preferentially cover the riskiest (lowest-ACH)
   # locations first:
-  riskiness <- x$parameters_list$workplace_specific_riskiness
+  riskiness <- population_data$workplace_specific_riskiness
   expect_gte(min(riskiness[covered == 1]), 0)
   if (any(covered == 0) && any(covered == 1)) {
     expect_gte(min(riskiness[covered == 1]), 0)
@@ -576,7 +578,7 @@ test_that("generate_intervention_switches() with coverage_target as square_foota
   }
 })
 
-test_that("generate_intervention_switches() errors when both joint and a per-setting intervention are active", {
+test_that("set_intervention_ach() errors when both joint and a per-setting intervention are active", {
   parameters_list <- with_default_ach(get_parameters())
   intervention <- make_intervention(
     name = "test_intervention",
@@ -592,18 +594,109 @@ test_that("generate_intervention_switches() errors when both joint and a per-set
     timestep = 1,
     intervention = intervention
   )
+  expect_error(
+    object = set_intervention_ach(
+      parameters_list = parameters_list,
+      setting = "household",
+      coverage_target = "individuals",
+      coverage_type = "random",
+      timestep = 1,
+      intervention = intervention
+    ),
+    regexp = "Joint interventions cannot be enabled together with setting-type specific interventions"
+  )
+})
+
+# A joint intervention covering every location, so that each location's
+# efficacy is known:
+set_full_joint_intervention <- function(parameters_list, delta, timestep) {
+  set_intervention_ach(
+    parameters_list = parameters_list,
+    setting = "joint",
+    coverage_target = "individuals",
+    coverage_type = "targeted_riskiness",
+    timestep = timestep,
+    intervention = make_intervention(
+      name = "constant_delta",
+      delta_function = function(delta) delta,
+      delta_params = list(delta = delta),
+      coverage = 1
+    )
+  )
+}
+
+expect_full_joint_efficacy <- function(parameters_list, delta, timestep) {
+  population_data <- generate_population_data(parameters_list)
+  intervention_data <- generate_intervention_data(parameters_list, population_data)
+
+  expect_named(intervention_data$efficacy, c("workplace", "school", "leisure"))
+  for (setting in c("workplace", "school", "leisure")) {
+    expected <- delta_to_efficacy(
+      baseline_ach = 4,
+      delta = delta,
+      V = parameters_list[[paste0("volume_per_person_", setting)]]
+    )
+    efficacy <- intervention_data$efficacy[[setting]]
+    expect_equal(efficacy, rep(expected, length(efficacy)))
+    expect_identical(intervention_data$timestep[[setting]], timestep)
+  }
+}
+
+test_that("set_intervention_ach() errors when a joint intervention follows a per-setting one", {
+  parameters_list <- with_default_ach(get_parameters())
+  intervention <- make_intervention(
+    name = "test_intervention",
+    delta_function = function(delta) delta,
+    delta_params = list(delta = 5),
+    coverage = 0.5
+  )
   parameters_list <- set_intervention_ach(
     parameters_list = parameters_list,
-    setting = "household",
+    setting = "workplace",
     coverage_target = "individuals",
     coverage_type = "random",
     timestep = 1,
     intervention = intervention
   )
-
   expect_error(
-    object = create_variables(parameters_list),
-    regexp = "If intervention_joint_active is set to TRUE, setting-type specific intervention switches must be set to FALSE"
+    object = set_full_joint_intervention(parameters_list, delta = 5, timestep = 1),
+    regexp = "Joint interventions cannot be enabled together with setting-type specific interventions"
+  )
+})
+
+test_that("a joint intervention can be set up again, and the last one applies", {
+  parameters_list <- with_default_ach(get_parameters(list(human_population = 2000, number_initial_S = 1995)))
+  parameters_list <- set_full_joint_intervention(parameters_list, delta = 2, timestep = 1)
+  parameters_list <- set_full_joint_intervention(parameters_list, delta = 8, timestep = 5)
+
+  # The joint intervention stays in the joint slots:
+  for (setting in c("workplace", "school", "leisure", "household")) {
+    expect_false(parameters_list[[paste0("intervention_", setting, "_active")]])
+  }
+  expect_full_joint_efficacy(parameters_list, delta = 8, timestep = 5)
+})
+
+test_that("a joint intervention set up by hand applies to workplaces, schools and leisure", {
+  parameters_list <- with_default_ach(get_parameters(list(human_population = 2000, number_initial_S = 1995)))
+  parameters_list$intervention_joint_active <- TRUE
+  parameters_list$intervention_joint_list <- list(make_intervention(
+    name = "constant_delta",
+    delta_function = function(delta) delta,
+    delta_params = list(delta = 3),
+    coverage = 1
+  ))
+  parameters_list$intervention_joint_coverage <- 1
+  parameters_list$intervention_joint_coverage_target <- "individuals"
+  parameters_list$intervention_joint_coverage_type <- "targeted_riskiness"
+  parameters_list$intervention_joint_timestep <- 2
+
+  expect_full_joint_efficacy(parameters_list, delta = 3, timestep = 2)
+
+  # Mixing it with a per-setting intervention by hand is still caught:
+  parameters_list$intervention_household_active <- TRUE
+  expect_error(
+    object = generate_intervention_data(parameters_list, generate_population_data(parameters_list)),
+    regexp = "setting-type specific intervention switches must be set to FALSE"
   )
 })
 
@@ -628,16 +721,17 @@ test_that("generate_joint_intervention_switches() pools workplace, school, and l
     intervention = intervention
   )
 
-  x <- create_variables(parameters_list)
+  population_data <- generate_population_data(parameters_list)
+  intervention_data <- generate_intervention_data(parameters_list, population_data)
 
   # Household is excluded from joint deployment, so it should have no
   # installed intervention and zero efficacy:
-  expect_false(isTRUE(x$parameters_list$intervention_household_active))
-  expect_true(is.null(x$parameters_list$household_specific_efficacy))
+  expect_false(parameters_list$intervention_household_active)
+  expect_false("household" %in% names(intervention_data$efficacy))
 
   # Workplace, school, and leisure should each have some covered locations:
   for (setting in c("workplace", "school", "leisure")) {
-    covered <- x$parameters_list[[paste0("intervention_", setting, "_covered")]]
+    covered <- intervention_data$switches[[setting]]
     expect_true(any(covered == 1))
   }
 })
@@ -667,9 +761,10 @@ test_that("an installed intervention with full coverage reduces every location's
     intervention = intervention
   )
 
-  x <- create_variables(parameters_list)
+  population_data <- generate_population_data(parameters_list)
+  intervention_data <- generate_intervention_data(parameters_list, population_data)
 
-  efficacy <- x$parameters_list$workplace_specific_efficacy
+  efficacy <- intervention_data$efficacy$workplace
   # coverage = 1 with coverage_target = "individuals" allocates until the
   # full headcount budget is met, which can occasionally leave a
   # zero-occupancy location's covered switch at 0 -- so check on average

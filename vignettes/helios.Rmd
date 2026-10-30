@@ -69,8 +69,8 @@ names(parameters_list)
 Next, we define the model variables:
 
 ```{r}
-variables_list <- create_variables(parameters_list)
-variables_list <- variables_list$variables_list
+population_data <- generate_population_data(parameters_list)
+variables_list <- create_variables(parameters_list, population_data)
 names(variables_list)
 ```
 
@@ -113,8 +113,6 @@ data.frame("State" = disease_states, "Count" = disease_state_counts) |>
 There are three age classes: children, adults, and the elderly. The age of each individual remains fixed throughout the simulation.
 
 ```{r}
-parameters_list[c("initial_proportion_child", "initial_proportion_adult", "initial_proportion_elderly")]
-
 age_classes <- variables_list$age_class$get_categories()
 age_class_counts <- purrr::map_vec(age_classes, function(x) variables_list$age_class$get_size_of(values = x))
 
@@ -253,9 +251,9 @@ class(renderer)
 Processes enable queing of events:
 
 ```{r}
-variables_list <- create_variables(parameters_list)
-parameters_list <- variables_list$parameters_list 
-variables_list <- variables_list$variables_list
+population_data <- generate_population_data(parameters_list)
+intervention_data <- generate_intervention_data(parameters_list, population_data)
+variables_list <- create_variables(parameters_list, population_data)
 events_list <- create_events(variables_list = variables_list, parameters_list = parameters_list)
 timesteps <- round(parameters_list$simulation_time/parameters_list$dt)
 renderer <- individual::Render$new(timesteps)
@@ -264,6 +262,8 @@ processes_list <- create_processes(
   variables_list = variables_list,
   events_list = events_list,
   parameters_list = parameters_list,
+  population_data = population_data,
+  intervention_data = intervention_data,
   renderer = renderer
 )
 
