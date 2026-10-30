@@ -4,14 +4,27 @@
 #' @param state Optional simulation state from a previous run, as returned in the
 #'   `state` element of the output list. When provided, the simulation resumes from
 #'   this state. `simulation_time` controls the number of *additional* timesteps to
-#'   run (not the absolute end time). Default is `NULL` (start fresh).
+#'   run (not the absolute end time). With time-varying transmission, beta
+#'   vectors are indexed by day from the start of the original run, so they must
+#'   have a value for every day up to the end of the resumed run. The population
+#'   is rebuilt from the seed saved in the state, so `parameters_list$seed` must
+#'   be `NULL` or that same seed, and the population parameters must not change.
+#'   The random number streams continue from the state, so a run resumed from a
+#'   state matches an uninterrupted run. Default is `NULL` (start fresh).
 #'
 #' @return A list with two elements:
 #'   \describe{
 #'     \item{result}{A data frame of simulation outputs with one row per
-#'       timestep. The columns are described below.}
+#'       timestep simulated in this call. When resuming, `timestep` counts from
+#'       the start of the original run, so the results of successive calls can be
+#'       joined with `rbind()`. The columns are described below.}
 #'     \item{state}{The final simulation state, which can be passed to a subsequent
-#'       call to resume the simulation.}
+#'       call to resume the simulation. A list with elements `timesteps` (the
+#'       number of timesteps simulated so far), `individual` (the state of the
+#'       individual package's variables, events and base R's random number
+#'       generator), `dqrng` (dqrng's random number state) and `seed` (the seed
+#'       that built the population, drawn at random when
+#'       `parameters_list$seed` is `NULL`).}
 #'   }
 #'
 #' The \code{result} data frame always contains the following columns:
@@ -62,13 +75,60 @@
 #' @export
 run_simulation <- function(parameters_list, state = NULL) {
 
-  # Set the seed from the parameter list:
   if (!("seed" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called seed")
   }
-  set.seed(parameters_list$seed)
 
-  # Generate the model variables:
+  if (!is.null(state)) {
+    state_elements <- c("timesteps", "individual", "dqrng", "seed")
+    if (!is.list(state) || !all(state_elements %in% names(state))) {
+      stop(
+        "state must be the state element returned by run_simulation(), a list with elements ",
+        paste(state_elements, collapse = ", ")
+      )
+    }
+    if (round(parameters_list$simulation_time / parameters_list$dt) < 1) {
+      stop("when resuming from a state, simulation_time must cover at least one timestep (dt)")
+    }
+  }
+
+  # A resumed run rebuilds the population from the seed and then overwrites its
+  # variables with the saved ones, so it must use the seed that built the saved
+  # population. A fresh run with seed = NULL draws a seed so it can be saved:
+  if (is.null(state)) {
+    if (is.null(parameters_list$seed)) {
+      parameters_list$seed <- sample.int(.Machine$integer.max, 1)
+    }
+  } else {
+    if (!is.null(parameters_list$seed) && !isTRUE(parameters_list$seed == state$seed)) {
+      stop(
+        "parameters_list$seed (", parameters_list$seed, ") differs from the seed that built ",
+        "the saved population (", state$seed, "). Resume with the same seed or with seed = NULL"
+      )
+    }
+    parameters_list$seed <- state$seed
+  }
+
+  # simulation_loop() takes an absolute end timestep, so when resuming, run
+  # simulation_time's worth of timesteps on from where the saved state ended:
+  start_timestep <- if (is.null(state)) 0 else state$timesteps
+  timesteps <- start_timestep + round(parameters_list$simulation_time / parameters_list$dt)
+
+  # Time-varying betas are indexed by day counted from the start of the original
+  # run, so they must have a value for every day up to the end of this call:
+  if (isTRUE(parameters_list$time_varying_transmission_on)) {
+    end_day <- timestep_to_day(timesteps, parameters_list$dt)
+    beta_names <- c("beta_household", "beta_workplace", "beta_school", "beta_leisure", "beta_community")
+    if (any(lengths(parameters_list[beta_names]) < end_day)) {
+      stop(
+        "when time_varying_transmission_on is TRUE, all setting-specific betas must have a value for every day up to day ",
+        end_day,
+        " (the end of this run, counting from the start of any run it resumes)"
+      )
+    }
+  }
+
+  # Generate the model variables (create_variables() seeds both RNGs):
   variables_list <- create_variables(parameters_list)
   parameters_list <- variables_list$parameters_list  # note: this could be written more nicely and in a way
   variables_list <- variables_list$variables_list    #       that doesn't require recursive modification
@@ -80,7 +140,6 @@ run_simulation <- function(parameters_list, state = NULL) {
   )
 
   # Set up the model renderer:
-  timesteps <- round(parameters_list$simulation_time / parameters_list$dt)
   renderer <- individual::Render$new(timesteps)
 
   # Generate the model processes:
@@ -91,15 +150,34 @@ run_simulation <- function(parameters_list, state = NULL) {
     renderer = renderer
   )
 
+  # individual only saves base R's RNG state, so continue dqrng's stream separately:
+  if (!is.null(state)) {
+    dqrng::dqrng_set_state(state$dqrng)
+  }
+
   # Use individual::simulation_loop() to run the model for the specified number of timesteps
-  final_state <- individual::simulation_loop(
+  individual_state <- individual::simulation_loop(
     variables = variables_list,
     events = unlist(events_list),
     processes = processes_list,
     timesteps = timesteps,
-    state = state
+    state = state$individual,
+    # Continue the saved RNG stream so a resumed run matches an uninterrupted one
+    restore_random_state = TRUE
   )
-  list(result = renderer$to_dataframe(), state = final_state)
+
+  final_state <- list(
+    timesteps = timesteps,
+    individual = individual_state,
+    dqrng = dqrng::dqrng_get_state(),
+    seed = parameters_list$seed
+  )
+
+  # Only return the timesteps simulated in this call:
+  result <- renderer$to_dataframe()
+  result <- result[result$timestep > start_timestep, , drop = FALSE]
+  rownames(result) <- NULL
+  list(result = result, state = final_state)
 }
 
 #' Run helios simulations using table of parameter values

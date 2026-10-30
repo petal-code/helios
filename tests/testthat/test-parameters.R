@@ -14,6 +14,22 @@ test_that("get_parameters() accepts setting-specific betas as vectors matching s
   )
 })
 
+test_that("get_parameters() accepts setting-specific betas longer than simulation_time, so they can cover resumed runs", {
+  expect_no_error(
+    get_parameters(
+      overrides = list(
+        simulation_time = 30,
+        time_varying_transmission_on = TRUE,
+        beta_household = rep(0.5, 60),
+        beta_school = rep(0.5, 60),
+        beta_workplace = rep(0.5, 60),
+        beta_leisure = rep(0.5, 60),
+        beta_community = rep(0.2, 60)
+      )
+    )
+  )
+})
+
 test_that("get_parameters() errors when time_varying_transmission_on is TRUE but a setting-specific beta is still a constant", {
   expect_error(
     get_parameters(
@@ -22,11 +38,11 @@ test_that("get_parameters() errors when time_varying_transmission_on is TRUE but
         time_varying_transmission_on = TRUE
       )
     ),
-    regexp = "when time_varying_transmission_on is TRUE, all setting-specific betas must be numeric vectors of length equal to simulation_time"
+    regexp = "when time_varying_transmission_on is TRUE, all setting-specific betas must be numeric vectors with at least simulation_time values"
   )
 })
 
-test_that("get_parameters() errors when a setting-specific beta length does not match simulation_time under time-varying transmission", {
+test_that("get_parameters() errors when a setting-specific beta is shorter than simulation_time under time-varying transmission", {
   expect_error(
     get_parameters(
       overrides = list(
@@ -36,10 +52,10 @@ test_that("get_parameters() errors when a setting-specific beta length does not 
         beta_school = rep(0.5, 30),
         beta_workplace = rep(0.5, 30),
         beta_leisure = rep(0.5, 30),
-        beta_community = rep(0.2, 100)
+        beta_community = rep(0.2, 10)
       )
     ),
-    regexp = "when time_varying_transmission_on is TRUE, all setting-specific betas must be numeric vectors of length equal to simulation_time"
+    regexp = "when time_varying_transmission_on is TRUE, all setting-specific betas must be numeric vectors with at least simulation_time values"
   )
 })
 
@@ -58,7 +74,7 @@ test_that("get_parameters() errors when a setting-specific beta contains NAs und
         beta_community = rep(0.2, 30)
       )
     ),
-    regexp = "when time_varying_transmission_on is TRUE, all setting-specific betas must be numeric vectors of length equal to simulation_time"
+    regexp = "when time_varying_transmission_on is TRUE, all setting-specific betas must be numeric vectors with at least simulation_time values"
   )
 })
 

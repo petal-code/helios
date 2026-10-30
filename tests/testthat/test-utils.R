@@ -51,3 +51,22 @@ test_that("timestep_to_day() errors when dt is zero or negative", {
   expect_error(timestep_to_day(1, 0),  "dt must be a positive numeric value")
   expect_error(timestep_to_day(1, -1), "dt must be a positive numeric value")
 })
+
+test_that("seed_rng() seeds both base R's and dqrng's random number generators", {
+  draw <- function() list(stats::runif(5), dqrng::dqrunif(5))
+
+  seed_rng(42)
+  first <- draw()
+  seed_rng(42)
+  second <- draw()
+
+  expect_identical(first, second)
+})
+
+test_that("seed_rng() leaves base R's stream as set.seed() alone would", {
+  set.seed(42)
+  expected <- stats::runif(5)
+  seed_rng(42)
+
+  expect_identical(stats::runif(5), expected)
+})

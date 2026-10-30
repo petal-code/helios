@@ -18,7 +18,9 @@ These parameters are:
 \item \code{number_initial_E}: number of humans initially Exposed (state = E)
 \item \code{number_initial_I}: number of humans initially Infectious (state = I)
 \item \code{number_initial_R}: number of humans initially Recovered (state = R)
-\item \code{seed}: a seed to run the simulation with
+\item \code{seed}: a seed to run the simulation with. It seeds both R's generator
+and dqrng's (used for the daily leisure draw). With \code{NULL},
+\code{run_simulation()} draws a seed and saves it in the returned state
 \item \code{mean_household_size}: TBD
 \item \code{workplace_prop_max}: maximum size of a workplace as a proportion of total adult population size
 \item \code{workplace_a}: the a parameter for the Zipf-like distribution on workplace size
@@ -36,28 +38,30 @@ These parameters are:
 \item \code{prob_inf_external}: The probability a susceptible individual is infected from an external source
 \item \code{beta_household}: The transmission rate for household contacts, used to compute
 the per-timestep force of infection in household settings. A numeric scalar
-when \code{time_varying_transmission_on} is \code{FALSE}, or a numeric vector of length
-\code{simulation_time} (one value per simulated calendar day) when it is \code{TRUE}.
+when \code{time_varying_transmission_on} is \code{FALSE}, or a numeric vector of at least
+\code{simulation_time} values (one value per simulated calendar day) when it is \code{TRUE}.
 \item \code{beta_workplace}: The transmission rate for workplace contacts, used to compute
 the per-timestep force of infection in workplace settings. A numeric scalar
-when \code{time_varying_transmission_on} is \code{FALSE}, or a numeric vector of length
-\code{simulation_time} (one value per simulated calendar day) when it is \code{TRUE}.
+when \code{time_varying_transmission_on} is \code{FALSE}, or a numeric vector of at least
+\code{simulation_time} values (one value per simulated calendar day) when it is \code{TRUE}.
 \item \code{beta_school}: The transmission rate for school contacts, used to compute
 the per-timestep force of infection in school settings. A numeric scalar
-when \code{time_varying_transmission_on} is \code{FALSE}, or a numeric vector of length
-\code{simulation_time} (one value per simulated calendar day) when it is \code{TRUE}.
+when \code{time_varying_transmission_on} is \code{FALSE}, or a numeric vector of at least
+\code{simulation_time} values (one value per simulated calendar day) when it is \code{TRUE}.
 \item \code{beta_leisure}: The transmission rate for leisure contacts, used to compute
 the per-timestep force of infection in leisure settings. A numeric scalar
-when \code{time_varying_transmission_on} is \code{FALSE}, or a numeric vector of length
-\code{simulation_time} (one value per simulated calendar day) when it is \code{TRUE}.
+when \code{time_varying_transmission_on} is \code{FALSE}, or a numeric vector of at least
+\code{simulation_time} values (one value per simulated calendar day) when it is \code{TRUE}.
 \item \code{beta_community}: The transmission rate for community contacts, used to compute
 the per-timestep force of infection in community settings. A numeric scalar
-when \code{time_varying_transmission_on} is \code{FALSE}, or a numeric vector of length
-\code{simulation_time} (one value per simulated calendar day) when it is \code{TRUE}.
+when \code{time_varying_transmission_on} is \code{FALSE}, or a numeric vector of at least
+\code{simulation_time} values (one value per simulated calendar day) when it is \code{TRUE}.
 \item \code{time_varying_transmission_on}: Logical flag (default \code{FALSE}). When \code{FALSE},
 each setting-specific beta must be a numeric scalar. When \code{TRUE}, each
-setting-specific beta must instead be a numeric vector of length
-\code{simulation_time}, giving that setting's beta for each simulated calendar day.
+setting-specific beta must instead be a numeric vector of at least
+\code{simulation_time} values, giving that setting's beta for each simulated
+calendar day. Days are counted from the start of the original run, so when
+resuming from a saved state the vectors must cover the whole run.
 \item \code{dt}: TBD
 \item \code{simulation_time}: TBD
 \item \code{household_distribution_country}: TBD

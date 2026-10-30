@@ -340,19 +340,15 @@ create_SE_process <- function(
     #=== Leisure FOI ===#
     #=====================#
     if ((t * parameters_list$dt) == floor((t * parameters_list$dt))) {
-      # Creating vector to store which leisure location individuals visit on a given day
-      leisure_visit <- vector(
-        mode = "numeric",
-        length = parameters_list$human_population
-      )
-
       # For each individual, work out which leisure location they go to that particular day. 0 = they don't go to any
-      for (i in seq(parameters_list$human_population)) {
-        # Sampling which leisure location actually visited (0 = visit none and staying home) from the leisure locations individuals have associated with them (and could visit)
-        leisure_visit[i] <- leisure_indvidual_possible_visits_list[[
-          i
-        ]][dqrng::dqsample.int(n = 7, size = 1)]
-      }
+      # Sampling which leisure location actually visited (0 = visit none and staying home) from the leisure locations individuals have associated with them (and could visit)
+      # Uses dqrng for speed; it is seeded alongside base R's RNG by seed_rng()
+      visit_day <- dqrng::dqsample.int(n = 7, size = parameters_list$human_population, replace = TRUE)
+      leisure_visit <- vapply(
+        seq_len(parameters_list$human_population),
+        function(i) leisure_indvidual_possible_visits_list[[i]][visit_day[i]],
+        numeric(1)
+      )
 
       # Updating the leisure setting visited that day
       ## Note that we include all leisure locations as categories irrespective of whether they're visited on a particular day

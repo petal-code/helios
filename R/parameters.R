@@ -15,7 +15,9 @@
 #' * `number_initial_E`: number of humans initially Exposed (state = E)
 #' * `number_initial_I`: number of humans initially Infectious (state = I)
 #' * `number_initial_R`: number of humans initially Recovered (state = R)
-#' * `seed`: a seed to run the simulation with
+#' * `seed`: a seed to run the simulation with. It seeds both R's generator
+#'   and dqrng's (used for the daily leisure draw). With `NULL`,
+#'   `run_simulation()` draws a seed and saves it in the returned state
 #' * `mean_household_size`: TBD
 #' * `workplace_prop_max`: maximum size of a workplace as a proportion of total adult population size
 #' * `workplace_a`: the a parameter for the Zipf-like distribution on workplace size
@@ -33,28 +35,30 @@
 #' * `prob_inf_external`: The probability a susceptible individual is infected from an external source
 #' * `beta_household`: The transmission rate for household contacts, used to compute
 #'   the per-timestep force of infection in household settings. A numeric scalar
-#'   when `time_varying_transmission_on` is `FALSE`, or a numeric vector of length
-#'   `simulation_time` (one value per simulated calendar day) when it is `TRUE`.
+#'   when `time_varying_transmission_on` is `FALSE`, or a numeric vector of at least
+#'   `simulation_time` values (one value per simulated calendar day) when it is `TRUE`.
 #' * `beta_workplace`: The transmission rate for workplace contacts, used to compute
 #'   the per-timestep force of infection in workplace settings. A numeric scalar
-#'   when `time_varying_transmission_on` is `FALSE`, or a numeric vector of length
-#'   `simulation_time` (one value per simulated calendar day) when it is `TRUE`.
+#'   when `time_varying_transmission_on` is `FALSE`, or a numeric vector of at least
+#'   `simulation_time` values (one value per simulated calendar day) when it is `TRUE`.
 #' * `beta_school`: The transmission rate for school contacts, used to compute
 #'   the per-timestep force of infection in school settings. A numeric scalar
-#'   when `time_varying_transmission_on` is `FALSE`, or a numeric vector of length
-#'   `simulation_time` (one value per simulated calendar day) when it is `TRUE`.
+#'   when `time_varying_transmission_on` is `FALSE`, or a numeric vector of at least
+#'   `simulation_time` values (one value per simulated calendar day) when it is `TRUE`.
 #' * `beta_leisure`: The transmission rate for leisure contacts, used to compute
 #'   the per-timestep force of infection in leisure settings. A numeric scalar
-#'   when `time_varying_transmission_on` is `FALSE`, or a numeric vector of length
-#'   `simulation_time` (one value per simulated calendar day) when it is `TRUE`.
+#'   when `time_varying_transmission_on` is `FALSE`, or a numeric vector of at least
+#'   `simulation_time` values (one value per simulated calendar day) when it is `TRUE`.
 #' * `beta_community`: The transmission rate for community contacts, used to compute
 #'   the per-timestep force of infection in community settings. A numeric scalar
-#'   when `time_varying_transmission_on` is `FALSE`, or a numeric vector of length
-#'   `simulation_time` (one value per simulated calendar day) when it is `TRUE`.
+#'   when `time_varying_transmission_on` is `FALSE`, or a numeric vector of at least
+#'   `simulation_time` values (one value per simulated calendar day) when it is `TRUE`.
 #' * `time_varying_transmission_on`: Logical flag (default `FALSE`). When `FALSE`,
 #'   each setting-specific beta must be a numeric scalar. When `TRUE`, each
-#'   setting-specific beta must instead be a numeric vector of length
-#'   `simulation_time`, giving that setting's beta for each simulated calendar day.
+#'   setting-specific beta must instead be a numeric vector of at least
+#'   `simulation_time` values, giving that setting's beta for each simulated
+#'   calendar day. Days are counted from the start of the original run, so when
+#'   resuming from a saved state the vectors must cover the whole run.
 #' * `dt`: TBD
 #' * `simulation_time`: TBD
 #' * `household_distribution_country`: TBD
@@ -414,20 +418,21 @@ get_parameters <- function(overrides = list(), archetype = "none") {
 
   # Check that all setting-specific betas are of the correct length and type:
   # a single constant value when time-varying transmission is off, or a numeric vector of
-  # length simulation_time (one value per simulated day, with no NAs) when
-  # time-varying transmission is on
+  # at least simulation_time values (one value per simulated day, with no NAs) when
+  # time-varying transmission is on. Vectors may be longer so that they can also cover
+  # runs resumed from a saved state (checked in run_simulation())
   if (isTRUE(parameters$time_varying_transmission_on)) {
     if (
       any(
-        !is.numeric(parameters$beta_household) | length(parameters$beta_household) != parameters$simulation_time | anyNA(parameters$beta_household),
-        !is.numeric(parameters$beta_school) | length(parameters$beta_school) != parameters$simulation_time | anyNA(parameters$beta_school),
-        !is.numeric(parameters$beta_workplace) | length(parameters$beta_workplace) != parameters$simulation_time | anyNA(parameters$beta_workplace),
-        !is.numeric(parameters$beta_leisure) | length(parameters$beta_leisure) != parameters$simulation_time | anyNA(parameters$beta_leisure),
-        !is.numeric(parameters$beta_community) | length(parameters$beta_community) != parameters$simulation_time | anyNA(parameters$beta_community)
+        !is.numeric(parameters$beta_household) | length(parameters$beta_household) < parameters$simulation_time | anyNA(parameters$beta_household),
+        !is.numeric(parameters$beta_school) | length(parameters$beta_school) < parameters$simulation_time | anyNA(parameters$beta_school),
+        !is.numeric(parameters$beta_workplace) | length(parameters$beta_workplace) < parameters$simulation_time | anyNA(parameters$beta_workplace),
+        !is.numeric(parameters$beta_leisure) | length(parameters$beta_leisure) < parameters$simulation_time | anyNA(parameters$beta_leisure),
+        !is.numeric(parameters$beta_community) | length(parameters$beta_community) < parameters$simulation_time | anyNA(parameters$beta_community)
       )
     ) {
       stop(
-        "ERROR: when time_varying_transmission_on is TRUE, all setting-specific betas must be numeric vectors of length equal to simulation_time, with no NAs"
+        "ERROR: when time_varying_transmission_on is TRUE, all setting-specific betas must be numeric vectors with at least simulation_time values, with no NAs"
       )
     }
   } else {

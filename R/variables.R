@@ -10,7 +10,7 @@ create_variables <- function(parameters_list) {
   if (!("seed" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called seed")
   }
-  set.seed(parameters_list$seed)
+  seed_rng(parameters_list$seed)
 
   # Disease state variable
   disease_states <- c("S", "E", "I_mild", "I_hosp", "R", "D")
