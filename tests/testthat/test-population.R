@@ -32,10 +32,10 @@ check_population_invariant <- function(parameters) {
   expect_length(population_data$workplace_specific_ach, num_workplaces)
   expect_length(population_data$leisure_specific_ach, num_leisure)
 
-  expect_length(population_data$household_specific_riskiness, num_households)
-  expect_length(population_data$school_specific_riskiness, num_schools)
-  expect_length(population_data$workplace_specific_riskiness, num_workplaces)
-  expect_length(population_data$leisure_specific_riskiness, num_leisure)
+  expect_length(population_data$household_specific_far_field_riskiness, num_households)
+  expect_length(population_data$school_specific_far_field_riskiness, num_schools)
+  expect_length(population_data$workplace_specific_far_field_riskiness, num_workplaces)
+  expect_length(population_data$leisure_specific_far_field_riskiness, num_leisure)
 
   # There's a 1:1 mapping between households and individuals. That is not true
   # of other locations, eg. not everyone visits a school or a workplace.

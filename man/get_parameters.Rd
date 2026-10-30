@@ -100,7 +100,7 @@ Indoor Air Volume Per Person Parameters (used in the Wells-Riley calculation, wh
 \item \code{volume_per_person_household}: average indoor air volume per person in a household; default = 50 (assumes ~20 m^2 floor area at 2.5 m height)
 }
 
-Wells-Riley Parameters (used by \code{convert_ach_to_riskiness()} to derive per-location riskiness from ACH, and by \code{calculate_efficacy_from_ach()} to derive per-location intervention efficacy from ACH and the intervention delta - the extra equivalent ACH an intervention adds to covered locations, see \code{\link[=make_intervention]{make_intervention()}}):
+Wells-Riley Parameters (used by \code{convert_ach_to_riskiness()} to derive per-location far-field riskiness from ACH, and by \code{calculate_efficacy_from_ach()} to derive per-location far-field intervention efficacy from ACH and the intervention delta - the extra equivalent ACH an intervention adds to covered locations, see \code{\link[=make_intervention]{make_intervention()}}):
 \itemize{
 \item \code{wells_riley_emission_rate}: rate at which an infectious individual emits airborne infectious units (denoted pi); units = FFU (focus-forming units)/hour; default = 365 (Blatchley & Cui 2023, Table 2, scenario C: speaking; scenario D, singing, is 2335)
 \item \code{wells_riley_decay_rate}: natural decay rate of airborne pathogens (denoted k_D); units = 1/hour; default = 0.64 (Blatchley & Cui 2023)
@@ -117,7 +117,7 @@ Intervention Parameters (populated by \code{set_intervention_ach()}; users do no
 \item \verb{intervention_<s>_list}: list of intervention objects (each as returned by \code{make_intervention()}) deployed in scope \if{html}{\out{<s>}}. Currently single-intervention only — list always has length 1 when active. Default = NULL
 \item \verb{intervention_<s>_coverage}: fraction of total setting size to cover (numeric in \verb{[0, 1]}); inherited from the intervention object's \code{coverage} field. Default = NULL
 \item \verb{intervention_<s>_coverage_target}: what the coverage fraction applies to. Either "individuals" or "square_footage". Default = NULL
-\item \verb{intervention_<s>_coverage_type}: how locations are selected for coverage. Either "random" (uniform sampling) or "targeted_riskiness" (locations ranked in decreasing order of riskiness). Default = NULL
+\item \verb{intervention_<s>_coverage_type}: how locations are selected for coverage. Either "random" (uniform sampling) or "targeted_riskiness" (locations ranked in decreasing order of far-field riskiness). Default = NULL
 \item \verb{intervention_<s>_timestep}: first simulation timestep at which the intervention's efficacy is applied in the FOI calculation. Default = NULL
 }
 

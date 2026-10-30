@@ -130,9 +130,10 @@ create_SE_process <- function(
     as.integer(unlist(population_data$initial_leisure_settings, use.names = FALSE)),
     nrow = 7
   )
-  num_leisure <- length(population_data$leisure_specific_riskiness)
+  num_leisure <- length(population_data$leisure_specific_far_field_riskiness)
 
-  # Each location's riskiness at timestep t, reduced by the setting's intervention once it's in place
+  # Each location's far-field riskiness at timestep t, reduced by the setting's intervention once
+  # it's in place
   riskiness_at <- function(setting, t) {
     setting_riskiness(population_data, intervention_data, setting, t)
   }
@@ -256,14 +257,14 @@ create_SE_process <- function(
 #
 # Each individual has a household (ids from 1), and a school and workplace (ids from 0, for none).
 # Each location's size is its number of individuals. Each individual's leisure locations exist,
-# and every location has one riskiness value, and one efficacy value in settings with an
+# and every location has one far-field riskiness value, and one efficacy value in settings with an
 # intervention.
 check_settings <- function(population_data, intervention_data, N) {
   for (setting in c("household", "school", "workplace", "leisure")) {
     num_locations <- length(population_data$setting_sizes[[setting]])
-    if (length(population_data[[paste0(setting, "_specific_riskiness")]]) != num_locations) {
+    if (length(population_data[[paste0(setting, "_specific_far_field_riskiness")]]) != num_locations) {
       stop(
-        "population_data$", setting, "_specific_riskiness must have one value for each of the ",
+        "population_data$", setting, "_specific_far_field_riskiness must have one value for each of the ",
         num_locations, " locations in population_data$setting_sizes$", setting
       )
     }
@@ -312,11 +313,11 @@ check_settings <- function(population_data, intervention_data, N) {
   }
 }
 
-# Each location's riskiness in `setting` at timestep t, reduced by the setting's intervention once
-# it's in place. The intervention data has efficacy and a timestep only for settings with an active
-# intervention, including those a joint intervention covers.
+# Each location's far-field riskiness in `setting` at timestep t, reduced by the setting's
+# intervention once it's in place. The intervention data has efficacy and a timestep only for
+# settings with an active intervention, including those a joint intervention covers.
 setting_riskiness <- function(population_data, intervention_data, setting, t) {
-  riskiness <- population_data[[paste0(setting, "_specific_riskiness")]]
+  riskiness <- population_data[[paste0(setting, "_specific_far_field_riskiness")]]
   efficacy <- intervention_data$efficacy[[setting]]
   if (!is.null(efficacy) && t > intervention_data$timestep[[setting]]) {
     riskiness <- riskiness * (1 - efficacy)

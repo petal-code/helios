@@ -58,7 +58,7 @@ with_household_size <- function(population, mean_size) {
   population$initial_household_settings <- households
   population$setting_sizes$household <- tabulate(households, n_households)
   population$household_specific_ach <- rep_len(population$household_specific_ach, n_households)
-  population$household_specific_riskiness <- rep_len(population$household_specific_riskiness, n_households)
+  population$household_specific_far_field_riskiness <- rep_len(population$household_specific_far_field_riskiness, n_households)
   population
 }
 

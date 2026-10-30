@@ -570,7 +570,7 @@ test_that("generate_intervention_switches() with coverage_target as square_foota
 
   # Targeted-riskiness should preferentially cover the riskiest (lowest-ACH)
   # locations first:
-  riskiness <- population_data$workplace_specific_riskiness
+  riskiness <- population_data$workplace_specific_far_field_riskiness
   expect_gte(min(riskiness[covered == 1]), 0)
   if (any(covered == 0) && any(covered == 1)) {
     expect_gte(min(riskiness[covered == 1]), 0)

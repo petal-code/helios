@@ -61,8 +61,10 @@ test_that("create_SE_process() refuses settings that don't agree with each other
 
   # One school riskiness value too many:
   broken <- inputs
-  broken$population_data$school_specific_riskiness <- c(broken$population_data$school_specific_riskiness, 1)
-  expect_error(create_SE_from(broken), "school_specific_riskiness must have one value")
+  broken$population_data$school_specific_far_field_riskiness <- c(
+    broken$population_data$school_specific_far_field_riskiness, 1
+  )
+  expect_error(create_SE_from(broken), "school_specific_far_field_riskiness must have one value")
 
   # A leisure location that doesn't exist:
   broken <- inputs
@@ -113,7 +115,7 @@ test_that("setting_riskiness() applies a joint intervention after its timestep",
   intervention_data <- generate_intervention_data(parameters_list, population_data)
 
   for (setting in c("workplace", "school", "leisure")) {
-    riskiness <- population_data[[paste0(setting, "_specific_riskiness")]]
+    riskiness <- population_data[[paste0(setting, "_specific_far_field_riskiness")]]
     efficacy <- intervention_data$efficacy[[setting]]
     expect_identical(setting_riskiness(population_data, intervention_data, setting, 3), riskiness)
     expect_identical(setting_riskiness(population_data, intervention_data, setting, 4), riskiness * (1 - efficacy))
@@ -121,6 +123,6 @@ test_that("setting_riskiness() applies a joint intervention after its timestep",
   # A joint intervention doesn't cover households:
   expect_identical(
     setting_riskiness(population_data, intervention_data, "household", 4),
-    population_data$household_specific_riskiness
+    population_data$household_specific_far_field_riskiness
   )
 })
