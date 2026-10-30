@@ -20,8 +20,14 @@ run_simulation(parameters_list, state = NULL)
   Optional simulation state from a previous run, as returned in the
   `state` element of the output list. When provided, the simulation
   resumes from this state. `simulation_time` controls the number of
-  *additional* timesteps to run (not the absolute end time). Default is
-  `NULL` (start fresh).
+  *additional* timesteps to run (not the absolute end time). With
+  time-varying transmission, beta vectors are indexed by day from the
+  start of the original run, so they must have a value for every day up
+  to the end of the resumed run. The population is rebuilt from the seed
+  saved in the state, so `parameters_list$seed` must be `NULL` or that
+  same seed, and the population parameters must not change. The random
+  number streams continue from the state, so a run resumed from a state
+  matches an uninterrupted run. Default is `NULL` (start fresh).
 
 ## Value
 
@@ -29,13 +35,21 @@ A list with two elements:
 
 - result:
 
-  A data frame of simulation outputs with one row per timestep. The
-  columns are described below.
+  A data frame of simulation outputs with one row per timestep simulated
+  in this call. When resuming, `timestep` counts from the start of the
+  original run, so the results of successive calls can be joined with
+  [`rbind()`](https://rdrr.io/r/base/cbind.html). The columns are
+  described below.
 
 - state:
 
   The final simulation state, which can be passed to a subsequent call
-  to resume the simulation.
+  to resume the simulation. A list with elements `timesteps` (the number
+  of timesteps simulated so far), `individual` (the state of the
+  individual package's variables, events and base R's random number
+  generator), `dqrng` (dqrng's random number state) and `seed` (the seed
+  that built the population, drawn at random when `parameters_list$seed`
+  is `NULL`).
 
 The `result` data frame always contains the following columns:
 

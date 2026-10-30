@@ -41,7 +41,11 @@ get_parameters(overrides = list(), archetype = "none")
 
   - `number_initial_R`: number of humans initially Recovered (state = R)
 
-  - `seed`: a seed to run the simulation with
+  - `seed`: a seed to run the simulation with. It seeds both R's
+    generator and dqrng's (used for the daily leisure draw). With
+    `NULL`,
+    [`run_simulation()`](https://mrc-ide.github.io/helios/reference/run_simulation.md)
+    draws a seed and saves it in the returned state
 
   - `mean_household_size`: TBD
 
@@ -84,38 +88,40 @@ get_parameters(overrides = list(), archetype = "none")
   - `beta_household`: The transmission rate for household contacts, used
     to compute the per-timestep force of infection in household
     settings. A numeric scalar when `time_varying_transmission_on` is
-    `FALSE`, or a numeric vector of length `simulation_time` (one value
-    per simulated calendar day) when it is `TRUE`.
+    `FALSE`, or a numeric vector of at least `simulation_time` values
+    (one value per simulated calendar day) when it is `TRUE`.
 
   - `beta_workplace`: The transmission rate for workplace contacts, used
     to compute the per-timestep force of infection in workplace
     settings. A numeric scalar when `time_varying_transmission_on` is
-    `FALSE`, or a numeric vector of length `simulation_time` (one value
-    per simulated calendar day) when it is `TRUE`.
+    `FALSE`, or a numeric vector of at least `simulation_time` values
+    (one value per simulated calendar day) when it is `TRUE`.
 
   - `beta_school`: The transmission rate for school contacts, used to
     compute the per-timestep force of infection in school settings. A
     numeric scalar when `time_varying_transmission_on` is `FALSE`, or a
-    numeric vector of length `simulation_time` (one value per simulated
-    calendar day) when it is `TRUE`.
+    numeric vector of at least `simulation_time` values (one value per
+    simulated calendar day) when it is `TRUE`.
 
   - `beta_leisure`: The transmission rate for leisure contacts, used to
     compute the per-timestep force of infection in leisure settings. A
     numeric scalar when `time_varying_transmission_on` is `FALSE`, or a
-    numeric vector of length `simulation_time` (one value per simulated
-    calendar day) when it is `TRUE`.
+    numeric vector of at least `simulation_time` values (one value per
+    simulated calendar day) when it is `TRUE`.
 
   - `beta_community`: The transmission rate for community contacts, used
     to compute the per-timestep force of infection in community
     settings. A numeric scalar when `time_varying_transmission_on` is
-    `FALSE`, or a numeric vector of length `simulation_time` (one value
-    per simulated calendar day) when it is `TRUE`.
+    `FALSE`, or a numeric vector of at least `simulation_time` values
+    (one value per simulated calendar day) when it is `TRUE`.
 
   - `time_varying_transmission_on`: Logical flag (default `FALSE`). When
     `FALSE`, each setting-specific beta must be a numeric scalar. When
     `TRUE`, each setting-specific beta must instead be a numeric vector
-    of length `simulation_time`, giving that setting's beta for each
-    simulated calendar day.
+    of at least `simulation_time` values, giving that setting's beta for
+    each simulated calendar day. Days are counted from the start of the
+    original run, so when resuming from a saved state the vectors must
+    cover the whole run.
 
   - `dt`: TBD
 
