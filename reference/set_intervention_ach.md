@@ -4,16 +4,17 @@ Stores a single intervention object (as produced by
 [`make_intervention()`](https://mrc-ide.github.io/helios/reference/make_intervention.md))
 into the parameters list under the chosen `setting`. The intervention is
 not yet allocated to specific locations — that happens later via
-[`generate_intervention_switches()`](https://mrc-ide.github.io/helios/reference/generate_intervention_switches.md)
+[`generate_intervention_data()`](https://mrc-ide.github.io/helios/reference/generate_intervention_data.md)
 when
-[`create_variables()`](https://mrc-ide.github.io/helios/reference/create_variables.md)
+[`run_simulation()`](https://mrc-ide.github.io/helios/reference/run_simulation.md)
 runs.
 
 Setting "joint" pools workplace + school + leisure into a single
 coverage budget; household is intentionally excluded from joint
 deployment. The four per-setting options ("workplace", "school",
 "leisure", "household") install the intervention independently into one
-setting.
+setting. A joint intervention cannot be combined with setting-type
+specific interventions.
 
 Currently single-intervention only — passing more than one intervention
 will error. Multi-intervention support lives on a separate branch.
@@ -79,6 +80,7 @@ Other intervention:
 [`calculate_efficacy_from_ach()`](https://mrc-ide.github.io/helios/reference/calculate_efficacy_from_ach.md),
 [`delta_to_efficacy()`](https://mrc-ide.github.io/helios/reference/delta_to_efficacy.md),
 [`efficacy_to_delta()`](https://mrc-ide.github.io/helios/reference/efficacy_to_delta.md),
+[`generate_intervention_data()`](https://mrc-ide.github.io/helios/reference/generate_intervention_data.md),
 [`generate_intervention_switches()`](https://mrc-ide.github.io/helios/reference/generate_intervention_switches.md),
 [`generate_joint_intervention_switches()`](https://mrc-ide.github.io/helios/reference/generate_joint_intervention_switches.md),
 [`generate_setting_intervention_switches()`](https://mrc-ide.github.io/helios/reference/generate_setting_intervention_switches.md),

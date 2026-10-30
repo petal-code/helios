@@ -56,115 +56,101 @@ The names of all parameters are as follows:
 ``` r
 
 names(parameters_list)
-#>   [1] "human_population"                      
-#>   [2] "initial_proportion_child"              
-#>   [3] "initial_proportion_adult"              
-#>   [4] "initial_proportion_elderly"            
-#>   [5] "number_initial_S"                      
-#>   [6] "number_initial_E"                      
-#>   [7] "number_initial_I"                      
-#>   [8] "number_initial_R"                      
-#>   [9] "seed"                                  
-#>  [10] "mean_household_size"                   
-#>  [11] "workplace_prop_max"                    
-#>  [12] "workplace_a"                           
-#>  [13] "workplace_c"                           
-#>  [14] "school_prop_max"                       
-#>  [15] "school_meanlog"                        
-#>  [16] "school_sdlog"                          
-#>  [17] "school_student_staff_ratio"            
-#>  [18] "leisure_prob_visit"                    
-#>  [19] "leisure_mean_number_settings"          
-#>  [20] "leisure_mean_size"                     
-#>  [21] "leisure_overdispersion_size"           
-#>  [22] "leisure_prop_max"                      
-#>  [23] "duration_exposed"                      
-#>  [24] "duration_infectious"                   
-#>  [25] "beta_household"                        
-#>  [26] "beta_workplace"                        
-#>  [27] "beta_school"                           
-#>  [28] "beta_leisure"                          
-#>  [29] "beta_community"                        
-#>  [30] "time_varying_transmission_on"          
-#>  [31] "dt"                                    
-#>  [32] "simulation_time"                       
-#>  [33] "render_diagnostics"                    
-#>  [34] "household_distribution_country"        
-#>  [35] "school_distribution_country"           
-#>  [36] "workplace_distribution_country"        
-#>  [37] "endemic_or_epidemic"                   
-#>  [38] "duration_immune"                       
-#>  [39] "prob_inf_external"                     
-#>  [40] "setting_specific_ach_workplace"        
-#>  [41] "setting_specific_ach_workplace_mean"   
-#>  [42] "setting_specific_ach_workplace_sd"     
-#>  [43] "setting_specific_ach_school"           
-#>  [44] "setting_specific_ach_school_mean"      
-#>  [45] "setting_specific_ach_school_sd"        
-#>  [46] "setting_specific_ach_leisure"          
-#>  [47] "setting_specific_ach_leisure_mean"     
-#>  [48] "setting_specific_ach_leisure_sd"       
-#>  [49] "setting_specific_ach_household"        
-#>  [50] "setting_specific_ach_household_mean"   
-#>  [51] "setting_specific_ach_household_sd"     
-#>  [52] "default_ach_workplace"                 
-#>  [53] "default_ach_school"                    
-#>  [54] "default_ach_leisure"                   
-#>  [55] "default_ach_household"                 
-#>  [56] "volume_per_person_workplace"           
-#>  [57] "volume_per_person_school"              
-#>  [58] "volume_per_person_leisure"             
-#>  [59] "volume_per_person_household"           
-#>  [60] "wells_riley_emission_rate"             
-#>  [61] "wells_riley_decay_rate"                
-#>  [62] "wells_riley_infection_prob_per_ffu"    
-#>  [63] "wells_riley_respiratory_rate_factor"   
-#>  [64] "wells_riley_time_in_room"              
-#>  [65] "intervention_joint_active"             
-#>  [66] "intervention_joint_list"               
-#>  [67] "intervention_joint_coverage"           
-#>  [68] "intervention_joint_coverage_target"    
-#>  [69] "intervention_joint_coverage_type"      
-#>  [70] "intervention_joint_timestep"           
-#>  [71] "intervention_workplace_active"         
-#>  [72] "intervention_workplace_list"           
-#>  [73] "intervention_workplace_coverage"       
-#>  [74] "intervention_workplace_coverage_target"
-#>  [75] "intervention_workplace_coverage_type"  
-#>  [76] "intervention_workplace_timestep"       
-#>  [77] "intervention_workplace_covered"        
-#>  [78] "intervention_school_active"            
-#>  [79] "intervention_school_list"              
-#>  [80] "intervention_school_coverage"          
-#>  [81] "intervention_school_coverage_target"   
-#>  [82] "intervention_school_coverage_type"     
-#>  [83] "intervention_school_timestep"          
-#>  [84] "intervention_school_covered"           
-#>  [85] "intervention_leisure_active"           
-#>  [86] "intervention_leisure_list"             
-#>  [87] "intervention_leisure_coverage"         
-#>  [88] "intervention_leisure_coverage_target"  
-#>  [89] "intervention_leisure_coverage_type"    
-#>  [90] "intervention_leisure_timestep"         
-#>  [91] "intervention_leisure_covered"          
-#>  [92] "intervention_household_active"         
-#>  [93] "intervention_household_list"           
-#>  [94] "intervention_household_coverage"       
-#>  [95] "intervention_household_coverage_target"
-#>  [96] "intervention_household_coverage_type"  
-#>  [97] "intervention_household_timestep"       
-#>  [98] "intervention_household_covered"        
-#>  [99] "size_per_individual_workplace"         
-#> [100] "size_per_individual_school"            
-#> [101] "size_per_individual_leisure"           
-#> [102] "size_per_individual_household"         
-#> [103] "prob_hosp_child"                       
-#> [104] "prob_hosp_adult"                       
-#> [105] "prob_hosp_elderly"                     
-#> [106] "prob_death_hosp_child"                 
-#> [107] "prob_death_hosp_adult"                 
-#> [108] "prob_death_hosp_elderly"               
-#> [109] "duration_hospitalized"
+#>  [1] "human_population"                      
+#>  [2] "number_initial_S"                      
+#>  [3] "number_initial_E"                      
+#>  [4] "number_initial_I"                      
+#>  [5] "number_initial_R"                      
+#>  [6] "seed"                                  
+#>  [7] "workplace_prop_max"                    
+#>  [8] "workplace_a"                           
+#>  [9] "workplace_c"                           
+#> [10] "school_student_staff_ratio"            
+#> [11] "leisure_prob_visit"                    
+#> [12] "leisure_mean_number_settings"          
+#> [13] "leisure_mean_size"                     
+#> [14] "leisure_overdispersion_size"           
+#> [15] "leisure_prop_max"                      
+#> [16] "duration_exposed"                      
+#> [17] "duration_infectious"                   
+#> [18] "beta_household"                        
+#> [19] "beta_workplace"                        
+#> [20] "beta_school"                           
+#> [21] "beta_leisure"                          
+#> [22] "beta_community"                        
+#> [23] "time_varying_transmission_on"          
+#> [24] "dt"                                    
+#> [25] "simulation_time"                       
+#> [26] "render_diagnostics"                    
+#> [27] "endemic_or_epidemic"                   
+#> [28] "duration_immune"                       
+#> [29] "prob_inf_external"                     
+#> [30] "setting_specific_ach_workplace"        
+#> [31] "setting_specific_ach_workplace_mean"   
+#> [32] "setting_specific_ach_workplace_sd"     
+#> [33] "setting_specific_ach_school"           
+#> [34] "setting_specific_ach_school_mean"      
+#> [35] "setting_specific_ach_school_sd"        
+#> [36] "setting_specific_ach_leisure"          
+#> [37] "setting_specific_ach_leisure_mean"     
+#> [38] "setting_specific_ach_leisure_sd"       
+#> [39] "setting_specific_ach_household"        
+#> [40] "setting_specific_ach_household_mean"   
+#> [41] "setting_specific_ach_household_sd"     
+#> [42] "default_ach_workplace"                 
+#> [43] "default_ach_school"                    
+#> [44] "default_ach_leisure"                   
+#> [45] "default_ach_household"                 
+#> [46] "volume_per_person_workplace"           
+#> [47] "volume_per_person_school"              
+#> [48] "volume_per_person_leisure"             
+#> [49] "volume_per_person_household"           
+#> [50] "wells_riley_emission_rate"             
+#> [51] "wells_riley_decay_rate"                
+#> [52] "wells_riley_infection_prob_per_ffu"    
+#> [53] "wells_riley_respiratory_rate_factor"   
+#> [54] "wells_riley_time_in_room"              
+#> [55] "intervention_joint_active"             
+#> [56] "intervention_joint_list"               
+#> [57] "intervention_joint_coverage"           
+#> [58] "intervention_joint_coverage_target"    
+#> [59] "intervention_joint_coverage_type"      
+#> [60] "intervention_joint_timestep"           
+#> [61] "intervention_workplace_active"         
+#> [62] "intervention_workplace_list"           
+#> [63] "intervention_workplace_coverage"       
+#> [64] "intervention_workplace_coverage_target"
+#> [65] "intervention_workplace_coverage_type"  
+#> [66] "intervention_workplace_timestep"       
+#> [67] "intervention_school_active"            
+#> [68] "intervention_school_list"              
+#> [69] "intervention_school_coverage"          
+#> [70] "intervention_school_coverage_target"   
+#> [71] "intervention_school_coverage_type"     
+#> [72] "intervention_school_timestep"          
+#> [73] "intervention_leisure_active"           
+#> [74] "intervention_leisure_list"             
+#> [75] "intervention_leisure_coverage"         
+#> [76] "intervention_leisure_coverage_target"  
+#> [77] "intervention_leisure_coverage_type"    
+#> [78] "intervention_leisure_timestep"         
+#> [79] "intervention_household_active"         
+#> [80] "intervention_household_list"           
+#> [81] "intervention_household_coverage"       
+#> [82] "intervention_household_coverage_target"
+#> [83] "intervention_household_coverage_type"  
+#> [84] "intervention_household_timestep"       
+#> [85] "size_per_individual_workplace"         
+#> [86] "size_per_individual_school"            
+#> [87] "size_per_individual_leisure"           
+#> [88] "size_per_individual_household"         
+#> [89] "prob_hosp_child"                       
+#> [90] "prob_hosp_adult"                       
+#> [91] "prob_hosp_elderly"                     
+#> [92] "prob_death_hosp_child"                 
+#> [93] "prob_death_hosp_adult"                 
+#> [94] "prob_death_hosp_elderly"               
+#> [95] "duration_hospitalized"
 ```
 
 ## Variables
@@ -173,11 +159,11 @@ Next, we define the model variables:
 
 ``` r
 
-variables_list <- create_variables(parameters_list)
-variables_list <- variables_list$variables_list
+population_data <- generate_population_data(parameters_list)
+variables_list <- create_variables(parameters_list, population_data)
 names(variables_list)
-#> [1] "disease_state"    "age_class"        "workplace"        "school"          
-#> [5] "household"        "leisure"          "specific_leisure"
+#> [1] "disease_state"    "age_class"        "household"        "school"          
+#> [5] "workplace"        "leisure"          "specific_leisure"
 ```
 
 Aside from `leisure`, each entry of `variables_list` is of the
@@ -193,13 +179,13 @@ map(variables_list, class)
 #> $age_class
 #> [1] "CategoricalVariable" "R6"                 
 #> 
-#> $workplace
+#> $household
 #> [1] "CategoricalVariable" "R6"                 
 #> 
 #> $school
 #> [1] "CategoricalVariable" "R6"                 
 #> 
-#> $household
+#> $workplace
 #> [1] "CategoricalVariable" "R6"                 
 #> 
 #> $leisure
@@ -266,16 +252,6 @@ There are three age classes: children, adults, and the elderly. The age
 of each individual remains fixed throughout the simulation.
 
 ``` r
-
-parameters_list[c("initial_proportion_child", "initial_proportion_adult", "initial_proportion_elderly")]
-#> $initial_proportion_child
-#> [1] 0.2
-#> 
-#> $initial_proportion_adult
-#> [1] 0.6
-#> 
-#> $initial_proportion_elderly
-#> [1] 0.2
 
 age_classes <- variables_list$age_class$get_categories()
 age_class_counts <- purrr::map_vec(age_classes, function(x) variables_list$age_class$get_size_of(values = x))
@@ -475,9 +451,9 @@ Processes enable queing of events:
 
 ``` r
 
-variables_list <- create_variables(parameters_list)
-parameters_list <- variables_list$parameters_list 
-variables_list <- variables_list$variables_list
+population_data <- generate_population_data(parameters_list)
+intervention_data <- generate_intervention_data(parameters_list, population_data)
+variables_list <- create_variables(parameters_list, population_data)
 events_list <- create_events(variables_list = variables_list, parameters_list = parameters_list)
 timesteps <- round(parameters_list$simulation_time/parameters_list$dt)
 renderer <- individual::Render$new(timesteps)
@@ -486,6 +462,8 @@ processes_list <- create_processes(
   variables_list = variables_list,
   events_list = events_list,
   parameters_list = parameters_list,
+  population_data = population_data,
+  intervention_data = intervention_data,
   renderer = renderer
 )
 

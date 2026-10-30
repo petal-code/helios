@@ -9,16 +9,10 @@
 
 - [`create_variables()`](https://mrc-ide.github.io/helios/reference/create_variables.md)
   : Generate a list of the model variables
-- [`generate_initial_age_classes()`](https://mrc-ide.github.io/helios/reference/generate_initial_age_classes.md)
-  : Generates a vector of the age classes of all individuals in the
-  population
 - [`generate_initial_disease_states()`](https://mrc-ide.github.io/helios/reference/generate_initial_disease_states.md)
   : Generate a vector of the initial disease states of all individuals
   in the population
 - [`generate_initial_households()`](https://mrc-ide.github.io/helios/reference/generate_initial_households.md)
-  : Generates a vector of households for all individuals in the
-  population
-- [`generate_initial_households_bootstrap()`](https://mrc-ide.github.io/helios/reference/generate_initial_households_bootstrap.md)
   : Generates a vector of households for all individuals in the
   population
 - [`generate_initial_leisure()`](https://mrc-ide.github.io/helios/reference/generate_initial_leisure.md)
@@ -26,11 +20,10 @@
 - [`generate_initial_schools()`](https://mrc-ide.github.io/helios/reference/generate_initial_schools.md)
   : Generate a vector of school assignments for all individuals in the
   population
-- [`generate_initial_schools_bootstrap()`](https://mrc-ide.github.io/helios/reference/generate_initial_schools_bootstrap.md)
-  : Generate a vector of school assignments for all individuals in the
-  population
 - [`generate_initial_workplaces()`](https://mrc-ide.github.io/helios/reference/generate_initial_workplaces.md)
   : Gets workplace assignments for all individuals in the population
+- [`generate_population_data()`](https://mrc-ide.github.io/helios/reference/generate_population_data.md)
+  : Generate a population for the given parameters
 
 ## Processes
 
@@ -67,8 +60,6 @@
 
 ## Sampling
 
-- [`sample_log_normal()`](https://mrc-ide.github.io/helios/reference/sample_log_normal.md)
-  : Sample variables from an log-normal distribution with fixed sum
 - [`sample_negbinom()`](https://mrc-ide.github.io/helios/reference/sample_negbinom.md)
   : Sample variables from a negative binomial distribution with fixed
   sum
@@ -78,15 +69,10 @@
 
 ## Data
 
-- [`baseline_household_demographics_uk`](https://mrc-ide.github.io/helios/reference/baseline_household_demographics_uk.md)
-  : Data from ONS 2011 on baseline household demographics from Hinch et
-  al.
 - [`baseline_household_demographics_usa`](https://mrc-ide.github.io/helios/reference/baseline_household_demographics_usa.md)
   : Data from RTI Synthetic population of USA containing information on
   household size and age distribution. Selected for the county of San
   Francisco.
-- [`schools_uk`](https://mrc-ide.github.io/helios/reference/schools_uk.md)
-  : Data on English schools from the 2022/2023 School Census
 - [`schools_usa`](https://mrc-ide.github.io/helios/reference/schools_usa.md)
   : Data on US schools from 2019/2020 from the National Center for
   Education Statistics
@@ -100,8 +86,10 @@
   delta
 - [`efficacy_to_delta()`](https://mrc-ide.github.io/helios/reference/efficacy_to_delta.md)
   : Wells-Riley delta-eACH required to hit a target efficacy
+- [`generate_intervention_data()`](https://mrc-ide.github.io/helios/reference/generate_intervention_data.md)
+  : Generate the intervention data for a population
 - [`generate_intervention_switches()`](https://mrc-ide.github.io/helios/reference/generate_intervention_switches.md)
-  : Update model parameters with intervention switches
+  : Generate intervention coverage switches
 - [`generate_joint_intervention_switches()`](https://mrc-ide.github.io/helios/reference/generate_joint_intervention_switches.md)
   : Generate joint intervention switches
 - [`generate_setting_intervention_switches()`](https://mrc-ide.github.io/helios/reference/generate_setting_intervention_switches.md)

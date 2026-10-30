@@ -18,12 +18,12 @@ Because the Wells-Riley exponent is small for our parameter values,
 `(1 / (ACH_i + kD)) / mean(1 / (ACH_j + kD))`, i.e. it depends only on
 ACH. The constants `I`, `pi`, `RR_tv`, `t`, and `V` cancel.
 
-Called once per setting during
-[`create_variables()`](https://mrc-ide.github.io/helios/reference/create_variables.md)
-init, immediately after
+Called once per setting by
+[`generate_population_data()`](https://mrc-ide.github.io/helios/reference/generate_population_data.md),
+immediately after
 [`generate_setting_specific_ach()`](https://mrc-ide.github.io/helios/reference/generate_setting_specific_ach.md).
-The result is stored at `<setting>_specific_riskiness` and used by
-`processes.R` to scale the per-setting FOI.
+The result is stored at `<setting>_specific_riskiness` in the population
+data and used by `processes.R` to scale the per-setting FOI.
 
 ## Usage
 

@@ -25,10 +25,8 @@ generate_initial_leisure(parameters_list, leisure_setting_sizes)
 
 Other variables:
 [`create_variables()`](https://mrc-ide.github.io/helios/reference/create_variables.md),
-[`generate_initial_age_classes()`](https://mrc-ide.github.io/helios/reference/generate_initial_age_classes.md),
 [`generate_initial_disease_states()`](https://mrc-ide.github.io/helios/reference/generate_initial_disease_states.md),
 [`generate_initial_households()`](https://mrc-ide.github.io/helios/reference/generate_initial_households.md),
-[`generate_initial_households_bootstrap()`](https://mrc-ide.github.io/helios/reference/generate_initial_households_bootstrap.md),
 [`generate_initial_schools()`](https://mrc-ide.github.io/helios/reference/generate_initial_schools.md),
-[`generate_initial_schools_bootstrap()`](https://mrc-ide.github.io/helios/reference/generate_initial_schools_bootstrap.md),
-[`generate_initial_workplaces()`](https://mrc-ide.github.io/helios/reference/generate_initial_workplaces.md)
+[`generate_initial_workplaces()`](https://mrc-ide.github.io/helios/reference/generate_initial_workplaces.md),
+[`generate_population_data()`](https://mrc-ide.github.io/helios/reference/generate_population_data.md)

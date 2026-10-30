@@ -3,10 +3,10 @@
 Returns a numeric vector of length `number_of_locations` giving the
 baseline ACH (air changes per hour) for each location in `setting`.
 
-Called once per setting during
-[`create_variables()`](https://mrc-ide.github.io/helios/reference/create_variables.md)
-init. The returned vector is stored at `<setting>_specific_ach` in
-`parameters_list` and is subsequently consumed by
+Called once per setting by
+[`generate_population_data()`](https://mrc-ide.github.io/helios/reference/generate_population_data.md).
+The returned vector is stored at `<setting>_specific_ach` in the
+population data and is subsequently consumed by
 [`convert_ach_to_riskiness()`](https://mrc-ide.github.io/helios/reference/convert_ach_to_riskiness.md)
 and (when an intervention is active) by
 [`calculate_efficacy_from_ach()`](https://mrc-ide.github.io/helios/reference/calculate_efficacy_from_ach.md).
@@ -31,8 +31,8 @@ generate_setting_specific_ach(parameters_list, setting, number_of_locations)
 
 - number_of_locations:
 
-  Integer. Number of locations in the setting (determined from
-  `variables_list` upstream).
+  Integer. Number of locations in the setting (determined during
+  population generation).
 
 ## Value
 

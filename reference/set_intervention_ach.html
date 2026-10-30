@@ -8,20 +8,22 @@
 </script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Install an intervention into the parameters list — set_intervention_ach"><meta name="description" content="Stores a single intervention object (as produced by make_intervention())
 into the parameters list under the chosen setting. The intervention is
 not yet allocated to specific locations — that happens later via
-generate_intervention_switches() when create_variables() runs.
+generate_intervention_data() when run_simulation() runs.
 Setting &quot;joint&quot; pools workplace + school + leisure into a single coverage
 budget; household is intentionally excluded from joint deployment. The
 four per-setting options (&quot;workplace&quot;, &quot;school&quot;, &quot;leisure&quot;, &quot;household&quot;)
-install the intervention independently into one setting.
+install the intervention independently into one setting. A joint
+intervention cannot be combined with setting-type specific interventions.
 Currently single-intervention only — passing more than one intervention
 will error. Multi-intervention support lives on a separate branch."><meta property="og:description" content="Stores a single intervention object (as produced by make_intervention())
 into the parameters list under the chosen setting. The intervention is
 not yet allocated to specific locations — that happens later via
-generate_intervention_switches() when create_variables() runs.
+generate_intervention_data() when run_simulation() runs.
 Setting &quot;joint&quot; pools workplace + school + leisure into a single coverage
 budget; household is intentionally excluded from joint deployment. The
 four per-setting options (&quot;workplace&quot;, &quot;school&quot;, &quot;leisure&quot;, &quot;household&quot;)
-install the intervention independently into one setting.
+install the intervention independently into one setting. A joint
+intervention cannot be combined with setting-type specific interventions.
 Currently single-intervention only — passing more than one intervention
 will error. Multi-intervention support lives on a separate branch."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -71,11 +73,12 @@ will error. Multi-intervention support lives on a separate branch."></head><body
     <p>Stores a single intervention object (as produced by <code><a href="make_intervention.html">make_intervention()</a></code>)
 into the parameters list under the chosen <code>setting</code>. The intervention is
 not yet allocated to specific locations — that happens later via
-<code><a href="generate_intervention_switches.html">generate_intervention_switches()</a></code> when <code><a href="create_variables.html">create_variables()</a></code> runs.</p>
+<code><a href="generate_intervention_data.html">generate_intervention_data()</a></code> when <code><a href="run_simulation.html">run_simulation()</a></code> runs.</p>
 <p>Setting "joint" pools workplace + school + leisure into a single coverage
 budget; household is intentionally excluded from joint deployment. The
 four per-setting options ("workplace", "school", "leisure", "household")
-install the intervention independently into one setting.</p>
+install the intervention independently into one setting. A joint
+intervention cannot be combined with setting-type specific interventions.</p>
 <p>Currently single-intervention only — passing more than one intervention
 will error. Multi-intervention support lives on a separate branch.</p>
     </div>
@@ -140,6 +143,7 @@ field.</p>
 <code><a href="calculate_efficacy_from_ach.html">calculate_efficacy_from_ach()</a></code>,
 <code><a href="delta_to_efficacy.html">delta_to_efficacy()</a></code>,
 <code><a href="efficacy_to_delta.html">efficacy_to_delta()</a></code>,
+<code><a href="generate_intervention_data.html">generate_intervention_data()</a></code>,
 <code><a href="generate_intervention_switches.html">generate_intervention_switches()</a></code>,
 <code><a href="generate_joint_intervention_switches.html">generate_joint_intervention_switches()</a></code>,
 <code><a href="generate_setting_intervention_switches.html">generate_setting_intervention_switches()</a></code>,

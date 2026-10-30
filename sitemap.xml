@@ -11,7 +11,6 @@
 <url><loc>https://mrc-ide.github.io/helios/authors.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/index.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/ach_to_p_inf.html</loc></url>
-<url><loc>https://mrc-ide.github.io/helios/reference/baseline_household_demographics_uk.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/baseline_household_demographics_usa.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/calculate_efficacy_from_ach.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/convert_ach_to_riskiness.html</loc></url>
@@ -28,16 +27,15 @@
 <url><loc>https://mrc-ide.github.io/helios/reference/efficacy_to_delta.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/generate_beta_sweep_plot.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/generate_betas.html</loc></url>
-<url><loc>https://mrc-ide.github.io/helios/reference/generate_initial_age_classes.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/generate_initial_disease_states.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/generate_initial_households.html</loc></url>
-<url><loc>https://mrc-ide.github.io/helios/reference/generate_initial_households_bootstrap.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/generate_initial_leisure.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/generate_initial_schools.html</loc></url>
-<url><loc>https://mrc-ide.github.io/helios/reference/generate_initial_schools_bootstrap.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/generate_initial_workplaces.html</loc></url>
+<url><loc>https://mrc-ide.github.io/helios/reference/generate_intervention_data.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/generate_intervention_switches.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/generate_joint_intervention_switches.html</loc></url>
+<url><loc>https://mrc-ide.github.io/helios/reference/generate_population_data.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/generate_setting_intervention_switches.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/generate_setting_specific_ach.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/generate_time_varying_beta_vectors.html</loc></url>
@@ -53,10 +51,8 @@
 <url><loc>https://mrc-ide.github.io/helios/reference/run_one_sweep_replicate.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/run_simulation.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/run_simulations_from_table.html</loc></url>
-<url><loc>https://mrc-ide.github.io/helios/reference/sample_log_normal.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/sample_negbinom.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/sample_offset_truncated_power_distribution.html</loc></url>
-<url><loc>https://mrc-ide.github.io/helios/reference/schools_uk.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/schools_usa.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/set_default_ach.html</loc></url>
 <url><loc>https://mrc-ide.github.io/helios/reference/set_intervention_ach.html</loc></url>

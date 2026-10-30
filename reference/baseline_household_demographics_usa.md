@@ -20,6 +20,4 @@ An object of class `tbl_df` (inherits from `tbl`, `data.frame`) with
 ## See also
 
 Other data:
-[`baseline_household_demographics_uk`](https://mrc-ide.github.io/helios/reference/baseline_household_demographics_uk.md),
-[`schools_uk`](https://mrc-ide.github.io/helios/reference/schools_uk.md),
 [`schools_usa`](https://mrc-ide.github.io/helios/reference/schools_usa.md)

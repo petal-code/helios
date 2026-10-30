@@ -35,5 +35,4 @@ sample_negbinom(N, prop_max = 0.1, mu, size)
 ## See also
 
 Other sampling:
-[`sample_log_normal()`](https://mrc-ide.github.io/helios/reference/sample_log_normal.md),
 [`sample_offset_truncated_power_distribution()`](https://mrc-ide.github.io/helios/reference/sample_offset_truncated_power_distribution.md)

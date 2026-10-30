@@ -18,9 +18,9 @@ Because the Wells-Riley exponent is small for our parameter values,
 1 - exp(-x) \approx x, and riskiness simplifies to approximately
 (1 / (ACH_i + kD)) / mean(1 / (ACH_j + kD)), i.e. it depends only on
 ACH. The constants I, pi, RR_tv, t, and V cancel.
-Called once per setting during create_variables() init, immediately
+Called once per setting by generate_population_data(), immediately
 after generate_setting_specific_ach(). The result is stored at
-&amp;lt;setting&amp;gt;_specific_riskiness and used by processes.R to scale the
+&amp;lt;setting&amp;gt;_specific_riskiness in the population data and used by processes.R to scale the
 per-setting FOI."><meta property="og:description" content="Applies the Wells-Riley framework to convert each location's baseline ACH
 into a relative riskiness value (a per-location multiplier on the FOI).
 For each location i:
@@ -34,9 +34,9 @@ Because the Wells-Riley exponent is small for our parameter values,
 1 - exp(-x) \approx x, and riskiness simplifies to approximately
 (1 / (ACH_i + kD)) / mean(1 / (ACH_j + kD)), i.e. it depends only on
 ACH. The constants I, pi, RR_tv, t, and V cancel.
-Called once per setting during create_variables() init, immediately
+Called once per setting by generate_population_data(), immediately
 after generate_setting_specific_ach(). The result is stored at
-&amp;lt;setting&amp;gt;_specific_riskiness and used by processes.R to scale the
+&amp;lt;setting&amp;gt;_specific_riskiness in the population data and used by processes.R to scale the
 per-setting FOI."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -95,9 +95,9 @@ locations in the setting.</p>
 <code>1 - exp(-x) \approx x</code>, and riskiness simplifies to approximately
 <code>(1 / (ACH_i + kD)) / mean(1 / (ACH_j + kD))</code>, i.e. it depends only on
 ACH. The constants <code>I</code>, <code>pi</code>, <code>RR_tv</code>, <code>t</code>, and <code>V</code> cancel.</p>
-<p>Called once per setting during <code><a href="create_variables.html">create_variables()</a></code> init, immediately
+<p>Called once per setting by <code><a href="generate_population_data.html">generate_population_data()</a></code>, immediately
 after <code><a href="generate_setting_specific_ach.html">generate_setting_specific_ach()</a></code>. The result is stored at
-<code>&lt;setting&gt;_specific_riskiness</code> and used by <code>processes.R</code> to scale the
+<code>&lt;setting&gt;_specific_riskiness</code> in the population data and used by <code>processes.R</code> to scale the
 per-setting FOI.</p>
     </div>
 

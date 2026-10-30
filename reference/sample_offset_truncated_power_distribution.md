@@ -35,5 +35,4 @@ sample_offset_truncated_power_distribution(
 ## See also
 
 Other sampling:
-[`sample_log_normal()`](https://mrc-ide.github.io/helios/reference/sample_log_normal.md),
 [`sample_negbinom()`](https://mrc-ide.github.io/helios/reference/sample_negbinom.md)

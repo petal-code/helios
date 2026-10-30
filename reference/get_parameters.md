@@ -22,15 +22,6 @@ get_parameters(overrides = list(), archetype = "none")
 
   - `human_population`: the number of humans to include in the model
 
-  - `initial_proportion_child`: proportion of population initially in
-    the 'child' age class
-
-  - `initial_proportion_adult`: proportion of population initially in
-    the 'adult' age class
-
-  - `initial_proportion_elderly`: proportion of population initially in
-    the 'elderly' age class
-
   - `number_initial_S`: number of humans initially Susceptible (state =
     S)
 
@@ -45,9 +36,9 @@ get_parameters(overrides = list(), archetype = "none")
     generator and dqrng's (used for the daily leisure draw). With
     `NULL`,
     [`run_simulation()`](https://mrc-ide.github.io/helios/reference/run_simulation.md)
-    draws a seed and saves it in the returned state
-
-  - `mean_household_size`: TBD
+    draws a seed and saves it in the returned state, and
+    [`generate_population_data()`](https://mrc-ide.github.io/helios/reference/generate_population_data.md)
+    draws one and saves it in the population
 
   - `workplace_prop_max`: maximum size of a workplace as a proportion of
     total adult population size
@@ -57,15 +48,6 @@ get_parameters(overrides = list(), archetype = "none")
 
   - `workplace_c`: the c parameter for the Zipf-like distribution on
     workplace size
-
-  - `school_prop_max`: maximum size of a school as a proporiton of total
-    child population size
-
-  - `school_meanlog`: the meanlog parameter for the log-normal
-    distribution on school size
-
-  - `school_sdlog`: the sdlog parameter for the log-normal distribution
-    on school size
 
   - `school_student_staff_ratio`: the number of students to each adult
     staff member
@@ -126,12 +108,6 @@ get_parameters(overrides = list(), archetype = "none")
   - `dt`: TBD
 
   - `simulation_time`: TBD
-
-  - `household_distribution_country`: TBD
-
-  - `school_distribution_country`: TBD
-
-  - `workplace_distribution_country`: TBD
 
   - `endemic_or_epidemic`: TBD
 
@@ -279,10 +255,8 @@ get_parameters(overrides = list(), archetype = "none")
   across A-C in schools), but a substantially higher emission rate such
   as scenario D lowers it considerably (0.23 in schools).
 
-  Intervention Parameters (populated internally by
-  [`set_intervention_ach()`](https://mrc-ide.github.io/helios/reference/set_intervention_ach.md)
-  and by
-  [`generate_intervention_switches()`](https://mrc-ide.github.io/helios/reference/generate_intervention_switches.md);
+  Intervention Parameters (populated by
+  [`set_intervention_ach()`](https://mrc-ide.github.io/helios/reference/set_intervention_ach.md);
   users do not normally set these directly. One block per scope, where
   `<s>` is one of `joint`, `workplace`, `school`, `leisure` or
   `household`):
@@ -310,12 +284,6 @@ get_parameters(overrides = list(), archetype = "none")
   - `intervention_<s>_timestep`: first simulation timestep at which the
     intervention's efficacy is applied in the FOI calculation. Default =
     NULL
-
-  - `intervention_<setting>_covered` (per-setting scopes only —
-    workplace/school/leisure/household): 0/1 switch vector of length
-    equal to the number of locations in the setting, populated by
-    [`generate_intervention_switches()`](https://mrc-ide.github.io/helios/reference/generate_intervention_switches.md)
-    to mark which locations received the intervention. Default = NULL
 
   Setting-Specific Room Size Per Individual Parameters:
 

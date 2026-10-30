@@ -20,6 +20,4 @@ rows and 7 columns.
 ## See also
 
 Other data:
-[`baseline_household_demographics_uk`](https://mrc-ide.github.io/helios/reference/baseline_household_demographics_uk.md),
-[`baseline_household_demographics_usa`](https://mrc-ide.github.io/helios/reference/baseline_household_demographics_usa.md),
-[`schools_uk`](https://mrc-ide.github.io/helios/reference/schools_uk.md)
+[`baseline_household_demographics_usa`](https://mrc-ide.github.io/helios/reference/baseline_household_demographics_usa.md)

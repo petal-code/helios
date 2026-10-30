@@ -124,126 +124,112 @@ use a uniform baseline of 4 ACH in each setting:</p>
 <p>The names of all parameters are as follows:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">parameters_list</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   [1] "human_population"                      </span></span>
-<span><span class="co">#&gt;   [2] "initial_proportion_child"              </span></span>
-<span><span class="co">#&gt;   [3] "initial_proportion_adult"              </span></span>
-<span><span class="co">#&gt;   [4] "initial_proportion_elderly"            </span></span>
-<span><span class="co">#&gt;   [5] "number_initial_S"                      </span></span>
-<span><span class="co">#&gt;   [6] "number_initial_E"                      </span></span>
-<span><span class="co">#&gt;   [7] "number_initial_I"                      </span></span>
-<span><span class="co">#&gt;   [8] "number_initial_R"                      </span></span>
-<span><span class="co">#&gt;   [9] "seed"                                  </span></span>
-<span><span class="co">#&gt;  [10] "mean_household_size"                   </span></span>
-<span><span class="co">#&gt;  [11] "workplace_prop_max"                    </span></span>
-<span><span class="co">#&gt;  [12] "workplace_a"                           </span></span>
-<span><span class="co">#&gt;  [13] "workplace_c"                           </span></span>
-<span><span class="co">#&gt;  [14] "school_prop_max"                       </span></span>
-<span><span class="co">#&gt;  [15] "school_meanlog"                        </span></span>
-<span><span class="co">#&gt;  [16] "school_sdlog"                          </span></span>
-<span><span class="co">#&gt;  [17] "school_student_staff_ratio"            </span></span>
-<span><span class="co">#&gt;  [18] "leisure_prob_visit"                    </span></span>
-<span><span class="co">#&gt;  [19] "leisure_mean_number_settings"          </span></span>
-<span><span class="co">#&gt;  [20] "leisure_mean_size"                     </span></span>
-<span><span class="co">#&gt;  [21] "leisure_overdispersion_size"           </span></span>
-<span><span class="co">#&gt;  [22] "leisure_prop_max"                      </span></span>
-<span><span class="co">#&gt;  [23] "duration_exposed"                      </span></span>
-<span><span class="co">#&gt;  [24] "duration_infectious"                   </span></span>
-<span><span class="co">#&gt;  [25] "beta_household"                        </span></span>
-<span><span class="co">#&gt;  [26] "beta_workplace"                        </span></span>
-<span><span class="co">#&gt;  [27] "beta_school"                           </span></span>
-<span><span class="co">#&gt;  [28] "beta_leisure"                          </span></span>
-<span><span class="co">#&gt;  [29] "beta_community"                        </span></span>
-<span><span class="co">#&gt;  [30] "time_varying_transmission_on"          </span></span>
-<span><span class="co">#&gt;  [31] "dt"                                    </span></span>
-<span><span class="co">#&gt;  [32] "simulation_time"                       </span></span>
-<span><span class="co">#&gt;  [33] "render_diagnostics"                    </span></span>
-<span><span class="co">#&gt;  [34] "household_distribution_country"        </span></span>
-<span><span class="co">#&gt;  [35] "school_distribution_country"           </span></span>
-<span><span class="co">#&gt;  [36] "workplace_distribution_country"        </span></span>
-<span><span class="co">#&gt;  [37] "endemic_or_epidemic"                   </span></span>
-<span><span class="co">#&gt;  [38] "duration_immune"                       </span></span>
-<span><span class="co">#&gt;  [39] "prob_inf_external"                     </span></span>
-<span><span class="co">#&gt;  [40] "setting_specific_ach_workplace"        </span></span>
-<span><span class="co">#&gt;  [41] "setting_specific_ach_workplace_mean"   </span></span>
-<span><span class="co">#&gt;  [42] "setting_specific_ach_workplace_sd"     </span></span>
-<span><span class="co">#&gt;  [43] "setting_specific_ach_school"           </span></span>
-<span><span class="co">#&gt;  [44] "setting_specific_ach_school_mean"      </span></span>
-<span><span class="co">#&gt;  [45] "setting_specific_ach_school_sd"        </span></span>
-<span><span class="co">#&gt;  [46] "setting_specific_ach_leisure"          </span></span>
-<span><span class="co">#&gt;  [47] "setting_specific_ach_leisure_mean"     </span></span>
-<span><span class="co">#&gt;  [48] "setting_specific_ach_leisure_sd"       </span></span>
-<span><span class="co">#&gt;  [49] "setting_specific_ach_household"        </span></span>
-<span><span class="co">#&gt;  [50] "setting_specific_ach_household_mean"   </span></span>
-<span><span class="co">#&gt;  [51] "setting_specific_ach_household_sd"     </span></span>
-<span><span class="co">#&gt;  [52] "default_ach_workplace"                 </span></span>
-<span><span class="co">#&gt;  [53] "default_ach_school"                    </span></span>
-<span><span class="co">#&gt;  [54] "default_ach_leisure"                   </span></span>
-<span><span class="co">#&gt;  [55] "default_ach_household"                 </span></span>
-<span><span class="co">#&gt;  [56] "volume_per_person_workplace"           </span></span>
-<span><span class="co">#&gt;  [57] "volume_per_person_school"              </span></span>
-<span><span class="co">#&gt;  [58] "volume_per_person_leisure"             </span></span>
-<span><span class="co">#&gt;  [59] "volume_per_person_household"           </span></span>
-<span><span class="co">#&gt;  [60] "wells_riley_emission_rate"             </span></span>
-<span><span class="co">#&gt;  [61] "wells_riley_decay_rate"                </span></span>
-<span><span class="co">#&gt;  [62] "wells_riley_infection_prob_per_ffu"    </span></span>
-<span><span class="co">#&gt;  [63] "wells_riley_respiratory_rate_factor"   </span></span>
-<span><span class="co">#&gt;  [64] "wells_riley_time_in_room"              </span></span>
-<span><span class="co">#&gt;  [65] "intervention_joint_active"             </span></span>
-<span><span class="co">#&gt;  [66] "intervention_joint_list"               </span></span>
-<span><span class="co">#&gt;  [67] "intervention_joint_coverage"           </span></span>
-<span><span class="co">#&gt;  [68] "intervention_joint_coverage_target"    </span></span>
-<span><span class="co">#&gt;  [69] "intervention_joint_coverage_type"      </span></span>
-<span><span class="co">#&gt;  [70] "intervention_joint_timestep"           </span></span>
-<span><span class="co">#&gt;  [71] "intervention_workplace_active"         </span></span>
-<span><span class="co">#&gt;  [72] "intervention_workplace_list"           </span></span>
-<span><span class="co">#&gt;  [73] "intervention_workplace_coverage"       </span></span>
-<span><span class="co">#&gt;  [74] "intervention_workplace_coverage_target"</span></span>
-<span><span class="co">#&gt;  [75] "intervention_workplace_coverage_type"  </span></span>
-<span><span class="co">#&gt;  [76] "intervention_workplace_timestep"       </span></span>
-<span><span class="co">#&gt;  [77] "intervention_workplace_covered"        </span></span>
-<span><span class="co">#&gt;  [78] "intervention_school_active"            </span></span>
-<span><span class="co">#&gt;  [79] "intervention_school_list"              </span></span>
-<span><span class="co">#&gt;  [80] "intervention_school_coverage"          </span></span>
-<span><span class="co">#&gt;  [81] "intervention_school_coverage_target"   </span></span>
-<span><span class="co">#&gt;  [82] "intervention_school_coverage_type"     </span></span>
-<span><span class="co">#&gt;  [83] "intervention_school_timestep"          </span></span>
-<span><span class="co">#&gt;  [84] "intervention_school_covered"           </span></span>
-<span><span class="co">#&gt;  [85] "intervention_leisure_active"           </span></span>
-<span><span class="co">#&gt;  [86] "intervention_leisure_list"             </span></span>
-<span><span class="co">#&gt;  [87] "intervention_leisure_coverage"         </span></span>
-<span><span class="co">#&gt;  [88] "intervention_leisure_coverage_target"  </span></span>
-<span><span class="co">#&gt;  [89] "intervention_leisure_coverage_type"    </span></span>
-<span><span class="co">#&gt;  [90] "intervention_leisure_timestep"         </span></span>
-<span><span class="co">#&gt;  [91] "intervention_leisure_covered"          </span></span>
-<span><span class="co">#&gt;  [92] "intervention_household_active"         </span></span>
-<span><span class="co">#&gt;  [93] "intervention_household_list"           </span></span>
-<span><span class="co">#&gt;  [94] "intervention_household_coverage"       </span></span>
-<span><span class="co">#&gt;  [95] "intervention_household_coverage_target"</span></span>
-<span><span class="co">#&gt;  [96] "intervention_household_coverage_type"  </span></span>
-<span><span class="co">#&gt;  [97] "intervention_household_timestep"       </span></span>
-<span><span class="co">#&gt;  [98] "intervention_household_covered"        </span></span>
-<span><span class="co">#&gt;  [99] "size_per_individual_workplace"         </span></span>
-<span><span class="co">#&gt; [100] "size_per_individual_school"            </span></span>
-<span><span class="co">#&gt; [101] "size_per_individual_leisure"           </span></span>
-<span><span class="co">#&gt; [102] "size_per_individual_household"         </span></span>
-<span><span class="co">#&gt; [103] "prob_hosp_child"                       </span></span>
-<span><span class="co">#&gt; [104] "prob_hosp_adult"                       </span></span>
-<span><span class="co">#&gt; [105] "prob_hosp_elderly"                     </span></span>
-<span><span class="co">#&gt; [106] "prob_death_hosp_child"                 </span></span>
-<span><span class="co">#&gt; [107] "prob_death_hosp_adult"                 </span></span>
-<span><span class="co">#&gt; [108] "prob_death_hosp_elderly"               </span></span>
-<span><span class="co">#&gt; [109] "duration_hospitalized"</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] "human_population"                      </span></span>
+<span><span class="co">#&gt;  [2] "number_initial_S"                      </span></span>
+<span><span class="co">#&gt;  [3] "number_initial_E"                      </span></span>
+<span><span class="co">#&gt;  [4] "number_initial_I"                      </span></span>
+<span><span class="co">#&gt;  [5] "number_initial_R"                      </span></span>
+<span><span class="co">#&gt;  [6] "seed"                                  </span></span>
+<span><span class="co">#&gt;  [7] "workplace_prop_max"                    </span></span>
+<span><span class="co">#&gt;  [8] "workplace_a"                           </span></span>
+<span><span class="co">#&gt;  [9] "workplace_c"                           </span></span>
+<span><span class="co">#&gt; [10] "school_student_staff_ratio"            </span></span>
+<span><span class="co">#&gt; [11] "leisure_prob_visit"                    </span></span>
+<span><span class="co">#&gt; [12] "leisure_mean_number_settings"          </span></span>
+<span><span class="co">#&gt; [13] "leisure_mean_size"                     </span></span>
+<span><span class="co">#&gt; [14] "leisure_overdispersion_size"           </span></span>
+<span><span class="co">#&gt; [15] "leisure_prop_max"                      </span></span>
+<span><span class="co">#&gt; [16] "duration_exposed"                      </span></span>
+<span><span class="co">#&gt; [17] "duration_infectious"                   </span></span>
+<span><span class="co">#&gt; [18] "beta_household"                        </span></span>
+<span><span class="co">#&gt; [19] "beta_workplace"                        </span></span>
+<span><span class="co">#&gt; [20] "beta_school"                           </span></span>
+<span><span class="co">#&gt; [21] "beta_leisure"                          </span></span>
+<span><span class="co">#&gt; [22] "beta_community"                        </span></span>
+<span><span class="co">#&gt; [23] "time_varying_transmission_on"          </span></span>
+<span><span class="co">#&gt; [24] "dt"                                    </span></span>
+<span><span class="co">#&gt; [25] "simulation_time"                       </span></span>
+<span><span class="co">#&gt; [26] "render_diagnostics"                    </span></span>
+<span><span class="co">#&gt; [27] "endemic_or_epidemic"                   </span></span>
+<span><span class="co">#&gt; [28] "duration_immune"                       </span></span>
+<span><span class="co">#&gt; [29] "prob_inf_external"                     </span></span>
+<span><span class="co">#&gt; [30] "setting_specific_ach_workplace"        </span></span>
+<span><span class="co">#&gt; [31] "setting_specific_ach_workplace_mean"   </span></span>
+<span><span class="co">#&gt; [32] "setting_specific_ach_workplace_sd"     </span></span>
+<span><span class="co">#&gt; [33] "setting_specific_ach_school"           </span></span>
+<span><span class="co">#&gt; [34] "setting_specific_ach_school_mean"      </span></span>
+<span><span class="co">#&gt; [35] "setting_specific_ach_school_sd"        </span></span>
+<span><span class="co">#&gt; [36] "setting_specific_ach_leisure"          </span></span>
+<span><span class="co">#&gt; [37] "setting_specific_ach_leisure_mean"     </span></span>
+<span><span class="co">#&gt; [38] "setting_specific_ach_leisure_sd"       </span></span>
+<span><span class="co">#&gt; [39] "setting_specific_ach_household"        </span></span>
+<span><span class="co">#&gt; [40] "setting_specific_ach_household_mean"   </span></span>
+<span><span class="co">#&gt; [41] "setting_specific_ach_household_sd"     </span></span>
+<span><span class="co">#&gt; [42] "default_ach_workplace"                 </span></span>
+<span><span class="co">#&gt; [43] "default_ach_school"                    </span></span>
+<span><span class="co">#&gt; [44] "default_ach_leisure"                   </span></span>
+<span><span class="co">#&gt; [45] "default_ach_household"                 </span></span>
+<span><span class="co">#&gt; [46] "volume_per_person_workplace"           </span></span>
+<span><span class="co">#&gt; [47] "volume_per_person_school"              </span></span>
+<span><span class="co">#&gt; [48] "volume_per_person_leisure"             </span></span>
+<span><span class="co">#&gt; [49] "volume_per_person_household"           </span></span>
+<span><span class="co">#&gt; [50] "wells_riley_emission_rate"             </span></span>
+<span><span class="co">#&gt; [51] "wells_riley_decay_rate"                </span></span>
+<span><span class="co">#&gt; [52] "wells_riley_infection_prob_per_ffu"    </span></span>
+<span><span class="co">#&gt; [53] "wells_riley_respiratory_rate_factor"   </span></span>
+<span><span class="co">#&gt; [54] "wells_riley_time_in_room"              </span></span>
+<span><span class="co">#&gt; [55] "intervention_joint_active"             </span></span>
+<span><span class="co">#&gt; [56] "intervention_joint_list"               </span></span>
+<span><span class="co">#&gt; [57] "intervention_joint_coverage"           </span></span>
+<span><span class="co">#&gt; [58] "intervention_joint_coverage_target"    </span></span>
+<span><span class="co">#&gt; [59] "intervention_joint_coverage_type"      </span></span>
+<span><span class="co">#&gt; [60] "intervention_joint_timestep"           </span></span>
+<span><span class="co">#&gt; [61] "intervention_workplace_active"         </span></span>
+<span><span class="co">#&gt; [62] "intervention_workplace_list"           </span></span>
+<span><span class="co">#&gt; [63] "intervention_workplace_coverage"       </span></span>
+<span><span class="co">#&gt; [64] "intervention_workplace_coverage_target"</span></span>
+<span><span class="co">#&gt; [65] "intervention_workplace_coverage_type"  </span></span>
+<span><span class="co">#&gt; [66] "intervention_workplace_timestep"       </span></span>
+<span><span class="co">#&gt; [67] "intervention_school_active"            </span></span>
+<span><span class="co">#&gt; [68] "intervention_school_list"              </span></span>
+<span><span class="co">#&gt; [69] "intervention_school_coverage"          </span></span>
+<span><span class="co">#&gt; [70] "intervention_school_coverage_target"   </span></span>
+<span><span class="co">#&gt; [71] "intervention_school_coverage_type"     </span></span>
+<span><span class="co">#&gt; [72] "intervention_school_timestep"          </span></span>
+<span><span class="co">#&gt; [73] "intervention_leisure_active"           </span></span>
+<span><span class="co">#&gt; [74] "intervention_leisure_list"             </span></span>
+<span><span class="co">#&gt; [75] "intervention_leisure_coverage"         </span></span>
+<span><span class="co">#&gt; [76] "intervention_leisure_coverage_target"  </span></span>
+<span><span class="co">#&gt; [77] "intervention_leisure_coverage_type"    </span></span>
+<span><span class="co">#&gt; [78] "intervention_leisure_timestep"         </span></span>
+<span><span class="co">#&gt; [79] "intervention_household_active"         </span></span>
+<span><span class="co">#&gt; [80] "intervention_household_list"           </span></span>
+<span><span class="co">#&gt; [81] "intervention_household_coverage"       </span></span>
+<span><span class="co">#&gt; [82] "intervention_household_coverage_target"</span></span>
+<span><span class="co">#&gt; [83] "intervention_household_coverage_type"  </span></span>
+<span><span class="co">#&gt; [84] "intervention_household_timestep"       </span></span>
+<span><span class="co">#&gt; [85] "size_per_individual_workplace"         </span></span>
+<span><span class="co">#&gt; [86] "size_per_individual_school"            </span></span>
+<span><span class="co">#&gt; [87] "size_per_individual_leisure"           </span></span>
+<span><span class="co">#&gt; [88] "size_per_individual_household"         </span></span>
+<span><span class="co">#&gt; [89] "prob_hosp_child"                       </span></span>
+<span><span class="co">#&gt; [90] "prob_hosp_adult"                       </span></span>
+<span><span class="co">#&gt; [91] "prob_hosp_elderly"                     </span></span>
+<span><span class="co">#&gt; [92] "prob_death_hosp_child"                 </span></span>
+<span><span class="co">#&gt; [93] "prob_death_hosp_adult"                 </span></span>
+<span><span class="co">#&gt; [94] "prob_death_hosp_elderly"               </span></span>
+<span><span class="co">#&gt; [95] "duration_hospitalized"</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="var">Variables<a class="anchor" aria-label="anchor" href="#var"></a>
 </h2>
 <p>Next, we define the model variables:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">variables_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/create_variables.html">create_variables</a></span><span class="op">(</span><span class="va">parameters_list</span><span class="op">)</span></span>
-<span><span class="va">variables_list</span> <span class="op">&lt;-</span> <span class="va">variables_list</span><span class="op">$</span><span class="va">variables_list</span></span>
+<code class="sourceCode R"><span><span class="va">population_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/generate_population_data.html">generate_population_data</a></span><span class="op">(</span><span class="va">parameters_list</span><span class="op">)</span></span>
+<span><span class="va">variables_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/create_variables.html">create_variables</a></span><span class="op">(</span><span class="va">parameters_list</span>, <span class="va">population_data</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">variables_list</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "disease_state"    "age_class"        "workplace"        "school"          </span></span>
-<span><span class="co">#&gt; [5] "household"        "leisure"          "specific_leisure"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "disease_state"    "age_class"        "household"        "school"          </span></span>
+<span><span class="co">#&gt; [5] "workplace"        "leisure"          "specific_leisure"</span></span></code></pre></div>
 <p>Aside from <code>leisure</code>, each entry of
 <code>variables_list</code> is of the <a href="https://mrc-ide.github.io/individual/reference/CategoricalVariable.html" class="external-link"><code>CategoricalVariable</code></a>
 class:</p>
@@ -255,13 +241,13 @@ class:</p>
 <span><span class="co">#&gt; $age_class</span></span>
 <span><span class="co">#&gt; [1] "CategoricalVariable" "R6"                 </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $workplace</span></span>
+<span><span class="co">#&gt; $household</span></span>
 <span><span class="co">#&gt; [1] "CategoricalVariable" "R6"                 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $school</span></span>
 <span><span class="co">#&gt; [1] "CategoricalVariable" "R6"                 </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $household</span></span>
+<span><span class="co">#&gt; $workplace</span></span>
 <span><span class="co">#&gt; [1] "CategoricalVariable" "R6"                 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $leisure</span></span>
@@ -787,17 +773,7 @@ disease state:</p>
 <p>There are three age classes: children, adults, and the elderly. The
 age of each individual remains fixed throughout the simulation.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">parameters_list</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"initial_proportion_child"</span>, <span class="st">"initial_proportion_adult"</span>, <span class="st">"initial_proportion_elderly"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt; $initial_proportion_child</span></span>
-<span><span class="co">#&gt; [1] 0.2</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $initial_proportion_adult</span></span>
-<span><span class="co">#&gt; [1] 0.6</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $initial_proportion_elderly</span></span>
-<span><span class="co">#&gt; [1] 0.2</span></span>
-<span></span>
-<span><span class="va">age_classes</span> <span class="op">&lt;-</span> <span class="va">variables_list</span><span class="op">$</span><span class="va">age_class</span><span class="op">$</span><span class="fu">get_categories</span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">age_classes</span> <span class="op">&lt;-</span> <span class="va">variables_list</span><span class="op">$</span><span class="va">age_class</span><span class="op">$</span><span class="fu">get_categories</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">age_class_counts</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_vec</a></span><span class="op">(</span><span class="va">age_classes</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">variables_list</span><span class="op">$</span><span class="va">age_class</span><span class="op">$</span><span class="fu">get_size_of</span><span class="op">(</span>values <span class="op">=</span> <span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">age_classes</span>, <span class="va">age_class_counts</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -1452,9 +1428,9 @@ and stores output from the model at each timestep:</p>
 </h2>
 <p>Processes enable queing of events:</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">variables_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/create_variables.html">create_variables</a></span><span class="op">(</span><span class="va">parameters_list</span><span class="op">)</span></span>
-<span><span class="va">parameters_list</span> <span class="op">&lt;-</span> <span class="va">variables_list</span><span class="op">$</span><span class="va">parameters_list</span> </span>
-<span><span class="va">variables_list</span> <span class="op">&lt;-</span> <span class="va">variables_list</span><span class="op">$</span><span class="va">variables_list</span></span>
+<code class="sourceCode R"><span><span class="va">population_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/generate_population_data.html">generate_population_data</a></span><span class="op">(</span><span class="va">parameters_list</span><span class="op">)</span></span>
+<span><span class="va">intervention_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/generate_intervention_data.html">generate_intervention_data</a></span><span class="op">(</span><span class="va">parameters_list</span>, <span class="va">population_data</span><span class="op">)</span></span>
+<span><span class="va">variables_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/create_variables.html">create_variables</a></span><span class="op">(</span><span class="va">parameters_list</span>, <span class="va">population_data</span><span class="op">)</span></span>
 <span><span class="va">events_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/create_events.html">create_events</a></span><span class="op">(</span>variables_list <span class="op">=</span> <span class="va">variables_list</span>, parameters_list <span class="op">=</span> <span class="va">parameters_list</span><span class="op">)</span></span>
 <span><span class="va">timesteps</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">parameters_list</span><span class="op">$</span><span class="va">simulation_time</span><span class="op">/</span><span class="va">parameters_list</span><span class="op">$</span><span class="va">dt</span><span class="op">)</span></span>
 <span><span class="va">renderer</span> <span class="op">&lt;-</span> <span class="fu">individual</span><span class="fu">::</span><span class="va"><a href="https://mrc-ide.github.io/individual/reference/Render.html" class="external-link">Render</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">timesteps</span><span class="op">)</span></span>
@@ -1463,6 +1439,8 @@ and stores output from the model at each timestep:</p>
 <span>  variables_list <span class="op">=</span> <span class="va">variables_list</span>,</span>
 <span>  events_list <span class="op">=</span> <span class="va">events_list</span>,</span>
 <span>  parameters_list <span class="op">=</span> <span class="va">parameters_list</span>,</span>
+<span>  population_data <span class="op">=</span> <span class="va">population_data</span>,</span>
+<span>  intervention_data <span class="op">=</span> <span class="va">intervention_data</span>,</span>
 <span>  renderer <span class="op">=</span> <span class="va">renderer</span></span>
 <span><span class="op">)</span></span>
 <span></span>
