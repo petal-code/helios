@@ -2,7 +2,7 @@
 % Please edit documentation in R/setting_specific_ach.R
 \name{convert_ach_to_riskiness}
 \alias{convert_ach_to_riskiness}
-\title{Convert per-location ACH values to per-location riskiness}
+\title{Convert per-location ACH values to per-location far-field riskiness}
 \usage{
 convert_ach_to_riskiness(ach_values, parameters_list, setting)
 }
@@ -21,12 +21,14 @@ the setting volume (\verb{volume_per_person_<setting>}) are read from here.}
 or \code{"household"}. Used to select the appropriate \verb{volume_per_person_*}.}
 }
 \value{
-Numeric vector of per-location riskiness values, same length as
+Numeric vector of per-location far-field riskiness values, same length as
 \code{ach_values}, anchored so mean riskiness across locations is exactly 1.
 }
 \description{
 Applies the Wells-Riley framework to convert each location's baseline ACH
 into a relative riskiness value (a per-location multiplier on the FOI).
+Wells-Riley assumes a well-mixed room, so this is the riskiness of far-field
+(room-scale airborne) transmission.
 
 For each location \code{i}:
 \deqn{p_{inf}(i) = 1 - \exp(-r \cdot C_{ss}(i) \cdot RR_{tv} \cdot t)}
@@ -44,8 +46,8 @@ ACH. The constants \code{I}, \code{pi}, \code{RR_tv}, \code{t}, and \code{V} can
 
 Called once per setting by \code{\link[=generate_population_data]{generate_population_data()}}, immediately
 after \code{\link[=generate_setting_specific_ach]{generate_setting_specific_ach()}}. The result is stored at
-\verb{<setting>_specific_riskiness} in the population data and used by \code{processes.R} to scale the
-per-setting FOI.
+\verb{<setting>_specific_far_field_riskiness} in the population data and used by \code{processes.R} to
+scale the far-field part of the per-setting FOI.
 }
 \seealso{
 Other setting-specific ACH: 

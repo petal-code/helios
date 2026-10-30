@@ -98,11 +98,13 @@ ach_to_p_inf <- function(ach_values, parameters_list, setting) {
   return(1 - exp(-r * Css_values * RRtv * t))
 }
 
-#' Convert per-location ACH values to per-location riskiness
+#' Convert per-location ACH values to per-location far-field riskiness
 #'
 #' @description
 #' Applies the Wells-Riley framework to convert each location's baseline ACH
 #' into a relative riskiness value (a per-location multiplier on the FOI).
+#' Wells-Riley assumes a well-mixed room, so this is the riskiness of far-field
+#' (room-scale airborne) transmission.
 #'
 #' For each location `i`:
 #' \deqn{p_{inf}(i) = 1 - \exp(-r \cdot C_{ss}(i) \cdot RR_{tv} \cdot t)}
@@ -120,8 +122,8 @@ ach_to_p_inf <- function(ach_values, parameters_list, setting) {
 #'
 #' Called once per setting by [generate_population_data()], immediately
 #' after [generate_setting_specific_ach()]. The result is stored at
-#' `<setting>_specific_riskiness` in the population data and used by `processes.R` to scale the
-#' per-setting FOI.
+#' `<setting>_specific_far_field_riskiness` in the population data and used by `processes.R` to
+#' scale the far-field part of the per-setting FOI.
 #'
 #' @param ach_values Numeric vector of per-location baseline ACH values
 #' (1/hour), as returned by [generate_setting_specific_ach()].
@@ -134,7 +136,7 @@ ach_to_p_inf <- function(ach_values, parameters_list, setting) {
 #' @param setting Character. One of `"workplace"`, `"school"`, `"leisure"`,
 #' or `"household"`. Used to select the appropriate `volume_per_person_*`.
 #'
-#' @return Numeric vector of per-location riskiness values, same length as
+#' @return Numeric vector of per-location far-field riskiness values, same length as
 #' `ach_values`, anchored so mean riskiness across locations is exactly 1.
 #'
 #' @family setting-specific ACH
@@ -155,7 +157,7 @@ convert_ach_to_riskiness <- function(ach_values, parameters_list, setting) {
 #' @description
 #' Activates setting-specific ACH for a single setting and configures the
 #' truncated-normal distribution from which each location's baseline ACH is
-#' drawn. Per-location ACH values feed into both the riskiness calculation
+#' drawn. Per-location ACH values feed into both the far-field riskiness calculation
 #' (via [convert_ach_to_riskiness()]) and any intervention efficacy
 #' calculation (via [calculate_efficacy_from_ach()]).
 #'

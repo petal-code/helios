@@ -28,9 +28,9 @@ and \code{\link[=run_simulation]{run_simulation()}} error otherwise.
 }
 \description{
 This will sample individuals' initial state and assign them to households and
-other locations. It also draws the baseline ACH and riskiness of each
-location. Interventions are not part of the population: see
-\code{\link[=generate_intervention_data]{generate_intervention_data()}}.
+other locations. It also draws the baseline ACH and far-field riskiness of
+each location. Every location's near-field riskiness is 1. Interventions are
+not part of the population: see \code{\link[=generate_intervention_data]{generate_intervention_data()}}.
 }
 \seealso{
 Other variables: 
