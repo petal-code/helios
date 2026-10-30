@@ -137,10 +137,9 @@ generate_population_data <- function(parameters_list) {
   visited_leisure_locations <- sort(unique(unlist(initial_leisure_settings)))
   visited_leisure_locations <- visited_leisure_locations[visited_leisure_locations != 0]
   leisure_setting_sizes <- leisure_setting_sizes[visited_leisure_locations]
-  initial_leisure_settings <- lapply(initial_leisure_settings, function(visits) {
-    visits[visits != 0] <- match(visits[visits != 0], visited_leisure_locations)
-    visits
-  })
+  # new_leisure_location[old id + 1] is the new id
+  new_leisure_location <- c(0L, match(seq_len(max(visited_leisure_locations, 0L)), visited_leisure_locations, nomatch = 0L))
+  initial_leisure_settings <- lapply(initial_leisure_settings, function(visits) new_leisure_location[visits + 1L])
 
   # The generators assign 1-indexed, contiguous location ids (0 meaning no location), so the number
   # of locations in each setting is the largest id. Households and workplaces always have at least
@@ -537,42 +536,39 @@ generate_initial_leisure <- function(parameters_list, leisure_setting_sizes) {
     leisure_visits_per_person_per_week > 7
   ] <- 7 # capping it at 1 leisure visit per day (max 7 per week)
 
-  # Populating a list with the leisure visits made by each individual
-  leisure_visit_list <- vector(
-    mode = "list",
-    length = parameters_list$human_population
-  )
-  for (i in seq_len(parameters_list$human_population)) {
-    # Creating a temporary vector of leisure visits for that person
-    # -> Each element indicates where they visit on which day of the week
-    #    and a 0 means nowhere visited on that day of the week
-    temp_leisure_visit <- rep(0L, 7)
-
-    # Sampling which locations individuals visit for their leisure visits (weighted according to leisure setting size)
-    temp_location_leisure_visits <- sample.int(
-      n = length(leisure_setting_sizes),
-      size = leisure_visits_per_person_per_week[i],
-      replace = FALSE,
-      prob = leisure_setting_sizes
-    )
-
-    # Sampling which day(s) of the week the individual makes those visit(s) and assigning visits randomly
-    days_visits_made <- sample(
-      x = 1:7,
-      size = leisure_visits_per_person_per_week[i],
-      replace = FALSE
-    )
-    if (leisure_visits_per_person_per_week[i] == 1) {
-      temp_leisure_visit[days_visits_made] <- temp_location_leisure_visits
-    } else {
-      temp_leisure_visit[days_visits_made] <- sample(
-        x = temp_location_leisure_visits,
-        size = leisure_visits_per_person_per_week[i],
-        replace = FALSE
-      )
-    }
-    leisure_visit_list[[i]] <- temp_leisure_visit
+  # Sampling which locations individuals visit (weighted according to leisure setting size), without
+  # replacement for each individual. Visit j of every individual is drawn at once, with replacement,
+  # and draws that repeat one of that individual's earlier visits are redrawn: this gives the same
+  # distribution as sampling without replacement, without a pass over every setting per individual.
+  visits <- leisure_visits_per_person_per_week
+  if (max(0L, visits) > sum(leisure_setting_sizes > 0)) {
+    stop("too few leisure settings for the number of leisure visits")
   }
+  locations <- matrix(0L, parameters_list$human_population, 7)
+  for (j in seq_len(max(0L, visits))) {
+    pending <- which(visits >= j)
+    while (length(pending)) {
+      locations[pending, j] <- sample.int(
+        n = length(leisure_setting_sizes),
+        size = length(pending),
+        replace = TRUE,
+        prob = leisure_setting_sizes
+      )
+      repeated <- rowSums(locations[pending, seq_len(j - 1), drop = FALSE] == locations[pending, j]) > 0
+      pending <- pending[repeated]
+    }
+  }
+
+  # Sampling which day(s) of the week the individual makes those visit(s): visit j is made on the
+  # j-th day of a random ordering of the week, and a 0 means nowhere visited on that day
+  n <- parameters_list$human_population
+  individual <- rep(seq_len(n), 7)
+  by_individual <- order(individual, stats::runif(n * 7))
+  day_order <- matrix((by_individual - 1L) %/% n + 1L, n, 7, byrow = TRUE)
+  leisure_week <- matrix(0L, n, 7)
+  leisure_week[cbind(individual, as.vector(day_order))] <- locations
+
+  leisure_visit_list <- unname(split(as.vector(t(leisure_week)), rep(seq_len(n), each = 7)))
 
   return(leisure_visit_list) # a list where each element contains a vector that specifies the ids of the leisure settings
   # that each individual visits e.g. list(c(2, 6, 19, 35), c(1, 8), c(6, 10, 45)... etc)
