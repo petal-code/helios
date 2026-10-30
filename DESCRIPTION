@@ -37,6 +37,12 @@ Suggests:
     tictoc,
     tidyr
 Config/testthat/edition: 3
+Config/Needs/bench:
+    bench,
+    htmlwidgets,
+    pkgload,
+    profvis,
+    rmarkdown
 Imports:
     individual (>= 0.1.18),
     dplyr,
