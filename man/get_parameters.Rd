@@ -111,6 +111,11 @@ Wells-Riley Parameters (used by \code{convert_ach_to_riskiness()} to derive per-
 
 \code{r} and \code{pi} are a matched pair: \code{1/r} = 73 FFU is one Wells-Riley quantum, so \code{pi} = 365 is 5.0 quanta/hour. Both consumers return ratios and the exponent is small, so this level has limited leverage over efficacy between scenarios A and C (0.60 at A versus 0.52-0.58 across A-C in schools), but a substantially higher emission rate such as scenario D lowers it considerably (0.23 in schools).
 
+Near-Field Transmission Parameters (one per setting, where \verb{<setting>} is one of \code{household}, \code{workplace}, \code{school} or \code{leisure}):
+\itemize{
+\item \verb{near_field_fraction_<setting>}: share of the setting's transmission that is near-field (at close range to an infectious individual) rather than far-field (room-scale airborne, as Wells-Riley describes). A single number in \verb{[0, 1]}. The far-field share is scaled by each location's far-field riskiness and reduced by ACH interventions. The near-field share has a riskiness of 1 in every location, and ACH interventions don't reduce it. Default = 0 (all transmission is far-field)
+}
+
 Intervention Parameters (populated by \code{set_intervention_ach()}; users do not normally set these directly. One block per scope, where \verb{<s>} is one of \code{joint}, \code{workplace}, \code{school}, \code{leisure} or \code{household}):
 \itemize{
 \item \verb{intervention_<s>_active}: boolean flag set to TRUE when an intervention has been installed in scope \if{html}{\out{<s>}}. Default = FALSE

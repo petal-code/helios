@@ -2,9 +2,9 @@
 #'
 #' @description
 #' Determines which locations have an intervention deployed, and the resulting
-#' per-location efficacy for each setting with an active intervention. This is
-#' kept separate from [generate_population_data()] so that the same population
-#' can be reused with different interventions.
+#' per-location far-field and near-field efficacy for each setting with an
+#' active intervention. This is kept separate from [generate_population_data()]
+#' so that the same population can be reused with different interventions.
 #'
 #' It seeds the random number generators itself, so its result does not depend
 #' on earlier random draws, and it is the intervention data that
@@ -19,16 +19,19 @@
 #'
 #' @inheritParams generate_intervention_switches
 #'
-#' @return A list with three elements:
+#' @return A list with four elements:
 #'   \describe{
 #'     \item{switches}{The coverage switches, as returned by
 #'       [generate_intervention_switches()].}
-#'     \item{efficacy}{A named list containing, for each setting with an active
-#'       intervention, the per-location efficacy as returned by
-#'       [calculate_efficacy_from_ach()].}
+#'     \item{far_field_efficacy}{A named list containing, for each setting with
+#'       an active intervention, the per-location far-field efficacy as returned
+#'       by [calculate_efficacy_from_ach()].}
+#'     \item{near_field_efficacy}{A named list containing, for each setting with
+#'       an active intervention, the per-location near-field efficacy. The ACH
+#'       interventions don't reduce near-field transmission, so it is 0.}
 #'     \item{timestep}{A named list containing, for each setting with an active
-#'       intervention, its `intervention_<setting>_timestep`: efficacy is
-#'       applied at the timesteps after it.}
+#'       intervention, its `intervention_<setting>_timestep`: both efficacies
+#'       are applied at the timesteps after it.}
 #'   }
 #'   A joint intervention counts as active in the workplace, school and leisure
 #'   settings, with the joint intervention list and timestep.
@@ -64,22 +67,31 @@ generate_intervention_data <- function(parameters_list, population_data) {
   }
 
   # The coverage vector is used inside calculate_efficacy_from_ach to zero out
-  # delta for uncovered locations.
-  efficacy <- list()
+  # delta for uncovered locations. The ACH interventions don't reduce near-field
+  # transmission, so their near-field efficacy is 0.
+  far_field_efficacy <- list()
+  near_field_efficacy <- list()
   timestep <- list()
   for (setting in c("workplace", "school", "leisure", "household")) {
     if (isTRUE(setting_parameters[[paste0("intervention_", setting, "_active")]])) {
-      efficacy[[setting]] <- calculate_efficacy_from_ach(
-        ach_values = population_data[[paste0(setting, "_specific_ach")]],
+      ach_values <- population_data[[paste0(setting, "_specific_ach")]]
+      far_field_efficacy[[setting]] <- calculate_efficacy_from_ach(
+        ach_values = ach_values,
         parameters_list = setting_parameters,
         setting = setting,
         coverage_vector = switches[[setting]]
       )
+      near_field_efficacy[[setting]] <- rep(0, length(ach_values))
       timestep[[setting]] <- setting_parameters[[paste0("intervention_", setting, "_timestep")]]
     }
   }
 
-  list(switches = switches, efficacy = efficacy, timestep = timestep)
+  list(
+    switches = switches,
+    far_field_efficacy = far_field_efficacy,
+    near_field_efficacy = near_field_efficacy,
+    timestep = timestep
+  )
 }
 
 #' Generate intervention coverage switches
@@ -598,16 +610,23 @@ calculate_efficacy_from_ach <- function(ach_values, parameters_list, setting, co
 
   efficacy <- 1 - p_post / p_pre
 
-  # A negative efficacy would be applied downstream as an FOI multiplier greater
-  # than one, silently amplifying transmission, so fail loudly instead.
-  if (any(!is.finite(efficacy)) || any(efficacy < 0) || any(efficacy > 1)) {
-    stop(
-      "Error: computed efficacy outside [0, 1] - check that delta_function ",
-      "returns non-negative values for every location"
-    )
-  }
+  # A negative delta gives a negative efficacy
+  check_efficacy(
+    efficacy,
+    paste0("The far-field efficacy from the ", setting, " intervention's delta_function")
+  )
 
   return(efficacy)
+}
+
+# Stop unless every value of `efficacy` is a number in [0, 1]. The FOI is
+# multiplied by (1 - efficacy), so a negative efficacy would silently amplify
+# transmission, and one above 1 would make the FOI negative. `description` names
+# the efficacy in the error.
+check_efficacy <- function(efficacy, description) {
+  if (any(!is.finite(efficacy)) || any(efficacy < 0) || any(efficacy > 1)) {
+    stop(description, " must be in [0, 1] for every location")
+  }
 }
 
 
