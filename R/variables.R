@@ -19,42 +19,16 @@ create_variables <- function(parameters_list, population_data) {
     initial_values = population_data$age_classes
   )
 
-  # Everyone belongs to a household, so household ids start at 1. For schools,
-  # workplaces and leisure, 0 means the individual doesn't attend any location.
-  # Ids are formatted with "%d" so that large ids aren't written in scientific
-  # notation (eg. `as.character(1e5)` is "1e+05").
-  household_variable <- individual::CategoricalVariable$new(
-    categories = sprintf("%d", seq_along(population_data$setting_sizes$household)),
-    initial_values = sprintf("%d", population_data$initial_household_settings)
-  )
-
-  school_variable <- individual::CategoricalVariable$new(
-    categories = sprintf("%d", 0:length(population_data$setting_sizes$school)),
-    initial_values = sprintf("%d", population_data$initial_school_settings)
-  )
-
-  workplace_variable <- individual::CategoricalVariable$new(
-    categories = sprintf("%d", 0:length(population_data$setting_sizes$workplace)),
-    initial_values = sprintf("%d", population_data$initial_workplace_settings)
-  )
-
-  leisure_variable <- individual::RaggedInteger$new(
-    initial_values = population_data$initial_leisure_settings
-  )
-
-  ## Creating initial CategoricalVariable tracking leisure location an individiual goes to on a given day, which we will dynamically update
-  specific_leisure_variable <- individual::CategoricalVariable$new(
-    categories = sprintf("%d", 0:length(population_data$setting_sizes$leisure)),
-    initial_values = rep("0", parameters_list$human_population)
+  # The leisure location each individual visits on the current day (0 = none), which the S -> E
+  # process samples at the start of each day. Individuals' households, schools, workplaces and
+  # the leisure locations they could visit don't change, so they are kept in `population_data`.
+  specific_leisure_variable <- individual::IntegerVariable$new(
+    initial_values = rep(0L, parameters_list$human_population)
   )
 
   return(list(
     disease_state = disease_state_variable,
     age_class = age_class_variable,
-    household = household_variable,
-    school = school_variable,
-    workplace = workplace_variable,
-    leisure = leisure_variable,
     specific_leisure = specific_leisure_variable
   ))
 }
@@ -129,7 +103,7 @@ generate_population_data <- function(parameters_list) {
   initial_leisure_settings <- generate_initial_leisure(
     parameters_list = parameters_list,
     leisure_setting_sizes = leisure_setting_sizes
-  ) # returns list to initialise RaggedInteger
+  ) # a list with each individual's leisure location on each day of the week (0 = none)
 
   # Due to the sampling method used, some leisure settings for which sizes have been drawn are not
   # visited by anyone. Drop those settings and renumber the remaining ones as 1..n, keeping 0 as
