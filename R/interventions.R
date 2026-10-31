@@ -3,8 +3,10 @@
 #' @description
 #' Determines which locations have an intervention deployed, and the resulting
 #' per-location far-field and near-field efficacy for each setting with an
-#' active intervention. This is kept separate from [generate_population_data()]
-#' so that the same population can be reused with different interventions.
+#' active intervention. When masks are active, it also draws each individual's
+#' daily probability of wearing a mask. This is kept separate from
+#' [generate_population_data()] so that the same population can be reused with
+#' different interventions.
 #'
 #' It seeds the random number generators itself, so its result does not depend
 #' on earlier random draws, and it is the intervention data that
@@ -19,7 +21,7 @@
 #'
 #' @inheritParams generate_intervention_switches
 #'
-#' @return A list with four elements:
+#' @return A list with five elements:
 #'   \describe{
 #'     \item{switches}{The coverage switches, as returned by
 #'       [generate_intervention_switches()].}
@@ -32,6 +34,10 @@
 #'     \item{timestep}{A named list containing, for each setting with an active
 #'       intervention, its `intervention_<setting>_timestep`: both efficacies
 #'       are applied at the timesteps after it.}
+#'     \item{mask_probability}{When `mask_active` is TRUE, each individual's
+#'       daily probability of wearing a mask: `mask_daily_probability` for a
+#'       share `mask_willing_fraction` of individuals, picked at random, and 0
+#'       for the rest. NULL when masks aren't active.}
 #'   }
 #'   A joint intervention counts as active in the workplace, school and leisure
 #'   settings, with the joint intervention list and timestep.
@@ -86,11 +92,29 @@ generate_intervention_data <- function(parameters_list, population_data) {
     }
   }
 
+  # Each individual's daily probability of wearing a mask, fixed for the run. A share
+  # mask_willing_fraction of individuals, picked at random, wear one on each day with probability
+  # mask_daily_probability, and the rest never do. Nothing is drawn when masks aren't active, or
+  # when everyone or nobody is willing.
+  mask_probability <- NULL
+  if (isTRUE(parameters_list$mask_active)) {
+    N <- parameters_list$human_population
+    num_willing <- round(parameters_list$mask_willing_fraction * N)
+    willing <- if (num_willing > 0 && num_willing < N) {
+      sample.int(N, num_willing)
+    } else {
+      seq_len(num_willing) # everyone or nobody
+    }
+    mask_probability <- numeric(N)
+    mask_probability[willing] <- parameters_list$mask_daily_probability
+  }
+
   list(
     switches = switches,
     far_field_efficacy = far_field_efficacy,
     near_field_efficacy = near_field_efficacy,
-    timestep = timestep
+    timestep = timestep,
+    mask_probability = mask_probability
   )
 }
 
