@@ -132,11 +132,12 @@ create_SE_process <- function(
   )
   num_leisure <- length(population_data$leisure_specific_far_field_riskiness)
 
-  # Each location's riskiness at timestep t, from its far-field and near-field riskiness, each
-  # reduced by the setting's intervention once it's in place
-  riskiness_at <- function(setting, t) {
+  # The FOI on each individual from the locations of `setting` at timestep t, from the setting's
+  # near-field fraction and each field's riskiness and location efficacy at t
+  FOI_from <- function(setting, t, location, infectious, beta, size) {
     near_field_fraction <- parameters_list[[paste0("near_field_fraction_", setting)]]
-    setting_riskiness(population_data, intervention_data, setting, t, near_field_fraction)
+    fields <- setting_fields(population_data, intervention_data, setting, t)
+    setting_FOI(location, infectious, fields, beta, size, near_field_fraction)
   }
 
   ## Process Function
@@ -169,22 +170,16 @@ create_SE_process <- function(
     #=== Household FOI ===#
     #=====================#
     # Individuals living alone can't be infected at home
-    household_FOI <- location_FOI(
-      household, I, riskiness_at("household", t), beta_household_t, household_size
-    )
+    household_FOI <- FOI_from("household", t, household, I, beta_household_t, household_size)
     household_FOI[lives_alone] <- 0
 
     #=== Workplace FOI ===#
     #=====================#
-    workplace_FOI <- location_FOI(
-      workplace, I, riskiness_at("workplace", t), beta_workplace_t, workplace_size
-    )
+    workplace_FOI <- FOI_from("workplace", t, workplace, I, beta_workplace_t, workplace_size)
 
     #=== School FOI ===#
     #==================#
-    school_FOI <- location_FOI(
-      school, I, riskiness_at("school", t), beta_school_t, school_size
-    )
+    school_FOI <- FOI_from("school", t, school, I, beta_school_t, school_size)
 
     #=== Leisure FOI ===#
     #=====================#
@@ -200,15 +195,15 @@ create_SE_process <- function(
     }
 
     # Leisure FOI is shared among the individuals actually visiting each location that day
-    leisure_FOI <- location_FOI(
-      leisure_visit, I, riskiness_at("leisure", t), beta_leisure_t, tabulate(leisure_visit, num_leisure)
+    leisure_FOI <- FOI_from(
+      "leisure", t, leisure_visit, I, beta_leisure_t, tabulate(leisure_visit, num_leisure)
     )
 
     #=== Community FOI ===#
     #=====================#
     # The community is a single location that contains everyone, so its FOI is the same for every
     # individual
-    community_FOI <- location_FOI(NULL, I, riskiness_at("community", t), beta_community_t, N)
+    community_FOI <- FOI_from("community", t, NULL, I, beta_community_t, N)
 
     #=== Total FOI ===#
     #=================#
@@ -259,7 +254,7 @@ create_SE_process <- function(
 # Each individual has a household (ids from 1), and a school and workplace (ids from 0, for none).
 # Each location's size is its number of individuals. Each individual's leisure locations exist.
 # Every location has one far-field and one near-field riskiness value, and one far-field and one
-# near-field efficacy value in settings with an intervention.
+# near-field efficacy value in [0, 1] in settings with an intervention.
 check_settings <- function(population_data, intervention_data, N) {
   for (setting in c("household", "school", "workplace", "leisure")) {
     num_locations <- length(population_data$setting_sizes[[setting]])
@@ -308,57 +303,112 @@ check_settings <- function(population_data, intervention_data, N) {
   for (setting in names(intervention_data$far_field_efficacy)) {
     num_locations <- length(population_data$setting_sizes[[setting]])
     for (field in c("far_field", "near_field")) {
-      if (length(intervention_data[[paste0(field, "_efficacy")]][[setting]]) != num_locations) {
+      efficacy <- intervention_data[[paste0(field, "_efficacy")]][[setting]]
+      if (length(efficacy) != num_locations) {
         stop(
           "intervention_data$", field, "_efficacy$", setting, " must have one value for each of ",
           "the ", num_locations, " locations in population_data$setting_sizes$", setting,
           ". Generate the intervention data from this population"
         )
       }
+      check_efficacy(efficacy, paste0("intervention_data$", field, "_efficacy$", setting))
     }
   }
 }
 
-# Each location's riskiness in `setting` at timestep t. A share `near_field_fraction` of it is
-# near-field and the rest far-field, and each field's riskiness is reduced by the setting's
-# intervention once it's in place. The intervention data has efficacies and a timestep only for
-# settings with an active intervention, including those a joint intervention covers. The community
-# is a single location with a riskiness of 1 in both fields, and no intervention.
-setting_riskiness <- function(population_data, intervention_data, setting, t, near_field_fraction) {
+# Each field's riskiness and location efficacy in `setting` at timestep t
+#
+# Returns a list with an element for each field, `far_field` and `near_field`. Each has the
+# riskiness of each location, and the efficacy of the setting's intervention in each location once
+# it's in place, or NULL before then and in settings without one. The intervention data has
+# efficacies and a timestep only for settings with an active intervention, including those a joint
+# intervention covers. The community is a single location with a riskiness of 1 in both fields, and
+# no intervention.
+setting_fields <- function(population_data, intervention_data, setting, t) {
+  if (setting == "community") {
+    field <- list(riskiness = 1, efficacy = NULL)
+    return(list(far_field = field, near_field = field))
+  }
   intervention_in_place <- !is.null(intervention_data$far_field_efficacy[[setting]]) &&
     t > intervention_data$timestep[[setting]]
-  field_riskiness <- function(field) {
-    if (setting == "community") {
-      return(1)
-    }
-    riskiness <- population_data[[paste0(setting, "_specific_", field, "_riskiness")]]
-    if (intervention_in_place) {
-      riskiness <- riskiness * (1 - intervention_data[[paste0(field, "_efficacy")]][[setting]])
-    }
-    riskiness
+  fields <- list()
+  for (field in c("far_field", "near_field")) {
+    efficacy <- intervention_data[[paste0(field, "_efficacy")]][[setting]]
+    fields[[field]] <- list(
+      riskiness = population_data[[paste0(setting, "_specific_", field, "_riskiness")]],
+      efficacy = if (intervention_in_place) efficacy
+    )
   }
-
-  # Without a near-field share the mix is just the far-field riskiness, so skip the near-field work
-  far_field_riskiness <- field_riskiness("far_field")
-  if (near_field_fraction == 0) {
-    far_field_riskiness
-  } else {
-    (1 - near_field_fraction) * far_field_riskiness +
-      near_field_fraction * field_riskiness("near_field")
-  }
+  fields
 }
 
 # The force of infection on each individual from the locations of one setting type
 #
-# `location` is each individual's location (0 = none) and `infectious` the indices of infectious
-# individuals. `riskiness` and `size` are each location's riskiness and number of individuals.
-# `location` is NULL for a setting with a single location that contains everyone, such as the
-# community, and the FOI is then one value, the same for every individual.
-location_FOI <- function(location, infectious, riskiness, beta, size) {
-  num_infectious <- effective_infectious_count(location, infectious, length(size))
-  # Locations nobody attends have a FOI of NaN (0 / 0), but it's never assigned to anyone
-  FOI <- riskiness * beta * num_infectious / size
-  if (is.null(location)) FOI else c(0, FOI)[location + 1]
+# `location` is each individual's location (0 = none), or NULL for a setting with a single location
+# that contains everyone, such as the community. The FOI is then one value, the same for every
+# individual, unless personal protection makes it differ. `infectious` has the indices of infectious
+# individuals, `fields` each field's riskiness and location efficacy from setting_fields(), and
+# `size` each location's number of individuals. A share `near_field_fraction` of the setting's
+# transmission is near-field and the rest far-field.
+#
+# `weight` and `protection` may each have an element for each field, `far_field` and `near_field`.
+# A field's `weight` has one value for each infectious individual, their weight in the effective
+# infectious count (see effective_infectious_count()). A field's `protection` has one value for each
+# individual, the efficacy of their own protection, such as a mask's. In a field without personal
+# protection, the location efficacy reduces each location's FOI before it's handed to the location's
+# members. In a field with it, combine_protection() combines the two for each individual.
+setting_FOI <- function(
+  location,
+  infectious,
+  fields,
+  beta,
+  size,
+  near_field_fraction,
+  weight = list(),
+  protection = list()
+) {
+  # Each individual's value of a per-location vector, 0 for individuals without a location
+  at_location <- function(x) if (is.null(location)) x else c(0, x)[location + 1]
+  # NULL until a field adds to it, so that a single field's FOI is used exactly as it is
+  add <- function(total, FOI) if (is.null(total)) FOI else total + FOI
+
+  # Fields without a share of transmission are skipped
+  share <- c(far_field = 1 - near_field_fraction, near_field = near_field_fraction)
+  n <- length(size)
+  FOI_per_location <- NULL
+  FOI_per_individual <- NULL
+  for (field in names(share)[share > 0]) {
+    num_infectious <- effective_infectious_count(location, infectious, n, weight[[field]])
+    riskiness <- fields[[field]]$riskiness
+    efficacy <- fields[[field]]$efficacy
+    personal_efficacy <- protection[[field]]
+    if (is.null(personal_efficacy) && !is.null(efficacy)) {
+      riskiness <- riskiness * (1 - efficacy)
+    }
+    # Locations nobody attends have a FOI of NaN (0 / 0), but it's never handed to anyone
+    FOI <- riskiness * (share[[field]] * beta) * num_infectious / size
+    if (is.null(personal_efficacy)) {
+      FOI_per_location <- add(FOI_per_location, FOI)
+    } else {
+      location_efficacy <- if (is.null(efficacy)) 0 else at_location(efficacy)
+      FOI <- at_location(FOI) * combine_protection(location_efficacy, personal_efficacy)
+      FOI_per_individual <- add(FOI_per_individual, FOI)
+    }
+  }
+  FOI <- FOI_per_individual
+  if (!is.null(FOI_per_location)) {
+    FOI <- add(FOI, at_location(FOI_per_location))
+  }
+  FOI
+}
+
+# The share of one field's transmission to each individual that gets through both the location's
+# interventions and the individual's own protection, from the efficacy of each. This is the one
+# place the rule lives, and it works on vectors over individuals. By default the two act
+# independently, so the share is the product of what each lets through: a mask removes a fraction
+# of whatever concentration reaches the face, however much ventilation has already lowered it.
+combine_protection <- function(location_efficacy, personal_efficacy) {
+  (1 - location_efficacy) * (1 - personal_efficacy)
 }
 
 # The effective number of infectious individuals in each of the `n` locations of a setting type

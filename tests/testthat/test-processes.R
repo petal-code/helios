@@ -91,17 +91,30 @@ test_that("create_SE_process() refuses settings that don't agree with each other
   broken <- inputs
   broken$intervention_data$near_field_efficacy$workplace <- NULL
   expect_error(create_SE_from(broken), "near_field_efficacy\\$workplace must have one value")
+
+  # A workplace near-field efficacy above 1:
+  broken <- inputs
+  broken$intervention_data$near_field_efficacy$workplace[1] <- 1.5
+  expect_error(
+    create_SE_from(broken),
+    "near_field_efficacy\\$workplace must be in \\[0, 1\\] for every location"
+  )
 })
 
 #============================#
 #===== FOI calculations =====#
 #============================#
 
-test_that("location_FOI() shares each location's infectious individuals among its members", {
+test_that("setting_FOI() shares each location's infectious individuals among its members", {
   # Location 1 has two members, one of them infectious, location 2 has one member and location 3
   # none. The fourth individual has no location.
-  FOI <- location_FOI(
-    location = c(1, 1, 2, 0), infectious = 1, riskiness = c(2, 1, 1), beta = 0.5, size = c(2, 1, 0)
+  fields <- list(
+    far_field = list(riskiness = c(2, 1, 1), efficacy = NULL),
+    near_field = list(riskiness = c(1, 1, 1), efficacy = NULL)
+  )
+  FOI <- setting_FOI(
+    location = c(1, 1, 2, 0), infectious = 1, fields = fields, beta = 0.5, size = c(2, 1, 0),
+    near_field_fraction = 0
   )
   expect_identical(FOI, c(0.5, 0.5, 0, 0))
 })
@@ -158,11 +171,13 @@ test_that("the community FOI is beta_community * n_I / N, whatever its near-fiel
   }
 
   # At the default near-field fraction of 0, exactly as before the community was a setting:
-  expect_identical(setting_riskiness(list(), list(), "community", 1, 0), 1)
-  expect_identical(location_FOI(NULL, 1:30, 1, 0.2, 1000), 0.2 * 30 / 1000)
+  fields <- setting_fields(list(), list(), "community", 1)
+  expect_identical(fields$far_field, list(riskiness = 1, efficacy = NULL))
+  expect_identical(fields$near_field, list(riskiness = 1, efficacy = NULL))
+  expect_identical(setting_FOI(NULL, 1:30, fields, 0.2, 1000, 0), 0.2 * 30 / 1000)
 })
 
-test_that("setting_riskiness() applies a joint intervention after its timestep", {
+test_that("setting_fields() applies a joint intervention after its timestep", {
   parameters_list <- with_default_ach(get_parameters(overrides = list(
     human_population = 1000,
     number_initial_S = 990,
@@ -185,28 +200,31 @@ test_that("setting_riskiness() applies a joint intervention after its timestep",
   population_data <- generate_population_data(parameters_list)
   intervention_data <- generate_intervention_data(parameters_list, population_data)
 
-  # Without a near-field share, the riskiness is the far-field riskiness
+  # Each field's riskiness, and its efficacy only after the intervention's timestep
   for (setting in c("workplace", "school", "leisure")) {
-    riskiness <- population_data[[paste0(setting, "_specific_far_field_riskiness")]]
-    efficacy <- intervention_data$far_field_efficacy[[setting]]
-    expect_identical(
-      setting_riskiness(population_data, intervention_data, setting, 3, 0),
-      riskiness
-    )
-    expect_identical(
-      setting_riskiness(population_data, intervention_data, setting, 4, 0),
-      riskiness * (1 - efficacy)
-    )
+    for (field in c("far_field", "near_field")) {
+      riskiness <- population_data[[paste0(setting, "_specific_", field, "_riskiness")]]
+      efficacy <- intervention_data[[paste0(field, "_efficacy")]][[setting]]
+      expect_identical(
+        setting_fields(population_data, intervention_data, setting, 3)[[field]],
+        list(riskiness = riskiness, efficacy = NULL)
+      )
+      expect_identical(
+        setting_fields(population_data, intervention_data, setting, 4)[[field]],
+        list(riskiness = riskiness, efficacy = efficacy)
+      )
+    }
   }
   # A joint intervention doesn't cover households:
-  expect_identical(
-    setting_riskiness(population_data, intervention_data, "household", 4, 0),
-    population_data$household_specific_far_field_riskiness
-  )
+  household <- setting_fields(population_data, intervention_data, "household", 4)
+  expect_null(household$far_field$efficacy)
+  expect_null(household$near_field$efficacy)
 })
 
-test_that("the FOI from a setting combines its far-field and near-field transmission", {
-  # Two schools, with an intervention from timestep 2 that reduces both fields' riskiness
+# Two schools, with an intervention from timestep 2 that reduces transmission in both fields.
+# School 1 has two pupils, one of them infectious, and school 2 three, two of them infectious. The
+# sixth individual has no school. A quarter of transmission is near-field.
+two_schools_FOI <- function(t, weight = list(), protection = list()) {
   population_data <- list(
     school_specific_far_field_riskiness = c(2, 0.5),
     school_specific_near_field_riskiness = c(1, 3)
@@ -216,22 +234,90 @@ test_that("the FOI from a setting combines its far-field and near-field transmis
     near_field_efficacy = list(school = c(0.25, 0)),
     timestep = list(school = 2)
   )
-
-  # A quarter of transmission is near-field. Before the intervention, school 1's riskiness is
-  # 0.75 * 2 + 0.25 * 1, and school 2's 0.75 * 0.5 + 0.25 * 3:
-  expect_equal(
-    setting_riskiness(population_data, intervention_data, "school", 2, 0.25),
-    c(1.75, 1.125)
+  setting_FOI(
+    location = c(1, 1, 2, 2, 2, 0),
+    infectious = c(1, 3, 4),
+    fields = setting_fields(population_data, intervention_data, "school", t),
+    beta = 0.4,
+    size = c(2, 3),
+    near_field_fraction = 0.25,
+    weight = weight,
+    protection = protection
   )
+}
+
+test_that("the FOI from a setting combines its far-field and near-field transmission", {
+  # Before the intervention, school 1's riskiness is 0.75 * 2 + 0.25 * 1, and school 2's
+  # 0.75 * 0.5 + 0.25 * 3:
+  expect_equal(two_schools_FOI(2), c(rep(1.75 * 0.4 / 2, 2), rep(1.125 * 0.4 * 2 / 3, 3), 0))
   # After it, they're 0.75 * 2 * 0.5 + 0.25 * 1 * 0.75 and 0.75 * 0.5 * 0.8 + 0.25 * 3 * 1:
-  riskiness <- setting_riskiness(population_data, intervention_data, "school", 3, 0.25)
-  expect_equal(riskiness, c(0.9375, 1.05))
+  expect_equal(two_schools_FOI(3), c(rep(0.9375 * 0.4 / 2, 2), rep(1.05 * 0.4 * 2 / 3, 3), 0))
+})
 
-  # School 1 has two pupils, one of them infectious, and school 2 three, two of them infectious.
-  # The sixth individual has no school.
-  FOI <- location_FOI(
-    location = c(1, 1, 2, 2, 2, 0), infectious = c(1, 3, 4), riskiness = riskiness, beta = 0.4,
-    size = c(2, 3)
+test_that("the FOI from a setting combines each individual's protection with the location's", {
+  # The infectious individuals' weights make the effective infectious count 1 in both schools in
+  # the far field, and 0.2 in school 1 and 0.2 + 1 in school 2 in the near field
+  weight <- list(far_field = c(1, 0.5, 0.5), near_field = c(0.2, 0.2, 1))
+  # After the intervention, the far-field FOI on school 1's pupils is 0.75 * 0.4 * 2 * 0.5 * 1 / 2,
+  # and on school 2's 0.75 * 0.4 * 0.5 * 0.8 * 1 / 3, before their own protection. The near-field
+  # FOI is 0.25 * 0.4 * 1 * 0.75 * 0.2 / 2 and 0.25 * 0.4 * 3 * 1 * 1.2 / 3.
+  far <- c(0.15, 0.04)
+  near <- c(0.0075, 0.12)
+  expect_equal(two_schools_FOI(3, weight), c(rep(far[1] + near[1], 2), rep(far[2] + near[2], 3), 0))
+
+  # Individuals 2, 4, 5 and 6 protect themselves, with an efficacy of 0.5 in the far field and 0.4
+  # in the near field. Individual 6 has no school, so it changes nothing for them.
+  protected <- c(FALSE, TRUE, FALSE, TRUE, TRUE, TRUE)
+  far_protection <- ifelse(protected, 0.5, 0)
+  near_protection <- ifelse(protected, 0.4, 0)
+  expect_equal(
+    two_schools_FOI(3, weight, list(far_field = far_protection, near_field = near_protection)),
+    c(
+      far[1] + near[1], far[1] * 0.5 + near[1] * 0.6,
+      far[2] + near[2], rep(far[2] * 0.5 + near[2] * 0.6, 2),
+      0
+    )
   )
-  expect_equal(FOI, c(0.9375 * 0.4 / 2, 0.9375 * 0.4 / 2, rep(1.05 * 0.4 * 2 / 3, 3), 0))
+  # With protection in the far field only:
+  expect_equal(
+    two_schools_FOI(3, weight, list(far_field = far_protection)),
+    c(
+      far[1] + near[1], far[1] * 0.5 + near[1],
+      far[2] + near[2], rep(far[2] * 0.5 + near[2], 2),
+      0
+    )
+  )
+  # Before the intervention there's no location efficacy to combine with. Without weights, the
+  # far-field FOI is 0.75 * 0.4 * 2 * 1 / 2 and 0.75 * 0.4 * 0.5 * 2 / 3, and the near-field FOI
+  # 0.25 * 0.4 * 1 * 1 / 2 and 0.25 * 0.4 * 3 * 2 / 3.
+  far_before <- c(0.3, 0.1)
+  near_before <- c(0.05, 0.2)
+  expect_equal(
+    two_schools_FOI(2, protection = list(far_field = far_protection, near_field = near_protection)),
+    c(
+      far_before[1] + near_before[1], far_before[1] * 0.5 + near_before[1] * 0.6,
+      far_before[2] + near_before[2], rep(far_before[2] * 0.5 + near_before[2] * 0.6, 2),
+      0
+    )
+  )
+  # Protection of 0 gives the FOI without protection:
+  no_protection <- list(far_field = rep(0, 6), near_field = rep(0, 6))
+  expect_equal(two_schools_FOI(3, weight, no_protection), two_schools_FOI(3, weight))
+})
+
+test_that("each individual's protection applies to the community's single FOI", {
+  fields <- setting_fields(list(), list(), "community", 1)
+  # Three of four individuals are infectious. The near-field fraction makes no difference.
+  for (near_field_fraction in c(0, 0.3)) {
+    FOI <- setting_FOI(
+      NULL, 1:3, fields, 0.2, 4, near_field_fraction,
+      protection = list(far_field = c(0, 0.5, 1, 0), near_field = c(0, 0.5, 1, 0))
+    )
+    expect_equal(FOI, 0.2 * 3 / 4 * c(1, 0.5, 0, 1))
+  }
+})
+
+test_that("combine_protection() multiplies what the location and the individual let through", {
+  expect_equal(combine_protection(c(0, 0.5, 0.2, 1), c(0.5, 0.5, 0, 0.3)), c(0.5, 0.25, 0.8, 0))
+  expect_identical(combine_protection(0, c(0, 0.4)), c(1, 0.6))
 })
