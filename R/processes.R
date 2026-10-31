@@ -206,9 +206,9 @@ create_SE_process <- function(
 
     #=== Community FOI ===#
     #=====================#
-    ### Calculate Community FOI (real-valued for all individuals)
-    #### NOTE: Double check whether the "/N" is correct here - not sure currently
-    community_FOI <- beta_community_t * length(I) / N
+    # The community is a single location that contains everyone, so its FOI is the same for every
+    # individual
+    community_FOI <- location_FOI(NULL, I, riskiness_at("community", t), beta_community_t, N)
 
     #=== Total FOI ===#
     #=================#
@@ -322,11 +322,15 @@ check_settings <- function(population_data, intervention_data, N) {
 # Each location's riskiness in `setting` at timestep t. A share `near_field_fraction` of it is
 # near-field and the rest far-field, and each field's riskiness is reduced by the setting's
 # intervention once it's in place. The intervention data has efficacies and a timestep only for
-# settings with an active intervention, including those a joint intervention covers.
+# settings with an active intervention, including those a joint intervention covers. The community
+# is a single location with a riskiness of 1 in both fields, and no intervention.
 setting_riskiness <- function(population_data, intervention_data, setting, t, near_field_fraction) {
   intervention_in_place <- !is.null(intervention_data$far_field_efficacy[[setting]]) &&
     t > intervention_data$timestep[[setting]]
   field_riskiness <- function(field) {
+    if (setting == "community") {
+      return(1)
+    }
     riskiness <- population_data[[paste0(setting, "_specific_", field, "_riskiness")]]
     if (intervention_in_place) {
       riskiness <- riskiness * (1 - intervention_data[[paste0(field, "_efficacy")]][[setting]])
@@ -348,7 +352,12 @@ setting_riskiness <- function(population_data, intervention_data, setting, t, ne
 #
 # `location` is each individual's location (0 = none) and `infectious` the indices of infectious
 # individuals. `riskiness` and `size` are each location's riskiness and number of individuals.
+# `location` is NULL for a setting with a single location that contains everyone, such as the
+# community, and the FOI is then one value, the same for every individual.
 location_FOI <- function(location, infectious, riskiness, beta, size) {
+  if (is.null(location)) {
+    return(riskiness * beta * length(infectious) / size)
+  }
   num_infectious <- tabulate(location[infectious], length(size))
   # Locations nobody attends have a FOI of NaN (0 / 0), but it's never assigned to anyone
   FOI <- riskiness * beta * num_infectious / size
