@@ -355,13 +355,38 @@ setting_riskiness <- function(population_data, intervention_data, setting, t, ne
 # `location` is NULL for a setting with a single location that contains everyone, such as the
 # community, and the FOI is then one value, the same for every individual.
 location_FOI <- function(location, infectious, riskiness, beta, size) {
-  if (is.null(location)) {
-    return(riskiness * beta * length(infectious) / size)
-  }
-  num_infectious <- tabulate(location[infectious], length(size))
+  num_infectious <- effective_infectious_count(location, infectious, length(size))
   # Locations nobody attends have a FOI of NaN (0 / 0), but it's never assigned to anyone
   FOI <- riskiness * beta * num_infectious / size
-  c(0, FOI)[location + 1]
+  if (is.null(location)) FOI else c(0, FOI)[location + 1]
+}
+
+# The effective number of infectious individuals in each of the `n` locations of a setting type
+#
+# `location` is each individual's location (0 = none), or NULL for a single location that contains
+# everyone, and `infectious` the indices of infectious individuals. Without weights, each infectious
+# individual counts as 1, so this is the number of infectious individuals in each location.
+# Otherwise `weight` has one value for each infectious individual, such as 1 minus the efficacy of
+# their source control, and this is the sum of the weights in each location.
+effective_infectious_count <- function(location, infectious, n, weight = NULL) {
+  if (!is.null(weight) && length(weight) != length(infectious)) {
+    stop("weight must have one value for each infectious individual")
+  }
+  if (is.null(location)) {
+    return(if (is.null(weight)) length(infectious) else sum(weight))
+  }
+  if (is.null(weight)) {
+    return(tabulate(location[infectious], n))
+  }
+  infectious_location <- location[infectious]
+  has_location <- infectious_location > 0
+  infectious_location <- infectious_location[has_location]
+  num_infectious <- numeric(n)
+  # rowsum() with reorder = FALSE sums each location's weights in the order the locations appear
+  num_infectious[unique(infectious_location)] <- rowsum(
+    weight[has_location], infectious_location, reorder = FALSE
+  )
+  num_infectious
 }
 
 #' Create process governing exposed to infectious disease state transition

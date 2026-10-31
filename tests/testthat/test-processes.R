@@ -106,6 +106,38 @@ test_that("location_FOI() shares each location's infectious individuals among it
   expect_identical(FOI, c(0.5, 0.5, 0, 0))
 })
 
+test_that("effective_infectious_count() counts each location's infectious, or sums their weights", {
+  # Individuals 1, 2, 4 and 5 are infectious. Two of them are in location 1, one in location 3 and
+  # one has no location. Nobody is in location 4.
+  location <- c(1, 1, 2, 0, 3, 1)
+  infectious <- c(1, 2, 4, 5)
+  weight <- c(0.5, 0.2, 0.9, 0.3)
+  count <- effective_infectious_count(location, infectious, 4)
+  expect_identical(count, tabulate(location[infectious], 4))
+  expect_identical(count, c(2L, 0L, 1L, 0L))
+  expect_equal(
+    effective_infectious_count(location, infectious, 4, weight = weight), c(0.7, 0, 0.3, 0)
+  )
+  expect_equal(
+    effective_infectious_count(location, infectious, 4, weight = rep(1, 4)), c(2, 0, 1, 0)
+  )
+
+  # Nobody infectious:
+  expect_identical(effective_infectious_count(location, integer(0), 4), integer(4))
+  expect_identical(
+    effective_infectious_count(location, integer(0), 4, weight = numeric(0)), numeric(4)
+  )
+
+  # A single location that contains everyone:
+  expect_identical(effective_infectious_count(NULL, infectious, 1), 4L)
+  expect_equal(effective_infectious_count(NULL, infectious, 1, weight = weight), 1.9)
+
+  expect_error(
+    effective_infectious_count(location, infectious, 4, weight = c(0.5, 0.2)),
+    "weight must have one value for each infectious individual"
+  )
+})
+
 test_that("the community FOI is beta_community * n_I / N, whatever its near-field fraction", {
   inputs <- small_SE_inputs()
   inputs$parameters_list$render_diagnostics <- TRUE
