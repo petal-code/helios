@@ -128,6 +128,18 @@ Intervention Parameters (populated by \code{set_intervention_ach()}; users do no
 \item \verb{intervention_<s>_timestep}: first simulation timestep at which the intervention's efficacy is applied in the FOI calculation. Default = NULL
 }
 
+Mask Parameters (masks are worn in every setting, the community included. Each individual has a daily probability of wearing a mask, fixed for the run, and each day either wears one in every setting or in none):
+\itemize{
+\item \code{mask_active}: TRUE to model mask wearing. Default = FALSE
+\item \code{mask_timestep}: masks are worn at the timesteps after this one, so 0 means from the start. A single number of at least 0, required when \code{mask_active} is TRUE. Default = NULL
+\item \code{mask_willing_fraction}: share of individuals who ever wear a mask, in \verb{[0, 1]}. Default = 1
+\item \code{mask_daily_probability}: probability that an individual who is willing to wear a mask wears one on a given day, in \verb{[0, 1]}. Default = 1 (perfect adherence)
+\item \code{mask_inward_far_field_efficacy}: share of the far-field FOI on the wearer that their mask removes, in \verb{[0, 1]}. Required when \code{mask_active} is TRUE. Default = NULL
+\item \code{mask_inward_near_field_efficacy}: share of the near-field FOI on the wearer that their mask removes, in \verb{[0, 1]}. Required when \code{mask_active} is TRUE. Default = NULL
+\item \code{mask_outward_far_field_efficacy}: share of an infectious wearer's far-field transmission that their mask removes (source control), in \verb{[0, 1]}. Required when \code{mask_active} is TRUE. Default = NULL
+\item \code{mask_outward_near_field_efficacy}: share of an infectious wearer's near-field transmission that their mask removes (source control), in \verb{[0, 1]}. Required when \code{mask_active} is TRUE. Default = NULL
+}
+
 Setting-Specific Room Size Per Individual Parameters:
 \itemize{
 \item \code{size_per_individual_workplace}: The volume or surface area for each individual in the workplace setting type; default = 1 (in which case "square_footage" coverage_target gives same results as "individuals" coverage_target)

@@ -111,6 +111,16 @@
 #' * `intervention_<s>_coverage_type`: how locations are selected for coverage. Either "random" (uniform sampling) or "targeted_riskiness" (locations ranked in decreasing order of far-field riskiness). Default = NULL
 #' * `intervention_<s>_timestep`: first simulation timestep at which the intervention's efficacy is applied in the FOI calculation. Default = NULL
 #'
+#' Mask Parameters (masks are worn in every setting, the community included. Each individual has a daily probability of wearing a mask, fixed for the run, and each day either wears one in every setting or in none):
+#' * `mask_active`: TRUE to model mask wearing. Default = FALSE
+#' * `mask_timestep`: masks are worn at the timesteps after this one, so 0 means from the start. A single number of at least 0, required when `mask_active` is TRUE. Default = NULL
+#' * `mask_willing_fraction`: share of individuals who ever wear a mask, in `[0, 1]`. Default = 1
+#' * `mask_daily_probability`: probability that an individual who is willing to wear a mask wears one on a given day, in `[0, 1]`. Default = 1 (perfect adherence)
+#' * `mask_inward_far_field_efficacy`: share of the far-field FOI on the wearer that their mask removes, in `[0, 1]`. Required when `mask_active` is TRUE. Default = NULL
+#' * `mask_inward_near_field_efficacy`: share of the near-field FOI on the wearer that their mask removes, in `[0, 1]`. Required when `mask_active` is TRUE. Default = NULL
+#' * `mask_outward_far_field_efficacy`: share of an infectious wearer's far-field transmission that their mask removes (source control), in `[0, 1]`. Required when `mask_active` is TRUE. Default = NULL
+#' * `mask_outward_near_field_efficacy`: share of an infectious wearer's near-field transmission that their mask removes (source control), in `[0, 1]`. Required when `mask_active` is TRUE. Default = NULL
+#'
 #' Setting-Specific Room Size Per Individual Parameters:
 #' * `size_per_individual_workplace`: The volume or surface area for each individual in the workplace setting type; default = 1 (in which case "square_footage" coverage_target gives same results as "individuals" coverage_target)
 #' * `size_per_individual_school`: The volume or surface area for each individual in the school setting type; default = 1 (in which case "square_footage" coverage_target gives same results as "individuals" coverage_target)
@@ -254,6 +264,17 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     intervention_household_coverage_target = NULL,
     intervention_household_coverage_type   = NULL,
     intervention_household_timestep        = NULL,
+
+    # Mask parameters. The timestep and the efficacies have no defaults, so they must be set
+    # when masks are active.
+    mask_active = FALSE,
+    mask_timestep = NULL,
+    mask_willing_fraction = 1,
+    mask_daily_probability = 1,
+    mask_inward_far_field_efficacy = NULL,
+    mask_inward_near_field_efficacy = NULL,
+    mask_outward_far_field_efficacy = NULL,
+    mask_outward_near_field_efficacy = NULL,
 
     # Room Size Per Individual Parameters: (currently used for coverage allocation)
     size_per_individual_workplace = 1,
@@ -424,11 +445,46 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     }
   }
 
+  is_single_number <- function(value) is.numeric(value) && length(value) == 1 && is.finite(value)
+  is_fraction <- function(value) is_single_number(value) && value >= 0 && value <= 1
+
   # Check that each setting's near-field fraction is a single number in [0, 1]
   for (setting in c("household", "workplace", "school", "leisure", "community")) {
     name <- paste0("near_field_fraction_", setting)
+    if (!is_fraction(parameters[[name]])) {
+      stop(name, " must be a single number in [0, 1]")
+    }
+  }
+
+  # Check the mask parameters. The timestep and the four efficacies have no defaults, so they must
+  # be set when masks are active.
+  mask_efficacies <- c(
+    "mask_inward_far_field_efficacy",
+    "mask_inward_near_field_efficacy",
+    "mask_outward_far_field_efficacy",
+    "mask_outward_near_field_efficacy"
+  )
+  if (!isTRUE(parameters$mask_active) && !isFALSE(parameters$mask_active)) {
+    stop("mask_active must be TRUE or FALSE")
+  }
+  if (parameters$mask_active) {
+    for (name in c("mask_timestep", mask_efficacies)) {
+      if (is.null(parameters[[name]])) {
+        stop(name, " must be specified if mask_active is TRUE")
+      }
+    }
+  }
+  if (
+    !is.null(parameters$mask_timestep) &&
+      !(is_single_number(parameters$mask_timestep) && parameters$mask_timestep >= 0)
+  ) {
+    stop("mask_timestep must be a single number of at least 0")
+  }
+  for (name in c("mask_willing_fraction", "mask_daily_probability", mask_efficacies)) {
     value <- parameters[[name]]
-    if (!is.numeric(value) || length(value) != 1 || !is.finite(value) || value < 0 || value > 1) {
+    # The efficacies may be left unset when masks aren't active
+    unset_efficacy <- name %in% mask_efficacies && is.null(value)
+    if (!unset_efficacy && !is_fraction(value)) {
       stop(name, " must be a single number in [0, 1]")
     }
   }

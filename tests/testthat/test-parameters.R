@@ -158,6 +158,87 @@ test_that("get_parameters() requires each near-field fraction to be a single num
   }
 })
 
+mask_efficacies <- c(
+  "mask_inward_far_field_efficacy",
+  "mask_inward_near_field_efficacy",
+  "mask_outward_far_field_efficacy",
+  "mask_outward_near_field_efficacy"
+)
+masks_on <- list(
+  mask_active = TRUE,
+  mask_timestep = 0,
+  mask_inward_far_field_efficacy = 0.5,
+  mask_inward_near_field_efficacy = 0.3,
+  mask_outward_far_field_efficacy = 0.6,
+  mask_outward_near_field_efficacy = 0.9
+)
+
+test_that("get_parameters() has masks off, perfect adherence and no efficacies by default", {
+  parameters_list <- get_parameters()
+  expect_false(parameters_list$mask_active)
+  expect_null(parameters_list$mask_timestep)
+  expect_identical(parameters_list$mask_willing_fraction, 1)
+  expect_identical(parameters_list$mask_daily_probability, 1)
+  for (name in mask_efficacies) {
+    expect_null(parameters_list[[name]])
+  }
+  expect_true(all(c("mask_timestep", mask_efficacies) %in% names(parameters_list)))
+})
+
+test_that("get_parameters() requires a mask timestep and the efficacies when masks are active", {
+  expect_no_error(get_parameters(overrides = masks_on))
+  for (name in c("mask_timestep", mask_efficacies)) {
+    expect_error(
+      get_parameters(overrides = masks_on[names(masks_on) != name]),
+      paste(name, "must be specified if mask_active is TRUE")
+    )
+  }
+})
+
+test_that("get_parameters() checks the values of the mask parameters", {
+  for (value in list(NA, 1, "TRUE", c(TRUE, FALSE), NULL)) {
+    expect_error(
+      get_parameters(overrides = list(mask_active = value)),
+      "mask_active must be TRUE or FALSE"
+    )
+  }
+
+  for (value in list(-1, NA_real_, Inf, c(1, 2), "1")) {
+    expect_error(
+      get_parameters(overrides = modifyList(masks_on, list(mask_timestep = value))),
+      "mask_timestep must be a single number of at least 0"
+    )
+  }
+  expect_identical(
+    get_parameters(overrides = modifyList(masks_on, list(mask_timestep = 20)))$mask_timestep,
+    20
+  )
+
+  for (name in c("mask_willing_fraction", "mask_daily_probability", mask_efficacies)) {
+    for (value in list(-0.1, 1.1, NA_real_, Inf, c(0.2, 0.3), "0.5")) {
+      expect_error(
+        get_parameters(overrides = modifyList(masks_on, setNames(list(value), name))),
+        paste0(name, " must be a single number in \\[0, 1\\]")
+      )
+    }
+    expect_identical(
+      get_parameters(overrides = modifyList(masks_on, setNames(list(0), name)))[[name]],
+      0
+    )
+  }
+  # The fractions have defaults, so they can't be unset:
+  expect_error(
+    get_parameters(overrides = list(mask_willing_fraction = NULL)),
+    "mask_willing_fraction must be a single number in \\[0, 1\\]"
+  )
+
+  # Efficacies set while masks are off are still checked:
+  expect_error(
+    get_parameters(overrides = list(mask_inward_far_field_efficacy = 2)),
+    "mask_inward_far_field_efficacy must be a single number in \\[0, 1\\]"
+  )
+})
+
 test_that("get_parameters() errors when an unrecognised archetype is input", {
   expect_error(get_parameters(archetype = "floo"), "archetype not recognised")
 })
