@@ -106,6 +106,30 @@ test_that("location_FOI() shares each location's infectious individuals among it
   expect_identical(FOI, c(0.5, 0.5, 0, 0))
 })
 
+test_that("the community FOI is beta_community * n_I / N, whatever its near-field fraction", {
+  inputs <- small_SE_inputs()
+  inputs$parameters_list$render_diagnostics <- TRUE
+  inputs$population_data$initial_disease_states[1:30] <- "I_mild"
+  for (near_field_fraction in c(0, 0.4)) {
+    inputs$parameters_list$near_field_fraction_community <- near_field_fraction
+    renderer <- individual::Render$new(1)
+    process <- create_SE_process(
+      variables_list = create_variables(inputs$parameters_list, inputs$population_data),
+      events_list = list(),
+      parameters_list = inputs$parameters_list,
+      population_data = inputs$population_data,
+      intervention_data = inputs$intervention_data,
+      renderer = renderer
+    )
+    process(1)
+    expect_equal(renderer$to_dataframe()$FOI_community, 0.2 * 30 / 1000)
+  }
+
+  # At the default near-field fraction of 0, exactly as before the community was a setting:
+  expect_identical(setting_riskiness(list(), list(), "community", 1, 0), 1)
+  expect_identical(location_FOI(NULL, 1:30, 1, 0.2, 1000), 0.2 * 30 / 1000)
+})
+
 test_that("setting_riskiness() applies a joint intervention after its timestep", {
   parameters_list <- with_default_ach(get_parameters(overrides = list(
     human_population = 1000,

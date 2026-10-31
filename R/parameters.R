@@ -98,8 +98,10 @@
 #'
 #' `r` and `pi` are a matched pair: `1/r` = 73 FFU is one Wells-Riley quantum, so `pi` = 365 is 5.0 quanta/hour. Both consumers return ratios and the exponent is small, so this level has limited leverage over efficacy between scenarios A and C (0.60 at A versus 0.52-0.58 across A-C in schools), but a substantially higher emission rate such as scenario D lowers it considerably (0.23 in schools).
 #'
-#' Near-Field Transmission Parameters (one per setting, where `<setting>` is one of `household`, `workplace`, `school` or `leisure`):
+#' Near-Field Transmission Parameters (one per setting, where `<setting>` is one of `household`, `workplace`, `school`, `leisure` or `community`):
 #' * `near_field_fraction_<setting>`: share of the setting's transmission that is near-field (at close range to an infectious individual) rather than far-field (room-scale airborne, as Wells-Riley describes). A single number in `[0, 1]`. The far-field share is scaled by each location's far-field riskiness and reduced by ACH interventions. The near-field share has a riskiness of 1 in every location, and ACH interventions don't reduce it. Default = 0 (all transmission is far-field). Use [set_near_field_fractions()] for literature-based values.
+#'
+#' The community is a single location that contains everyone. Its riskiness is 1 in both fields, and no intervention reduces it, so `near_field_fraction_community` changes nothing until source control or personal protection differ between the fields.
 #'
 #' Intervention Parameters (populated by `set_intervention_ach()`; users do not normally set these directly. One block per scope, where `<s>` is one of `joint`, `workplace`, `school`, `leisure` or `household`):
 #' * `intervention_<s>_active`: boolean flag set to TRUE when an intervention has been installed in scope <s>. Default = FALSE
@@ -160,6 +162,7 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     near_field_fraction_workplace = 0,
     near_field_fraction_school = 0,
     near_field_fraction_leisure = 0,
+    near_field_fraction_community = 0,
 
     time_varying_transmission_on = FALSE,
     dt = 0.5, # check this as default
@@ -422,7 +425,7 @@ get_parameters <- function(overrides = list(), archetype = "none") {
   }
 
   # Check that each setting's near-field fraction is a single number in [0, 1]
-  for (setting in c("household", "workplace", "school", "leisure")) {
+  for (setting in c("household", "workplace", "school", "leisure", "community")) {
     name <- paste0("near_field_fraction_", setting)
     value <- parameters[[name]]
     if (!is.numeric(value) || length(value) != 1 || !is.finite(value) || value < 0 || value > 1) {
