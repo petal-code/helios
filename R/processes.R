@@ -155,14 +155,27 @@ create_SE_process <- function(
     mask_drawn <- which(mask_probability > 0 & mask_probability < 1)
     mask_drawn_probability <- mask_probability[mask_drawn]
     first_mask_timestep <- floor(parameters_list$mask_timestep) + 1
+    # A mask's efficacy in each field, inward (protecting the wearer) and outward (source control)
+    mask_inward_efficacy <- c(
+      far_field = parameters_list$mask_inward_far_field_efficacy,
+      near_field = parameters_list$mask_inward_near_field_efficacy
+    )
+    mask_outward_efficacy <- c(
+      far_field = parameters_list$mask_outward_far_field_efficacy,
+      near_field = parameters_list$mask_outward_near_field_efficacy
+    )
   }
 
   # The FOI on each individual from the locations of `setting` at timestep t, from the setting's
-  # near-field fraction and each field's riskiness and location efficacy at t
-  FOI_from <- function(setting, t, location, infectious, beta, size) {
+  # near-field fraction, each field's riskiness and location efficacy at t, and the effect of the
+  # masks worn at t from mask_effects() (NULL without masks)
+  FOI_from <- function(setting, t, location, infectious, beta, size, masks) {
     near_field_fraction <- parameters_list[[paste0("near_field_fraction_", setting)]]
     fields <- setting_fields(population_data, intervention_data, setting, t)
-    setting_FOI(location, infectious, fields, beta, size, near_field_fraction)
+    setting_FOI(
+      location, infectious, fields, beta, size, near_field_fraction,
+      weight = masks$weight, protection = masks$protection
+    )
   }
 
   ## Process Function
@@ -208,7 +221,9 @@ create_SE_process <- function(
 
     # Whether each individual wears a mask today (1) or not (0). It's drawn at the first timestep
     # with masks, and then at the start of each day, after the leisure visits and from the same
-    # stream. With nobody to draw for, it doesn't change after the first timestep.
+    # stream. With nobody to draw for, it doesn't change after the first timestep. The masks act in
+    # every setting, the community included.
+    masks <- NULL
     masks_worn_now <- mask_active && t >= first_mask_timestep
     if (masks_worn_now) {
       if (t == first_mask_timestep || (day_start && length(mask_drawn) > 0)) {
@@ -222,34 +237,38 @@ create_SE_process <- function(
       } else {
         mask_worn <- variables_list$mask_worn$get_values()
       }
+      masks <- mask_effects(mask_worn, I, mask_inward_efficacy, mask_outward_efficacy)
     }
 
     #=== Household FOI ===#
     #=====================#
     # Individuals living alone can't be infected at home
-    household_FOI <- FOI_from("household", t, household, I, beta_household_t, household_size)
+    household_FOI <- FOI_from(
+      "household", t, household, I, beta_household_t, household_size, masks
+    )
     household_FOI[lives_alone] <- 0
 
     #=== Workplace FOI ===#
     #=====================#
-    workplace_FOI <- FOI_from("workplace", t, workplace, I, beta_workplace_t, workplace_size)
+    workplace_FOI <- FOI_from(
+      "workplace", t, workplace, I, beta_workplace_t, workplace_size, masks
+    )
 
     #=== School FOI ===#
     #==================#
-    school_FOI <- FOI_from("school", t, school, I, beta_school_t, school_size)
+    school_FOI <- FOI_from("school", t, school, I, beta_school_t, school_size, masks)
 
     #=== Leisure FOI ===#
     #=====================#
     # Leisure FOI is shared among the individuals actually visiting each location that day
-    leisure_FOI <- FOI_from(
-      "leisure", t, leisure_visit, I, beta_leisure_t, tabulate(leisure_visit, num_leisure)
-    )
+    leisure_size <- tabulate(leisure_visit, num_leisure)
+    leisure_FOI <- FOI_from("leisure", t, leisure_visit, I, beta_leisure_t, leisure_size, masks)
 
     #=== Community FOI ===#
     #=====================#
     # The community is a single location that contains everyone, so its FOI is the same for every
-    # individual
-    community_FOI <- FOI_from("community", t, NULL, I, beta_community_t, N)
+    # individual unless masks make it differ
+    community_FOI <- FOI_from("community", t, NULL, I, beta_community_t, N, masks)
 
     #=== Total FOI ===#
     #=================#
@@ -483,6 +502,29 @@ effective_infectious_count <- function(location, infectious, n, weight = NULL) {
     weight[has_location], infectious_location, reorder = FALSE
   )
   num_infectious
+}
+
+# The effect of the masks worn at a timestep in each field, for setting_FOI()
+#
+# `mask_worn` is whether each individual wears a mask (1) or not (0), `infectious` the indices of
+# infectious individuals, and `inward_efficacy` and `outward_efficacy` a mask's efficacy in each
+# field, `far_field` and `near_field`. Returns a list with each field's `weight`, 1 minus the
+# outward efficacy for each infectious individual wearing a mask and 1 for the rest, and each
+# field's `protection`, the inward efficacy for each individual wearing a mask and 0 for the rest.
+# A field where the efficacy is 0 gets no weights or no protection, as masks change nothing there.
+mask_effects <- function(mask_worn, infectious, inward_efficacy, outward_efficacy) {
+  weight <- list()
+  protection <- list()
+  infectious_masked <- mask_worn[infectious]
+  for (field in c("far_field", "near_field")) {
+    if (outward_efficacy[[field]] > 0) {
+      weight[[field]] <- 1 - outward_efficacy[[field]] * infectious_masked
+    }
+    if (inward_efficacy[[field]] > 0) {
+      protection[[field]] <- inward_efficacy[[field]] * mask_worn
+    }
+  }
+  list(weight = weight, protection = protection)
 }
 
 #' Create process governing exposed to infectious disease state transition
