@@ -255,10 +255,10 @@ test_that("mask_effects() weights the masked infectious individuals and protects
   )
 })
 
-# Runs a simulation of 10 days in which everyone wears a mask from timestep 5, with each mask
-# efficacy given in `...`. It starts with 10 infectious individuals, and every setting but schools
-# has some near-field transmission.
-run_everyone_masked <- function(...) {
+# Runs a simulation of 10 days with masks from timestep 5, worn by everyone unless `...` says
+# otherwise, and with each mask efficacy given in `...`. It starts with 10 infectious individuals,
+# and every setting but schools has some near-field transmission.
+simulate_with_masks <- function(...) {
   parameters_list <- mask_parameters(
     number_initial_S = 980,
     number_initial_I = 10,
@@ -275,11 +275,11 @@ run_everyone_masked <- function(...) {
 }
 
 test_that("masks scale the FOI from every setting by what they let through", {
-  without_masks <- run_everyone_masked(mask_active = FALSE)
+  without_masks <- simulate_with_masks(mask_active = FALSE)
   # In the far field, a mask lets through half inward and half outward, and in the near field a
   # quarter inward and everything outward, so the masks let through a quarter of each FOI in both
   # fields. The workplace intervention combines with them.
-  with_masks <- run_everyone_masked(
+  with_masks <- simulate_with_masks(
     mask_inward_far_field_efficacy = 0.5,
     mask_outward_far_field_efficacy = 0.5,
     mask_inward_near_field_efficacy = 0.75,
@@ -293,22 +293,58 @@ test_that("masks scale the FOI from every setting by what they let through", {
 })
 
 test_that("masks that stop all transmission inward or outward stop all new infections", {
-  without_masks <- run_everyone_masked(mask_active = FALSE)
+  without_masks <- simulate_with_masks(mask_active = FALSE)
   expect_gt(sum(without_masks$E_new[5:20]), 0)
   none_in <- list(mask_inward_far_field_efficacy = 1, mask_inward_near_field_efficacy = 1)
   none_out <- list(mask_outward_far_field_efficacy = 1, mask_outward_near_field_efficacy = 1)
   for (efficacy in list(none_in, none_out)) {
-    with_masks <- do.call(run_everyone_masked, efficacy)
+    with_masks <- do.call(simulate_with_masks, efficacy)
     expect_identical(with_masks$E_new[1:4], without_masks$E_new[1:4])
     expect_true(all(with_masks$E_new[5:20] == 0))
   }
 
   # Masks that remove nothing change nothing:
-  with_masks <- run_everyone_masked(
+  with_masks <- simulate_with_masks(
     mask_inward_far_field_efficacy = 0,
     mask_inward_near_field_efficacy = 0,
     mask_outward_far_field_efficacy = 0,
     mask_outward_near_field_efficacy = 0
   )
-  expect_identical(with_masks, without_masks)
+  mask_outputs <- c("mask_worn_count", "E_new_mask_willing", "E_new_mask_unwilling")
+  expect_identical(with_masks[setdiff(names(with_masks), mask_outputs)], without_masks)
+})
+
+test_that("runs with masks render the number masked and the new infections in each group", {
+  mask_outputs <- c("mask_worn_count", "E_new_mask_willing", "E_new_mask_unwilling")
+  without_masks <- simulate_with_masks(mask_active = FALSE)
+  expect_false(any(mask_outputs %in% names(without_masks)))
+
+  # 600 individuals always wear a mask from timestep 5:
+  always <- simulate_with_masks(mask_willing_fraction = 0.6)
+  expect_identical(always$mask_worn_count, rep(c(0, 600), c(4, 16)))
+
+  # 600 individuals wear one with probability 0.5 each day. The number changes only at timestep 5
+  # and at the start of each day, the even timesteps.
+  drawn <- simulate_with_masks(mask_willing_fraction = 0.6, mask_daily_probability = 0.5)
+  count <- drawn$mask_worn_count
+  expect_identical(count[1:4], rep(0, 4))
+  expect_identical(count[seq(7, 19, by = 2)], count[seq(6, 18, by = 2)])
+  expect_true(all(count[5:20] > 0 & count[5:20] < 600))
+  expect_equal(mean(count[c(5, seq(6, 20, by = 2))]), 300, tolerance = 0.1)
+
+  # The new infections in the two groups add up to all new infections:
+  for (run in list(always, drawn)) {
+    expect_identical(run$E_new_mask_willing + run$E_new_mask_unwilling, run$E_new)
+  }
+})
+
+test_that("willing individuals aren't infected once fully protective masks are worn", {
+  # Half the individuals always wear a mask from timestep 5, which stops all transmission to them
+  run <- simulate_with_masks(
+    mask_willing_fraction = 0.5,
+    mask_inward_far_field_efficacy = 1,
+    mask_inward_near_field_efficacy = 1
+  )
+  expect_true(all(run$E_new_mask_willing[5:20] == 0))
+  expect_gt(sum(run$E_new_mask_unwilling[5:20]), 0)
 })

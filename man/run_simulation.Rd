@@ -75,6 +75,17 @@ When \code{endemic_or_epidemic = "endemic"}, an additional column is included:
 infected via the external/background infection source at each timestep.
 }
 
+When \code{mask_active = TRUE}, additional columns are included:
+\itemize{
+\item \code{mask_worn_count}: The number of individuals wearing a mask at
+each timestep (0 until \code{mask_timestep}).
+\item \code{E_new_mask_willing}: The new infections (as in \code{E_new})
+among individuals willing to wear a mask, whose daily probability of
+wearing one is above 0.
+\item \code{E_new_mask_unwilling}: The new infections among the other
+individuals, who never wear a mask.
+}
+
 When \code{render_diagnostics = TRUE}, additional diagnostic columns are
 included:
 \itemize{
@@ -86,8 +97,9 @@ contacts across all individuals at each timestep.
 contacts across all individuals at each timestep.
 \item \code{FOI_leisure}: The maximum force of infection from leisure
 setting contacts across all individuals at each timestep.
-\item \code{FOI_community}: The community-level force of infection
-(derived from global prevalence) at each timestep.
+\item \code{FOI_community}: The maximum force of infection from the
+community across all individuals at each timestep. It's the same for
+every individual unless masks are worn.
 \item \code{FOI_total}: The maximum total force of infection (sum across
 all settings) experienced by any individual at each timestep.
 }
