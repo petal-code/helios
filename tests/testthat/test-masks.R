@@ -348,3 +348,100 @@ test_that("willing individuals aren't infected once fully protective masks are w
   expect_true(all(run$E_new_mask_willing[5:20] == 0))
   expect_gt(sum(run$E_new_mask_unwilling[5:20]), 0)
 })
+
+# The final attack rates of mask wearers, a share `c` of a homogeneously mixing population who
+# always wear a mask, and of everyone else, in an epidemic with basic reproduction number R0.
+# Wearers are less susceptible by the mask's inward efficacy and less infectious by its outward
+# efficacy. The attack rate z_g of each group g solves
+#   1 - z_g = exp(-susceptibility_g * R0 * sum over groups h of share_h * infectiousness_h * z_h).
+# Iterating from z = 1 converges to the epidemic's final size.
+two_group_final_size <- function(R0, c, inward, outward) {
+  share <- c(c, 1 - c)
+  susceptibility <- c(1 - inward, 1)
+  infectiousness <- c(1 - outward, 1)
+  z <- c(1, 1)
+  for (i in 1:1000) {
+    z <- 1 - exp(-susceptibility * R0 * sum(share * infectiousness * z))
+  }
+  z
+}
+
+test_that("mask wearers' and non-wearers' attack rates match the two-group final size", {
+  # This validates the model rather than one function, and takes about 6 seconds, so it only runs
+  # when the HELIOS_VALIDATION environment variable is "true", for example after
+  # Sys.setenv(HELIOS_VALIDATION = "true"). Run it after changing how masks or transmission work.
+  skip_if_not(Sys.getenv("HELIOS_VALIDATION") == "true", "HELIOS_VALIDATION isn't \"true\"")
+
+  # Community transmission only, in an epidemic without hospitalisation. An individual is
+  # infectious for duration_infectious days on average, plus the day the recovery delay adds, plus
+  # the timestep in which they become infectious, and R0 is beta_community times that.
+  defaults <- get_parameters()
+  infectious_days <- defaults$duration_infectious + 1 + defaults$dt
+  # Over 10 seeds at this population size, each attack rate was at most 0.02 from the final size,
+  # and each log ratio below at most 9.4% from 1 minus the inward efficacy. The tolerances leave a
+  # margin for other random streams, and still catch, for example, an infectious period one
+  # timestep too short, which moves an attack rate by 0.08.
+  N <- 10000
+  community_epidemic <- function(R0, c, inward, outward) {
+    with_default_ach(get_parameters(overrides = list(
+      human_population = N,
+      number_initial_S = N - 20,
+      number_initial_E = 10,
+      number_initial_I = 10,
+      seed = 1,
+      # Every epidemic is over well before then
+      simulation_time = 250,
+      beta_household = 0,
+      beta_workplace = 0,
+      beta_school = 0,
+      beta_leisure = 0,
+      beta_community = R0 / infectious_days,
+      prob_hosp_child = 0,
+      prob_hosp_adult = 0,
+      prob_hosp_elderly = 0,
+      mask_active = TRUE,
+      mask_timestep = 0,
+      mask_willing_fraction = c,
+      mask_daily_probability = 1,
+      mask_inward_far_field_efficacy = inward,
+      mask_inward_near_field_efficacy = inward,
+      mask_outward_far_field_efficacy = outward,
+      mask_outward_near_field_efficacy = outward
+    )))
+  }
+
+  scenarios <- list(
+    list(R0 = 3, c = 0.3, inward = 0.7, outward = 0.2),
+    list(R0 = 3, c = 0.5, inward = 0.5, outward = 0.5),
+    # Masks that protect only their wearers, and masks that protect only others:
+    list(R0 = 2.5, c = 0.4, inward = 0.8, outward = 0),
+    list(R0 = 3, c = 0.5, inward = 0, outward = 0.6)
+  )
+  population_data <- NULL
+  for (scenario in scenarios) {
+    parameters_list <- do.call(community_epidemic, scenario)
+    # Masks aren't population parameters, so one population fits every scenario
+    if (is.null(population_data)) {
+      population_data <- generate_population_data(parameters_list)
+    }
+    result <- run_simulation(parameters_list, population_data = population_data)$result
+    label <- paste(names(scenario), unlist(scenario), sep = " = ", collapse = ", ")
+    # The epidemic is over:
+    expect_equal(tail(result$E_count + result$I_mild_count, 1), 0, label = label)
+
+    num_willing <- round(scenario$c * N)
+    attack_rate <- c(
+      sum(result$E_new_mask_willing) / num_willing,
+      sum(result$E_new_mask_unwilling) / (N - num_willing)
+    )
+    expect_lt(max(abs(attack_rate - do.call(two_group_final_size, scenario))), 0.03, label = label)
+    # Both groups face the same force of infection over the epidemic, so whatever its course, the
+    # ratio of their log escape probabilities is the share of it a mask lets through inward:
+    expect_equal(
+      log(1 - attack_rate[1]) / log(1 - attack_rate[2]),
+      1 - scenario$inward,
+      tolerance = 0.15,
+      label = label
+    )
+  }
+})
