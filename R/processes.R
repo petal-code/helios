@@ -151,6 +151,7 @@ create_SE_process <- function(
     if (is.null(variables_list$mask_worn)) {
       stop("variables_list must have a mask_worn variable. Create the variables with masks active")
     }
+    mask_willing <- mask_probability > 0
     always_masked <- as.integer(mask_probability == 1)
     mask_drawn <- which(mask_probability > 0 & mask_probability < 1)
     mask_drawn_probability <- mask_probability[mask_drawn]
@@ -305,6 +306,15 @@ create_SE_process <- function(
 
     # Render the number of people going from susceptible to infected:
     renderer$render('E_new', S$size(), t)
+
+    # With masks active, render the number of individuals wearing a mask, and the new infections
+    # among individuals willing to wear one (a daily probability above 0) and the rest
+    if (mask_active) {
+      renderer$render('mask_worn_count', if (masks_worn_now) sum(mask_worn) else 0, t)
+      E_new_mask_willing <- sum(mask_willing[S$to_vector()])
+      renderer$render('E_new_mask_willing', E_new_mask_willing, t)
+      renderer$render('E_new_mask_unwilling', S$size() - E_new_mask_willing, t)
+    }
 
     # Queue an update to the infectious state of the newly infected susceptible individuals to Exposed:
     variables_list$disease_state$queue_update(value = "E", index = S)
