@@ -26,11 +26,21 @@ create_variables <- function(parameters_list, population_data) {
     initial_values = rep(0L, parameters_list$human_population)
   )
 
-  return(list(
+  variables_list <- list(
     disease_state = disease_state_variable,
     age_class = age_class_variable,
     specific_leisure = specific_leisure_variable
-  ))
+  )
+
+  # When masks are active, whether each individual wears a mask on the current day (1) or not (0),
+  # which the S -> E process draws. Nobody wears one before the first draw.
+  if (isTRUE(parameters_list$mask_active)) {
+    variables_list$mask_worn <- individual::IntegerVariable$new(
+      initial_values = rep(0L, parameters_list$human_population)
+    )
+  }
+
+  variables_list
 }
 
 #' Generate a population for the given parameters

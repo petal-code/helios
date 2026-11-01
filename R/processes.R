@@ -132,6 +132,31 @@ create_SE_process <- function(
   )
   num_leisure <- length(population_data$leisure_specific_far_field_riskiness)
 
+  # Mask wearing. Each individual's daily probability of wearing a mask is fixed for the run. Only
+  # individuals whose probability is strictly between 0 and 1 need a random draw each day, as the
+  # rest always or never wear one. Masks are worn from the first timestep after mask_timestep.
+  mask_active <- isTRUE(parameters_list$mask_active)
+  if (mask_active) {
+    mask_probability <- intervention_data$mask_probability
+    if (
+      length(mask_probability) != N ||
+        anyNA(mask_probability) ||
+        any(mask_probability < 0 | mask_probability > 1)
+    ) {
+      stop(
+        "intervention_data$mask_probability must have a probability in [0, 1] for each of the ", N,
+        " individuals. Generate the intervention data with masks active"
+      )
+    }
+    if (is.null(variables_list$mask_worn)) {
+      stop("variables_list must have a mask_worn variable. Create the variables with masks active")
+    }
+    always_masked <- as.integer(mask_probability == 1)
+    mask_drawn <- which(mask_probability > 0 & mask_probability < 1)
+    mask_drawn_probability <- mask_probability[mask_drawn]
+    first_mask_timestep <- floor(parameters_list$mask_timestep) + 1
+  }
+
   # The FOI on each individual from the locations of `setting` at timestep t, from the setting's
   # near-field fraction and each field's riskiness and location efficacy at t
   FOI_from <- function(setting, t, location, infectious, beta, size) {
@@ -167,6 +192,38 @@ create_SE_process <- function(
       beta_community_t <- parameters_list$beta_community
     }
 
+    #=== Today's leisure visits and masks ===#
+    #========================================#
+    day_start <- (t * parameters_list$dt) == floor((t * parameters_list$dt))
+    if (day_start) {
+      # At the start of each day, sample which of the week's leisure locations each individual visits
+      # that day (0 = they stay home). Uses dqrng for speed. Its stream is seeded, continued and
+      # saved together with base R's, so seeded and resumed runs draw the same visits.
+      visit_day <- dqrng::dqsample.int(n = 7, size = N, replace = TRUE)
+      leisure_visit <- leisure_week[cbind(visit_day, seq_len(N))]
+      variables_list$specific_leisure$queue_update(leisure_visit)
+    } else {
+      leisure_visit <- variables_list$specific_leisure$get_values()
+    }
+
+    # Whether each individual wears a mask today (1) or not (0). It's drawn at the first timestep
+    # with masks, and then at the start of each day, after the leisure visits and from the same
+    # stream. With nobody to draw for, it doesn't change after the first timestep.
+    masks_worn_now <- mask_active && t >= first_mask_timestep
+    if (masks_worn_now) {
+      if (t == first_mask_timestep || (day_start && length(mask_drawn) > 0)) {
+        mask_worn <- always_masked
+        if (length(mask_drawn) > 0) {
+          mask_worn[mask_drawn] <- as.integer(
+            dqrng::dqrunif(length(mask_drawn)) < mask_drawn_probability
+          )
+        }
+        variables_list$mask_worn$queue_update(mask_worn)
+      } else {
+        mask_worn <- variables_list$mask_worn$get_values()
+      }
+    }
+
     #=== Household FOI ===#
     #=====================#
     # Individuals living alone can't be infected at home
@@ -183,17 +240,6 @@ create_SE_process <- function(
 
     #=== Leisure FOI ===#
     #=====================#
-    if ((t * parameters_list$dt) == floor((t * parameters_list$dt))) {
-      # At the start of each day, sample which of the week's leisure locations each individual visits
-      # that day (0 = they stay home). Uses dqrng for speed. Its stream is seeded, continued and
-      # saved together with base R's, so seeded and resumed runs draw the same visits.
-      visit_day <- dqrng::dqsample.int(n = 7, size = N, replace = TRUE)
-      leisure_visit <- leisure_week[cbind(visit_day, seq_len(N))]
-      variables_list$specific_leisure$queue_update(leisure_visit)
-    } else {
-      leisure_visit <- variables_list$specific_leisure$get_values()
-    }
-
     # Leisure FOI is shared among the individuals actually visiting each location that day
     leisure_FOI <- FOI_from(
       "leisure", t, leisure_visit, I, beta_leisure_t, tabulate(leisure_visit, num_leisure)
