@@ -228,3 +228,87 @@ test_that("a run with masks resumed partway through a day matches an uninterrupt
   part_two <- run_simulation(parameters_list, state = part_one$state)
   expect_equal(rbind(part_one$result, part_two$result), full)
 })
+
+test_that("mask_effects() weights the masked infectious individuals and protects the masked", {
+  # Individuals 1, 3 and 4 wear a mask, and 2, 3 and 5 are infectious
+  mask_worn <- c(1L, 0L, 1L, 1L, 0L)
+  inward <- c(far_field = 0.5, near_field = 0.3)
+  outward <- c(far_field = 0.4, near_field = 0.9)
+  effects <- mask_effects(mask_worn, c(2, 3, 5), inward, outward)
+  expect_equal(effects$weight, list(far_field = c(1, 0.6, 1), near_field = c(1, 0.1, 1)))
+  expect_equal(
+    effects$protection,
+    list(far_field = c(0.5, 0, 0.5, 0.5, 0), near_field = c(0.3, 0, 0.3, 0.3, 0))
+  )
+
+  # A field where the efficacy is 0 gets no weights or no protection:
+  inward[["near_field"]] <- 0
+  outward[["far_field"]] <- 0
+  effects <- mask_effects(mask_worn, c(2, 3, 5), inward, outward)
+  expect_named(effects$weight, "near_field")
+  expect_named(effects$protection, "far_field")
+
+  # Nobody infectious:
+  expect_identical(
+    mask_effects(mask_worn, integer(0), inward, outward)$weight,
+    list(near_field = numeric(0))
+  )
+})
+
+# Runs a simulation of 10 days in which everyone wears a mask from timestep 5, with each mask
+# efficacy given in `...`. It starts with 10 infectious individuals, and every setting but schools
+# has some near-field transmission.
+run_everyone_masked <- function(...) {
+  parameters_list <- mask_parameters(
+    number_initial_S = 980,
+    number_initial_I = 10,
+    near_field_fraction_household = 0.5,
+    near_field_fraction_workplace = 0.4,
+    near_field_fraction_leisure = 0.5,
+    near_field_fraction_community = 0.3,
+    render_diagnostics = TRUE,
+    simulation_time = 10,
+    mask_timestep = 4,
+    ...
+  )
+  run_simulation(parameters_list)$result
+}
+
+test_that("masks scale the FOI from every setting by what they let through", {
+  without_masks <- run_everyone_masked(mask_active = FALSE)
+  # In the far field, a mask lets through half inward and half outward, and in the near field a
+  # quarter inward and everything outward, so the masks let through a quarter of each FOI in both
+  # fields. The workplace intervention combines with them.
+  with_masks <- run_everyone_masked(
+    mask_inward_far_field_efficacy = 0.5,
+    mask_outward_far_field_efficacy = 0.5,
+    mask_inward_near_field_efficacy = 0.75,
+    mask_outward_near_field_efficacy = 0
+  )
+  FOI <- paste0("FOI_", c("household", "workplace", "school", "leisure", "community", "total"))
+  expect_identical(with_masks[1:4, FOI], without_masks[1:4, FOI])
+  # Masks start at timestep 5, when both runs still have the same infectious individuals:
+  expect_true(all(without_masks[5, FOI] > 0))
+  expect_equal(with_masks[5, FOI], 0.25 * without_masks[5, FOI])
+})
+
+test_that("masks that stop all transmission inward or outward stop all new infections", {
+  without_masks <- run_everyone_masked(mask_active = FALSE)
+  expect_gt(sum(without_masks$E_new[5:20]), 0)
+  none_in <- list(mask_inward_far_field_efficacy = 1, mask_inward_near_field_efficacy = 1)
+  none_out <- list(mask_outward_far_field_efficacy = 1, mask_outward_near_field_efficacy = 1)
+  for (efficacy in list(none_in, none_out)) {
+    with_masks <- do.call(run_everyone_masked, efficacy)
+    expect_identical(with_masks$E_new[1:4], without_masks$E_new[1:4])
+    expect_true(all(with_masks$E_new[5:20] == 0))
+  }
+
+  # Masks that remove nothing change nothing:
+  with_masks <- run_everyone_masked(
+    mask_inward_far_field_efficacy = 0,
+    mask_inward_near_field_efficacy = 0,
+    mask_outward_far_field_efficacy = 0,
+    mask_outward_near_field_efficacy = 0
+  )
+  expect_identical(with_masks, without_masks)
+})
