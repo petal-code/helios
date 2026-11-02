@@ -43,8 +43,9 @@ test_that("run_simulation() is reproducible for a given seed", {
 
 test_that("run_simulation() gives the pinned result for a fixed seed", {
   # These numbers change whenever the random stream changes, which changes
-  # every seeded run, so update them only on purpose. They match #167, where
-  # the population, the intervention and the simulation drew from one stream.
+  # every seeded run, so update them only on purpose. They last changed with
+  # the O(n) leisure sampler (#170), which draws the same distribution of
+  # leisure visits from different random numbers.
   parameters <- with_random_workplace_intervention(small_test_parameters(simulation_time = 15))
   parameters$number_initial_S <- 970
   parameters$number_initial_E <- 30
@@ -53,11 +54,11 @@ test_that("run_simulation() gives the pinned result for a fixed seed", {
   final <- result[nrow(result), c("S_count", "E_count", "I_mild_count", "I_hosp_count", "R_count", "D_count")]
   expect_equal(
     unlist(final),
-    c(S_count = 438, E_count = 240, I_mild_count = 207, I_hosp_count = 6, R_count = 108, D_count = 1)
+    c(S_count = 451, E_count = 232, I_mild_count = 200, I_hosp_count = 8, R_count = 109, D_count = 0)
   )
   expect_equal(
     result$E_new,
-    c(0, 0, 0, 1, 2, 6, 9, 6, 18, 12, 4, 9, 13, 15, 14, 26, 24, 22, 24, 32, 31, 29, 34, 30, 27, 41, 29, 41, 33, 36)
+    c(0, 0, 0, 0, 4, 9, 9, 11, 6, 10, 10, 7, 16, 16, 16, 19, 13, 19, 22, 31, 31, 27, 27, 44, 25, 42, 28, 38, 39, 50)
   )
 })
 
