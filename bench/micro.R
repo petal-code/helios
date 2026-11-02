@@ -49,8 +49,8 @@ for (human_population in split_numbers(args$sizes)) {
   record("population_reference", population, time_it(function() generate_population_data(parameters)))
 }
 
-# Reassign people to households with the given mean size, keeping everyone's other settings. The
-# S -> E process loops over every setting, so this varies its cost at a fixed population size.
+# Reassign people to households with the given mean size, keeping everyone's other settings, to show
+# how the S -> E process's cost depends on the number of settings at a fixed population size.
 with_household_size <- function(population, mean_size) {
   n <- length(population$initial_household_settings)
   n_households <- max(1, round(n / mean_size))

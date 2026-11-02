@@ -22,7 +22,6 @@ simulations longer than one year.
 }
 \seealso{
 Other miscellaneous: 
-\code{\link{generate_betas}()},
-\code{\link{get_setting_size}()}
+\code{\link{generate_betas}()}
 }
 \concept{miscellaneous}
