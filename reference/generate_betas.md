@@ -48,5 +48,4 @@ generate_betas(
 ## See also
 
 Other miscellaneous:
-[`get_setting_size()`](https://mrc-ide.github.io/helios/reference/get_setting_size.md),
 [`timestep_to_day()`](https://mrc-ide.github.io/helios/reference/timestep_to_day.md)

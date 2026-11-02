@@ -138,7 +138,5 @@
 
 - [`generate_betas()`](https://mrc-ide.github.io/helios/reference/generate_betas.md)
   : generate_betas
-- [`get_setting_size()`](https://mrc-ide.github.io/helios/reference/get_setting_size.md)
-  : get_setting_size
 - [`timestep_to_day()`](https://mrc-ide.github.io/helios/reference/timestep_to_day.md)
   : timestep_to_day

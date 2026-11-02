@@ -162,13 +162,14 @@ Next, we define the model variables:
 population_data <- generate_population_data(parameters_list)
 variables_list <- create_variables(parameters_list, population_data)
 names(variables_list)
-#> [1] "disease_state"    "age_class"        "household"        "school"          
-#> [5] "workplace"        "leisure"          "specific_leisure"
+#> [1] "disease_state"    "age_class"        "specific_leisure"
 ```
 
-Aside from `leisure`, each entry of `variables_list` is of the
+`disease_state` and `age_class` are of the
 [`CategoricalVariable`](https://mrc-ide.github.io/individual/reference/CategoricalVariable.html)
-class:
+class, and `specific_leisure`, the leisure venue each individual visits
+on the current day, is an
+[`IntegerVariable`](https://mrc-ide.github.io/individual/reference/IntegerVariable.html):
 
 ``` r
 
@@ -179,29 +180,14 @@ map(variables_list, class)
 #> $age_class
 #> [1] "CategoricalVariable" "R6"                 
 #> 
-#> $household
-#> [1] "CategoricalVariable" "R6"                 
-#> 
-#> $school
-#> [1] "CategoricalVariable" "R6"                 
-#> 
-#> $workplace
-#> [1] "CategoricalVariable" "R6"                 
-#> 
-#> $leisure
-#> [1] "RaggedInteger" "R6"           
-#> 
 #> $specific_leisure
-#> [1] "CategoricalVariable" "R6"
+#> [1] "IntegerVariable" "R6"
 ```
 
-The `leisure` variable is a
-[`RagggedInteger`](https://mrc-ide.github.io/individual/reference/RaggedInteger.html)
-allowing its elements to have different lengths.
-
-Some variables change over time (`disease_state`, `leisure`,
-`specific_leisure`), while other remain fixed (`age_class`, `workplace`,
-`school`, `household`).
+`disease_state` and `specific_leisure` change over time, while
+`age_class` remains fixed. The schools, workplaces, households and
+leisure venues individuals attend don’t change either, so they are kept
+in `population_data` rather than as variables.
 
 ### Disease states
 
@@ -273,9 +259,7 @@ adults attend schools as staff:
 
 ``` r
 
-schools <- variables_list$school$get_categories()
-schools <- schools[schools != "0"]
-school_sizes <- purrr::map_vec(schools, function(x) variables_list$school$get_size_of(values = x))
+school_sizes <- population_data$setting_sizes$school
 
 data.frame(school_sizes) |>
   ggplot(aes(x = school_sizes)) +
@@ -293,9 +277,7 @@ workplace:
 
 ``` r
 
-workplaces <- variables_list$workplace$get_categories()
-workplaces <- workplaces[workplaces != "0"]
-workplace_sizes <- purrr::map_vec(workplaces, function(x) variables_list$workplace$get_size_of(values = x))
+workplace_sizes <- population_data$setting_sizes$workplace
 
 data.frame(workplace_sizes) |>
   ggplot(aes(x = log(workplace_sizes))) +
@@ -312,8 +294,7 @@ Children, adults and elderly people are grouped into fixed households:
 
 ``` r
 
-households <- variables_list$household$get_categories()
-household_sizes <- purrr::map_vec(households, function(x) variables_list$household$get_size_of(values = x))
+household_sizes <- population_data$setting_sizes$household
 
 table(household_sizes) |>
   data.frame() |>
@@ -328,10 +309,10 @@ The age distribution in households is as follows:
 
 ``` r
 
-household_df <- purrr::map_df(households, function(x) {
-  indices <- variables_list$household$get_index_of(values = x)$to_vector()
-  if(length(indices > 0)) data.frame("individual" = indices, "household" = as.numeric(x))
-})
+household_df <- data.frame(
+  "individual" = seq_along(population_data$initial_household_settings),
+  "household" = population_data$initial_household_settings
+)
 
 age_classes <- variables_list$age_class$get_categories()
 age_df <- purrr::map_df(age_classes, function(x) {
@@ -378,7 +359,7 @@ Each week, individuals attend leisure venues:
 
 ``` r
 
-leisure_places <- variables_list$leisure$get_values()
+leisure_places <- population_data$initial_leisure_settings
 number_leisure_places <- sapply(leisure_places, function(x) sum(x > 0))
 
 table(number_leisure_places) |>

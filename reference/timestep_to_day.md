@@ -30,5 +30,4 @@ An integer giving the simulation day for timestep `t`.
 ## See also
 
 Other miscellaneous:
-[`generate_betas()`](https://mrc-ide.github.io/helios/reference/generate_betas.md),
-[`get_setting_size()`](https://mrc-ide.github.io/helios/reference/get_setting_size.md)
+[`generate_betas()`](https://mrc-ide.github.io/helios/reference/generate_betas.md)

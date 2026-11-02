@@ -228,11 +228,10 @@ use a uniform baseline of 4 ACH in each setting:</p>
 <code class="sourceCode R"><span><span class="va">population_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/generate_population_data.html">generate_population_data</a></span><span class="op">(</span><span class="va">parameters_list</span><span class="op">)</span></span>
 <span><span class="va">variables_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/create_variables.html">create_variables</a></span><span class="op">(</span><span class="va">parameters_list</span>, <span class="va">population_data</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">variables_list</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "disease_state"    "age_class"        "household"        "school"          </span></span>
-<span><span class="co">#&gt; [5] "workplace"        "leisure"          "specific_leisure"</span></span></code></pre></div>
-<p>Aside from <code>leisure</code>, each entry of
-<code>variables_list</code> is of the <a href="https://mrc-ide.github.io/individual/reference/CategoricalVariable.html" class="external-link"><code>CategoricalVariable</code></a>
-class:</p>
+<span><span class="co">#&gt; [1] "disease_state"    "age_class"        "specific_leisure"</span></span></code></pre></div>
+<p><code>disease_state</code> and <code>age_class</code> are of the <a href="https://mrc-ide.github.io/individual/reference/CategoricalVariable.html" class="external-link"><code>CategoricalVariable</code></a>
+class, and <code>specific_leisure</code>, the leisure venue each
+individual visits on the current day, is an <a href="https://mrc-ide.github.io/individual/reference/IntegerVariable.html" class="external-link"><code>IntegerVariable</code></a>:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span><span class="va">variables_list</span>, <span class="va">class</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $disease_state</span></span>
@@ -241,26 +240,13 @@ class:</p>
 <span><span class="co">#&gt; $age_class</span></span>
 <span><span class="co">#&gt; [1] "CategoricalVariable" "R6"                 </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $household</span></span>
-<span><span class="co">#&gt; [1] "CategoricalVariable" "R6"                 </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $school</span></span>
-<span><span class="co">#&gt; [1] "CategoricalVariable" "R6"                 </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $workplace</span></span>
-<span><span class="co">#&gt; [1] "CategoricalVariable" "R6"                 </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $leisure</span></span>
-<span><span class="co">#&gt; [1] "RaggedInteger" "R6"           </span></span>
-<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $specific_leisure</span></span>
-<span><span class="co">#&gt; [1] "CategoricalVariable" "R6"</span></span></code></pre></div>
-<p>The <code>leisure</code> variable is a <a href="https://mrc-ide.github.io/individual/reference/RaggedInteger.html" class="external-link"><code>RagggedInteger</code></a>
-allowing its elements to have different lengths.</p>
-<p>Some variables change over time (<code>disease_state</code>,
-<code>leisure</code>, <code>specific_leisure</code>), while other remain
-fixed (<code>age_class</code>, <code>workplace</code>,
-<code>school</code>, <code>household</code>).</p>
+<span><span class="co">#&gt; [1] "IntegerVariable" "R6"</span></span></code></pre></div>
+<p><code>disease_state</code> and <code>specific_leisure</code> change
+over time, while <code>age_class</code> remains fixed. The schools,
+workplaces, households and leisure venues individuals attend don’t
+change either, so they are kept in <code>population_data</code> rather
+than as variables.</p>
 <div class="section level3">
 <h3 id="disease-states">Disease states<a class="anchor" aria-label="anchor" href="#disease-states"></a>
 </h3>
@@ -790,9 +776,7 @@ age of each individual remains fixed throughout the simulation.</p>
 <p>Each child attends a fixed school. Additionally, a small number of
 adults attend schools as staff:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">schools</span> <span class="op">&lt;-</span> <span class="va">variables_list</span><span class="op">$</span><span class="va">school</span><span class="op">$</span><span class="fu">get_categories</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="va">schools</span> <span class="op">&lt;-</span> <span class="va">schools</span><span class="op">[</span><span class="va">schools</span> <span class="op">!=</span> <span class="st">"0"</span><span class="op">]</span></span>
-<span><span class="va">school_sizes</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_vec</a></span><span class="op">(</span><span class="va">schools</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">variables_list</span><span class="op">$</span><span class="va">school</span><span class="op">$</span><span class="fu">get_size_of</span><span class="op">(</span>values <span class="op">=</span> <span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">school_sizes</span> <span class="op">&lt;-</span> <span class="va">population_data</span><span class="op">$</span><span class="va">setting_sizes</span><span class="op">$</span><span class="va">school</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">school_sizes</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">school_sizes</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -807,9 +791,7 @@ adults attend schools as staff:</p>
 <p>Each adult (aside from those who are school staff) attends a fixed
 workplace:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">workplaces</span> <span class="op">&lt;-</span> <span class="va">variables_list</span><span class="op">$</span><span class="va">workplace</span><span class="op">$</span><span class="fu">get_categories</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="va">workplaces</span> <span class="op">&lt;-</span> <span class="va">workplaces</span><span class="op">[</span><span class="va">workplaces</span> <span class="op">!=</span> <span class="st">"0"</span><span class="op">]</span></span>
-<span><span class="va">workplace_sizes</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_vec</a></span><span class="op">(</span><span class="va">workplaces</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">variables_list</span><span class="op">$</span><span class="va">workplace</span><span class="op">$</span><span class="fu">get_size_of</span><span class="op">(</span>values <span class="op">=</span> <span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">workplace_sizes</span> <span class="op">&lt;-</span> <span class="va">population_data</span><span class="op">$</span><span class="va">setting_sizes</span><span class="op">$</span><span class="va">workplace</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">workplace_sizes</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">workplace_sizes</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -824,8 +806,7 @@ workplace:</p>
 <p>Children, adults and elderly people are grouped into fixed
 households:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">households</span> <span class="op">&lt;-</span> <span class="va">variables_list</span><span class="op">$</span><span class="va">household</span><span class="op">$</span><span class="fu">get_categories</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="va">household_sizes</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_vec</a></span><span class="op">(</span><span class="va">households</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">variables_list</span><span class="op">$</span><span class="va">household</span><span class="op">$</span><span class="fu">get_size_of</span><span class="op">(</span>values <span class="op">=</span> <span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">household_sizes</span> <span class="op">&lt;-</span> <span class="va">population_data</span><span class="op">$</span><span class="va">setting_sizes</span><span class="op">$</span><span class="va">household</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">household_sizes</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -835,10 +816,10 @@ households:</p>
 <p><img src="helios_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="700"></p>
 <p>The age distribution in households is as follows:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">household_df</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map_dfr.html" class="external-link">map_df</a></span><span class="op">(</span><span class="va">households</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">indices</span> <span class="op">&lt;-</span> <span class="va">variables_list</span><span class="op">$</span><span class="va">household</span><span class="op">$</span><span class="fu">get_index_of</span><span class="op">(</span>values <span class="op">=</span> <span class="va">x</span><span class="op">)</span><span class="op">$</span><span class="fu">to_vector</span><span class="op">(</span><span class="op">)</span></span>
-<span>  <span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">indices</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="st">"individual"</span> <span class="op">=</span> <span class="va">indices</span>, <span class="st">"household"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">household_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  <span class="st">"individual"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">population_data</span><span class="op">$</span><span class="va">initial_household_settings</span><span class="op">)</span>,</span>
+<span>  <span class="st">"household"</span> <span class="op">=</span> <span class="va">population_data</span><span class="op">$</span><span class="va">initial_household_settings</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">age_classes</span> <span class="op">&lt;-</span> <span class="va">variables_list</span><span class="op">$</span><span class="va">age_class</span><span class="op">$</span><span class="fu">get_categories</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">age_df</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map_dfr.html" class="external-link">map_df</a></span><span class="op">(</span><span class="va">age_classes</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
@@ -1370,7 +1351,7 @@ households:</p>
 </h3>
 <p>Each week, individuals attend leisure venues:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">leisure_places</span> <span class="op">&lt;-</span> <span class="va">variables_list</span><span class="op">$</span><span class="va">leisure</span><span class="op">$</span><span class="fu">get_values</span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">leisure_places</span> <span class="op">&lt;-</span> <span class="va">population_data</span><span class="op">$</span><span class="va">initial_leisure_settings</span></span>
 <span><span class="va">number_leisure_places</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">leisure_places</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">x</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">number_leisure_places</span><span class="op">)</span> <span class="op">|&gt;</span></span>
