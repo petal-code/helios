@@ -26,7 +26,8 @@ either \code{"individuals"} (count of people) or \code{"square_footage"}
 
 \item{coverage_type}{Character. How locations are selected for coverage —
 either \code{"random"} (uniform sampling until the coverage budget is met) or
-\code{"targeted_riskiness"} (locations ranked in decreasing order of riskiness).}
+\code{"targeted_riskiness"} (locations ranked in decreasing order of far-field
+riskiness).}
 
 \item{timestep}{Numeric. First simulation timestep at which the
 intervention's efficacy is applied in the FOI calculation.}

@@ -464,6 +464,41 @@ test_that("calculate_efficacy_from_ach() variation does not inflate the mean del
   expect_lte(mean(efficacy_with_variation), mean(efficacy_no_variation))
 })
 
+test_that("calculate_efficacy_from_ach() errors when a negative delta gives a negative efficacy", {
+  parameters <- set_intervention_ach(
+    parameters_list = get_parameters(),
+    setting = "workplace",
+    coverage_target = "individuals",
+    coverage_type = "random",
+    timestep = 1,
+    intervention = make_intervention(
+      name = "negative_delta",
+      delta_function = function(delta) delta,
+      delta_params = list(delta = -1),
+      coverage = 1
+    )
+  )
+
+  expect_error(
+    calculate_efficacy_from_ach(
+      ach_values = rep(4, 5),
+      parameters_list = parameters,
+      setting = "workplace"
+    ),
+    "far-field efficacy from the workplace intervention's delta_function must be in \\[0, 1\\]"
+  )
+})
+
+test_that("check_efficacy() accepts efficacies in [0, 1] only", {
+  expect_no_error(check_efficacy(c(0, 0.5, 1), "The efficacy"))
+  for (value in c(-0.1, 1.1, NA, NaN, Inf)) {
+    expect_error(
+      check_efficacy(c(0.5, value), "The efficacy"),
+      "The efficacy must be in \\[0, 1\\] for every location"
+    )
+  }
+})
+
 #=========================================================#
 #===== uv_to_delta() / delta_to_efficacy() / efficacy_to_delta() =====#
 #=========================================================#
@@ -545,11 +580,11 @@ test_that("generate_intervention_switches() with coverage_target as individuals 
   intervention_data <- generate_intervention_data(parameters_list, population_data)
 
   expect_vector(
-    intervention_data$efficacy$household,
+    intervention_data$far_field_efficacy$household,
     ptype = double(),
     size = length(population_data$household_specific_ach)
   )
-  expect_true(any(intervention_data$efficacy$household > 0))
+  expect_true(any(intervention_data$far_field_efficacy$household > 0))
 })
 
 test_that("generate_intervention_switches() with coverage_target as square_footage and coverage_type as targeted_riskiness allocates the expected total coverage for workplaces", {
@@ -570,7 +605,7 @@ test_that("generate_intervention_switches() with coverage_target as square_foota
 
   # Targeted-riskiness should preferentially cover the riskiest (lowest-ACH)
   # locations first:
-  riskiness <- population_data$workplace_specific_riskiness
+  riskiness <- population_data$workplace_specific_far_field_riskiness
   expect_gte(min(riskiness[covered == 1]), 0)
   if (any(covered == 0) && any(covered == 1)) {
     expect_gte(min(riskiness[covered == 1]), 0)
@@ -629,15 +664,18 @@ expect_full_joint_efficacy <- function(parameters_list, delta, timestep) {
   population_data <- generate_population_data(parameters_list)
   intervention_data <- generate_intervention_data(parameters_list, population_data)
 
-  expect_named(intervention_data$efficacy, c("workplace", "school", "leisure"))
+  expect_named(intervention_data$far_field_efficacy, c("workplace", "school", "leisure"))
+  expect_named(intervention_data$near_field_efficacy, c("workplace", "school", "leisure"))
   for (setting in c("workplace", "school", "leisure")) {
     expected <- delta_to_efficacy(
       baseline_ach = 4,
       delta = delta,
       V = parameters_list[[paste0("volume_per_person_", setting)]]
     )
-    efficacy <- intervention_data$efficacy[[setting]]
+    efficacy <- intervention_data$far_field_efficacy[[setting]]
     expect_equal(efficacy, rep(expected, length(efficacy)))
+    # The ACH interventions don't reduce near-field transmission:
+    expect_identical(intervention_data$near_field_efficacy[[setting]], rep(0, length(efficacy)))
     expect_identical(intervention_data$timestep[[setting]], timestep)
   }
 }
@@ -727,7 +765,8 @@ test_that("generate_joint_intervention_switches() pools workplace, school, and l
   # Household is excluded from joint deployment, so it should have no
   # installed intervention and zero efficacy:
   expect_false(parameters_list$intervention_household_active)
-  expect_false("household" %in% names(intervention_data$efficacy))
+  expect_false("household" %in% names(intervention_data$far_field_efficacy))
+  expect_false("household" %in% names(intervention_data$near_field_efficacy))
 
   # Workplace, school, and leisure should each have some covered locations:
   for (setting in c("workplace", "school", "leisure")) {
@@ -764,7 +803,7 @@ test_that("an installed intervention with full coverage reduces every location's
   population_data <- generate_population_data(parameters_list)
   intervention_data <- generate_intervention_data(parameters_list, population_data)
 
-  efficacy <- intervention_data$efficacy$workplace
+  efficacy <- intervention_data$far_field_efficacy$workplace
   # coverage = 1 with coverage_target = "individuals" allocates until the
   # full headcount budget is met, which can occasionally leave a
   # zero-occupancy location's covered switch at 0 -- so check on average

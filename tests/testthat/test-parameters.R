@@ -144,6 +144,20 @@ test_that("get_parameters() successfully creates parameter list for endemic sett
   )
 })
 
+test_that("get_parameters() requires each near-field fraction to be a single number in [0, 1]", {
+  for (setting in c("household", "workplace", "school", "leisure")) {
+    name <- paste0("near_field_fraction_", setting)
+    expect_identical(get_parameters()[[name]], 0)
+    expect_identical(get_parameters(overrides = setNames(list(0.5), name))[[name]], 0.5)
+    for (value in list(-0.1, 1.1, NA_real_, Inf, c(0.2, 0.3), "0.5")) {
+      expect_error(
+        get_parameters(overrides = setNames(list(value), name)),
+        paste0(name, " must be a single number in \\[0, 1\\]")
+      )
+    }
+  }
+})
+
 test_that("get_parameters() errors when an unrecognised archetype is input", {
   expect_error(get_parameters(archetype = "floo"), "archetype not recognised")
 })

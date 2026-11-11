@@ -25,7 +25,7 @@ and the mean/sd populated.
 \description{
 Activates setting-specific ACH for a single setting and configures the
 truncated-normal distribution from which each location's baseline ACH is
-drawn. Per-location ACH values feed into both the riskiness calculation
+drawn. Per-location ACH values feed into both the far-field riskiness calculation
 (via \code{\link[=convert_ach_to_riskiness]{convert_ach_to_riskiness()}}) and any intervention efficacy
 calculation (via \code{\link[=calculate_efficacy_from_ach]{calculate_efficacy_from_ach()}}).
 }
