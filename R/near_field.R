@@ -1,6 +1,5 @@
-# Literature-based near-field fractions, from Supplementary Note 3 and Table S5 of the PPE
-# preprint (ppe_modelling/notes/near_field_fraction.md). Keep this table, Table S5 and that
-# note in step: change all three together. The values were derived at the reference
+# Literature-based near-field fractions. The sources are listed under @references in the
+# documentation of set_near_field_fractions(). The values were derived at the reference
 # ventilation below, which is the default uniform ACH and volume per person in
 # get_parameters(), with the default decay rate.
 near_field_fraction_presets <- function() {

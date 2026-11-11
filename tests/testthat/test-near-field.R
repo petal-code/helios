@@ -1,7 +1,7 @@
 near_field_settings <- c("household", "workplace", "school", "leisure")
 near_field_names <- paste0("near_field_fraction_", near_field_settings)
 
-# The presets in SI Table S5 of the PPE preprint, in the order of near_field_settings:
+# The preset values, in the order of near_field_settings:
 near_field_table <- list(
   low = c(0.4, 0.15, 0.1, 0.25),
   central = c(0.6, 0.3, 0.2, 0.4),
