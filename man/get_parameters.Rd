@@ -113,7 +113,7 @@ Wells-Riley Parameters (used by \code{convert_ach_to_riskiness()} to derive per-
 
 Near-Field Transmission Parameters (one per setting, where \verb{<setting>} is one of \code{household}, \code{workplace}, \code{school} or \code{leisure}):
 \itemize{
-\item \verb{near_field_fraction_<setting>}: share of the setting's transmission that is near-field (at close range to an infectious individual) rather than far-field (room-scale airborne, as Wells-Riley describes). A single number in \verb{[0, 1]}. The far-field share is scaled by each location's far-field riskiness and reduced by ACH interventions. The near-field share has a riskiness of 1 in every location, and ACH interventions don't reduce it. Default = 0 (all transmission is far-field)
+\item \verb{near_field_fraction_<setting>}: share of the setting's transmission that is near-field (at close range to an infectious individual) rather than far-field (room-scale airborne, as Wells-Riley describes). A single number in \verb{[0, 1]}. The far-field share is scaled by each location's far-field riskiness and reduced by ACH interventions. The near-field share has a riskiness of 1 in every location, and ACH interventions don't reduce it. Default = 0 (all transmission is far-field). Use \code{\link[=set_near_field_fractions]{set_near_field_fractions()}} for literature-based values.
 }
 
 Intervention Parameters (populated by \code{set_intervention_ach()}; users do not normally set these directly. One block per scope, where \verb{<s>} is one of \code{joint}, \code{workplace}, \code{school}, \code{leisure} or \code{household}):
@@ -151,5 +151,9 @@ Hospitalizations and Deaths
 This function creates a named list of model parameters which are to be used
 in the model. For example, the output of \code{\link[=get_parameters]{get_parameters()}} provides input to
 functions such as \code{\link[=create_variables]{create_variables()}} and \code{\link[=create_events]{create_events()}}.
+}
+\seealso{
+Other parameters: 
+\code{\link{set_near_field_fractions}()}
 }
 \concept{parameters}
