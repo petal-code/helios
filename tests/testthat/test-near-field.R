@@ -82,6 +82,7 @@ test_that("set_near_field_fractions() warns about a setting far from its referen
   parameters_list <- set_default_ach(get_parameters(), "household", 0.5)
   message <- conditionMessage(capture_warning(set_near_field_fractions(parameters_list, "central")))
   expect_match(message, "household (15.8 L/s per person, against 36.7)", fixed = TRUE)
+  expect_match(message, "adjust_for_ventilation = TRUE", fixed = TRUE)
   for (setting in c("workplace", "school", "leisure")) {
     expect_no_match(message, setting, fixed = TRUE)
   }
@@ -91,6 +92,55 @@ test_that("set_near_field_fractions() warns about a setting far from its referen
 
   # "none" sets the fractions to 0, so it doesn't depend on the ventilation:
   expect_no_warning(set_near_field_fractions(parameters_list, "none"))
+})
+
+test_that("adjust_for_ventilation = TRUE leaves the presets unchanged at the default ventilation", {
+  for (preset in names(near_field_table)) {
+    parameters_list <- set_near_field_fractions(get_parameters(), preset, adjust_for_ventilation = TRUE)
+    expect_equal(near_field_fractions(parameters_list), near_field_table[[preset]], tolerance = 1e-12)
+  }
+  parameters_list <- set_near_field_fractions(get_parameters(), "none", adjust_for_ventilation = TRUE)
+  expect_identical(near_field_fractions(parameters_list), rep(0, 4))
+})
+
+test_that("adjust_for_ventilation = TRUE converts the presets through the odds", {
+  # A household at 0.5 ACH has a clean air per person of 15.8 L/s, against 36.7 at 2.0 ACH:
+  parameters_list <- set_default_ach(get_parameters(), "household", 0.5)
+  expect_no_warning(
+    updated <- set_near_field_fractions(parameters_list, "central", adjust_for_ventilation = TRUE)
+  )
+  q <- (0.5 + 0.64) * 50 / 3.6
+  q_ref <- (2.0 + 0.64) * 50 / 3.6
+  odds <- 0.6 / 0.4 * q / q_ref
+  expect_equal(updated$near_field_fraction_household, odds / (1 + odds))
+  expect_equal(updated$near_field_fraction_household, 0.393, tolerance = 1e-3)
+  # The other settings keep their reference ventilation, so their presets don't change:
+  expect_equal(near_field_fractions(updated)[-1], near_field_table$central[-1], tolerance = 1e-12)
+
+  # With the default ACH distributions, the clean air per person is the harmonic mean over
+  # locations, about 33.1, 22.8, 8.9 and 7.4 L/s:
+  parameters_list <- with_default_setting_specific_ach(get_parameters())
+  updated <- set_near_field_fractions(parameters_list, "central", adjust_for_ventilation = TRUE)
+  expect_equal(near_field_fractions(updated), c(0.58, 0.26, 0.17, 0.35), tolerance = 0.01)
+  # Lower ventilation leaves more of the transmission far-field:
+  expect_true(all(near_field_fractions(updated) < near_field_table$central))
+})
+
+test_that("convert_near_field_fraction() keeps 0 and 1 and inverts itself", {
+  expect_identical(convert_near_field_fraction(0, q_ref = 10, q = 5), 0)
+  expect_identical(convert_near_field_fraction(1, q_ref = 10, q = 5), 1)
+  converted <- convert_near_field_fraction(0.3, q_ref = 10, q = 25)
+  expect_gt(converted, 0.3)
+  expect_equal(convert_near_field_fraction(converted, q_ref = 25, q = 10), 0.3)
+})
+
+test_that("set_near_field_fractions() requires adjust_for_ventilation to be TRUE or FALSE", {
+  for (value in list(NA, "yes", c(TRUE, FALSE), 1)) {
+    expect_error(
+      set_near_field_fractions(get_parameters(), "central", adjust_for_ventilation = value),
+      "adjust_for_ventilation must be TRUE or FALSE"
+    )
+  }
 })
 
 test_that("clean_air_per_person() is (ACH + decay) * volume per person / 3.6 with a uniform ACH", {

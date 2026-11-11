@@ -41,6 +41,14 @@ clean_air_per_person <- function(parameters_list, setting) {
   removal * volume / 3.6
 }
 
+# Convert a near-field fraction from clean air q_ref to q. The near-field dose doesn't
+# depend on ventilation and the far-field dose scales as 1 / q, so the odds scale with q.
+convert_near_field_fraction <- function(fraction, q_ref, q) {
+  if (fraction %in% c(0, 1)) return(fraction)
+  odds <- fraction / (1 - fraction) * q / q_ref
+  odds / (1 + odds)
+}
+
 #' Set literature-based near-field fractions
 #'
 #' @description
@@ -86,6 +94,15 @@ clean_air_per_person <- function(parameters_list, setting) {
 #' normalised by the mean infection probability. If a setting's clean air per
 #' person is more than 25% away from its reference, the function warns.
 #'
+#' With `adjust_for_ventilation = TRUE`, the function instead converts each
+#' preset from its reference clean air per person \eqn{q_{ref}} to the
+#' current one, \eqn{q}, through the odds:
+#' \deqn{\frac{\phi_s}{1 - \phi_s} = \frac{\phi_{ref}}{1 - \phi_{ref}} \cdot \frac{q}{q_{ref}}}
+#' The near-field dose doesn't depend on ventilation and the far-field dose
+#' scales as \eqn{1 / q}, so the odds scale with \eqn{q}. For example, a
+#' household at 0.5 ACH has a clean air per person of 15.8 L/s, and its
+#' central value of 0.6 becomes about 0.39.
+#'
 #' **Call order:** call this function after [set_default_ach()],
 #' [set_setting_specific_ach()] and any `volume_per_person_<setting>` or
 #' `wells_riley_decay_rate` overrides, because it reads the ventilation when
@@ -95,6 +112,10 @@ clean_air_per_person <- function(parameters_list, setting) {
 #' [get_parameters()].
 #' @param preset Character. One of `"central"` (the default), `"low"`,
 #' `"high"` or `"none"`.
+#' @param adjust_for_ventilation Logical. If `TRUE`, convert the presets
+#' from their reference ventilation to the current one. If `FALSE` (the
+#' default), use the presets as they are, and warn about settings far from
+#' their reference.
 #'
 #' @return The input `parameters_list` with `near_field_fraction_household`,
 #' `near_field_fraction_workplace`, `near_field_fraction_school` and
@@ -135,10 +156,21 @@ clean_air_per_person <- function(parameters_list, setting) {
 #' params <- set_near_field_fractions(get_parameters(archetype = "sars_cov_2"), "central")
 #' params$near_field_fraction_household
 #'
+#' # A less ventilated household, with the presets converted to its ventilation:
+#' params <- set_default_ach(get_parameters(archetype = "sars_cov_2"), "household", 0.5)
+#' params <- set_near_field_fractions(params, "central", adjust_for_ventilation = TRUE)
+#' params$near_field_fraction_household
+#'
 #' @family parameters
 #' @export
-set_near_field_fractions <- function(parameters_list, preset = c("central", "low", "high", "none")) {
+set_near_field_fractions <- function(parameters_list,
+                                     preset = c("central", "low", "high", "none"),
+                                     adjust_for_ventilation = FALSE) {
   preset <- match.arg(preset)
+  if (!is.logical(adjust_for_ventilation) || length(adjust_for_ventilation) != 1 ||
+      is.na(adjust_for_ventilation)) {
+    stop("adjust_for_ventilation must be TRUE or FALSE")
+  }
   presets <- near_field_fraction_presets()
   q_ref <- (presets$reference_ach + presets$reference_decay) * presets$reference_volume / 3.6
 
@@ -150,7 +182,9 @@ set_near_field_fractions <- function(parameters_list, preset = c("central", "low
     } else {
       fraction <- presets[[preset]][i]
       q <- clean_air_per_person(parameters_list, setting)
-      if (abs(q / q_ref[i] - 1) > 0.25) {
+      if (adjust_for_ventilation) {
+        fraction <- convert_near_field_fraction(fraction, q_ref[i], q)
+      } else if (abs(q / q_ref[i] - 1) > 0.25) {
         far_from_reference <- c(
           far_from_reference,
           sprintf("%s (%.1f L/s per person, against %.1f)", setting, q, q_ref[i])
@@ -164,7 +198,8 @@ set_near_field_fractions <- function(parameters_list, preset = c("central", "low
     warning(
       "The near-field fraction presets were derived at the default ventilation of ",
       "get_parameters(). The clean air per person is more than 25% away from it in: ",
-      paste(far_from_reference, collapse = ", "), "."
+      paste(far_from_reference, collapse = ", "), ". ",
+      "Use adjust_for_ventilation = TRUE to convert the presets to the current ventilation."
     )
   }
 

@@ -6,7 +6,8 @@
 \usage{
 set_near_field_fractions(
   parameters_list,
-  preset = c("central", "low", "high", "none")
+  preset = c("central", "low", "high", "none"),
+  adjust_for_ventilation = FALSE
 )
 }
 \arguments{
@@ -15,6 +16,11 @@ set_near_field_fractions(
 
 \item{preset}{Character. One of \code{"central"} (the default), \code{"low"},
 \code{"high"} or \code{"none"}.}
+
+\item{adjust_for_ventilation}{Logical. If \code{TRUE}, convert the presets
+from their reference ventilation to the current one. If \code{FALSE} (the
+default), use the presets as they are, and warn about settings far from
+their reference.}
 }
 \value{
 The input \code{parameters_list} with \code{near_field_fraction_household},
@@ -64,6 +70,15 @@ setting-specific ACH, the clean air per person uses the harmonic mean of
 normalised by the mean infection probability. If a setting's clean air per
 person is more than 25\% away from its reference, the function warns.
 
+With \code{adjust_for_ventilation = TRUE}, the function instead converts each
+preset from its reference clean air per person \eqn{q_{ref}} to the
+current one, \eqn{q}, through the odds:
+\deqn{\frac{\phi_s}{1 - \phi_s} = \frac{\phi_{ref}}{1 - \phi_{ref}} \cdot \frac{q}{q_{ref}}}
+The near-field dose doesn't depend on ventilation and the far-field dose
+scales as \eqn{1 / q}, so the odds scale with \eqn{q}. For example, a
+household at 0.5 ACH has a clean air per person of 15.8 L/s, and its
+central value of 0.6 becomes about 0.39.
+
 \strong{Call order:} call this function after \code{\link[=set_default_ach]{set_default_ach()}},
 \code{\link[=set_setting_specific_ach]{set_setting_specific_ach()}} and any \verb{volume_per_person_<setting>} or
 \code{wells_riley_decay_rate} overrides, because it reads the ventilation when
@@ -71,6 +86,11 @@ it is called.
 }
 \examples{
 params <- set_near_field_fractions(get_parameters(archetype = "sars_cov_2"), "central")
+params$near_field_fraction_household
+
+# A less ventilated household, with the presets converted to its ventilation:
+params <- set_default_ach(get_parameters(archetype = "sars_cov_2"), "household", 0.5)
+params <- set_near_field_fractions(params, "central", adjust_for_ventilation = TRUE)
 params$near_field_fraction_household
 
 }
