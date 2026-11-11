@@ -1,20 +1,24 @@
-near_field_settings <- c("household", "workplace", "school", "leisure")
+# The settings with ventilation. The community has none in Helios, so it has no reference
+# ventilation.
+ventilated_settings <- c("household", "workplace", "school", "leisure")
+near_field_settings <- c(ventilated_settings, "community")
 near_field_names <- paste0("near_field_fraction_", near_field_settings)
+ventilated <- near_field_settings %in% ventilated_settings
 
 # The preset values, in the order of near_field_settings:
 near_field_table <- list(
-  low = c(0.4, 0.15, 0.1, 0.25),
-  central = c(0.6, 0.3, 0.2, 0.4),
-  high = c(0.8, 0.5, 0.3, 0.55)
+  low = c(0.4, 0.15, 0.1, 0.25, 0.4),
+  central = c(0.6, 0.3, 0.2, 0.4, 0.6),
+  high = c(0.8, 0.5, 0.3, 0.55, 0.8)
 )
 
 near_field_fractions <- function(parameters_list) {
   unlist(parameters_list[near_field_names], use.names = FALSE)
 }
 
-# Every setting at the default means and SDs of its ACH distribution:
+# Every ventilated setting at the default means and SDs of its ACH distribution:
 with_default_setting_specific_ach <- function(parameters_list) {
-  for (setting in near_field_settings) {
+  for (setting in ventilated_settings) {
     parameters_list <- set_setting_specific_ach(
       parameters_list,
       setting,
@@ -40,7 +44,7 @@ test_that("set_near_field_fractions() sets each preset's values", {
 test_that("set_near_field_fractions() sets every fraction to 0 with \"none\" and rejects other presets", {
   parameters_list <- set_near_field_fractions(get_parameters(), "central")
   parameters_list <- set_near_field_fractions(parameters_list, "none")
-  expect_identical(near_field_fractions(parameters_list), rep(0, 4))
+  expect_identical(near_field_fractions(parameters_list), rep(0, 5))
   expect_identical(parameters_list, get_parameters())
 
   expect_error(set_near_field_fractions(get_parameters(), "medium"), "should be one of")
@@ -63,6 +67,10 @@ test_that("the near-field fraction presets are in [0, 1] and ordered low <= cent
     expect_true(all(presets[[preset]] >= 0 & presets[[preset]] <= 1))
   }
   expect_true(all(presets$low <= presets$central & presets$central <= presets$high))
+  # Only the community, which has no ventilation, has no reference ventilation:
+  reference <- presets[c("reference_ach", "reference_volume", "reference_decay")]
+  expect_true(all(is.na(reference[!ventilated, ])))
+  expect_false(anyNA(reference[ventilated, ]))
 })
 
 test_that("the near-field fraction presets pass get_parameters() validation", {
@@ -83,7 +91,7 @@ test_that("set_near_field_fractions() warns about a setting far from its referen
   message <- conditionMessage(capture_warning(set_near_field_fractions(parameters_list, "central")))
   expect_match(message, "household (15.8 L/s per person, against 36.7)", fixed = TRUE)
   expect_match(message, "adjust_for_ventilation = TRUE", fixed = TRUE)
-  for (setting in c("workplace", "school", "leisure")) {
+  for (setting in setdiff(near_field_settings, "household")) {
     expect_no_match(message, setting, fixed = TRUE)
   }
   # The presets are still set as they are:
@@ -100,7 +108,7 @@ test_that("adjust_for_ventilation = TRUE leaves the presets unchanged at the def
     expect_equal(near_field_fractions(parameters_list), near_field_table[[preset]], tolerance = 1e-12)
   }
   parameters_list <- set_near_field_fractions(get_parameters(), "none", adjust_for_ventilation = TRUE)
-  expect_identical(near_field_fractions(parameters_list), rep(0, 4))
+  expect_identical(near_field_fractions(parameters_list), rep(0, 5))
 })
 
 test_that("adjust_for_ventilation = TRUE converts the presets through the odds", {
@@ -114,16 +122,58 @@ test_that("adjust_for_ventilation = TRUE converts the presets through the odds",
   odds <- 0.6 / 0.4 * q / q_ref
   expect_equal(updated$near_field_fraction_household, odds / (1 + odds))
   expect_equal(updated$near_field_fraction_household, 0.393, tolerance = 1e-3)
-  # The other settings keep their reference ventilation, so their presets don't change:
+  # The other settings keep their reference ventilation, and the community has none, so their
+  # presets don't change:
   expect_equal(near_field_fractions(updated)[-1], near_field_table$central[-1], tolerance = 1e-12)
 
   # With the default ACH distributions, the clean air per person is the harmonic mean over
-  # locations, about 33.1, 22.8, 8.9 and 7.4 L/s:
+  # locations, about 33.1, 22.8, 8.9 and 7.4 L/s. The community keeps its preset:
   parameters_list <- with_default_setting_specific_ach(get_parameters())
   updated <- set_near_field_fractions(parameters_list, "central", adjust_for_ventilation = TRUE)
-  expect_equal(near_field_fractions(updated), c(0.58, 0.26, 0.17, 0.35), tolerance = 0.01)
+  expect_equal(near_field_fractions(updated), c(0.58, 0.26, 0.17, 0.35, 0.6), tolerance = 0.01)
   # Lower ventilation leaves more of the transmission far-field:
-  expect_true(all(near_field_fractions(updated) < near_field_table$central))
+  expect_true(all(near_field_fractions(updated)[ventilated] < near_field_table$central[ventilated]))
+})
+
+test_that("set_near_field_fractions() gives the community its preset whatever the ventilation", {
+  community_table <- c(low = 0.4, central = 0.6, high = 0.8)
+  # The other settings at their reference ventilation, far from it, and with the default ACH
+  # distributions:
+  parameters_lists <- list(
+    get_parameters(),
+    set_default_ach(set_default_ach(get_parameters(), "household", 0.5), "school", 10),
+    with_default_setting_specific_ach(get_parameters())
+  )
+  for (parameters_list in parameters_lists) {
+    for (adjust in c(FALSE, TRUE)) {
+      for (preset in names(community_table)) {
+        updated <- suppressWarnings(
+          set_near_field_fractions(parameters_list, preset, adjust_for_ventilation = adjust)
+        )
+        expect_identical(updated$near_field_fraction_community, community_table[[preset]])
+      }
+      updated <- set_near_field_fractions(parameters_list, "none", adjust_for_ventilation = adjust)
+      expect_identical(updated$near_field_fraction_community, 0)
+    }
+  }
+})
+
+test_that("set_near_field_fractions() never names the community in its warning", {
+  # Every ventilated setting far from its reference ventilation:
+  parameters_list <- get_parameters()
+  for (setting in ventilated_settings) {
+    parameters_list <- set_default_ach(parameters_list, setting, 0.1)
+  }
+  for (preset in c("low", "central", "high")) {
+    message <- conditionMessage(capture_warning(set_near_field_fractions(parameters_list, preset)))
+    for (setting in ventilated_settings) {
+      expect_match(message, paste0(setting, " ("), fixed = TRUE)
+    }
+    expect_no_match(message, "community", fixed = TRUE)
+  }
+  expect_no_warning(
+    set_near_field_fractions(parameters_list, "central", adjust_for_ventilation = TRUE)
+  )
 })
 
 test_that("convert_near_field_fraction() keeps 0 and 1 and inverts itself", {
@@ -147,7 +197,7 @@ test_that("clean_air_per_person() is (ACH + decay) * volume per person / 3.6 wit
   parameters_list <- get_parameters()
   ach <- c(household = 2.0, workplace = 3.1, school = 3.3, leisure = 3.5)
   volume <- c(household = 50, workplace = 27, school = 10, leisure = 8)
-  for (setting in near_field_settings) {
+  for (setting in ventilated_settings) {
     expect_equal(
       clean_air_per_person(parameters_list, setting),
       (ach[[setting]] + 0.64) * volume[[setting]] / 3.6

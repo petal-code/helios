@@ -1,16 +1,17 @@
 # Literature-based near-field fractions. The sources are listed under @references in the
 # documentation of set_near_field_fractions(). The values were derived at the reference
 # ventilation below, which is the default uniform ACH and volume per person in
-# get_parameters(), with the default decay rate.
+# get_parameters(), with the default decay rate. The community has no ventilation in Helios,
+# so it has no reference ventilation (NA), and its presets are used as they are.
 near_field_fraction_presets <- function() {
   data.frame(
-    setting = c("household", "workplace", "school", "leisure"),
-    low = c(0.4, 0.15, 0.1, 0.25),
-    central = c(0.6, 0.3, 0.2, 0.4),
-    high = c(0.8, 0.5, 0.3, 0.55),
-    reference_ach = c(2.0, 3.1, 3.3, 3.5),
-    reference_volume = c(50, 27, 10, 8),
-    reference_decay = 0.64,
+    setting = c("household", "workplace", "school", "leisure", "community"),
+    low = c(0.4, 0.15, 0.1, 0.25, 0.4),
+    central = c(0.6, 0.3, 0.2, 0.4, 0.6),
+    high = c(0.8, 0.5, 0.3, 0.55, 0.8),
+    reference_ach = c(2.0, 3.1, 3.3, 3.5, NA),
+    reference_volume = c(50, 27, 10, 8, NA),
+    reference_decay = c(0.64, 0.64, 0.64, 0.64, NA),
     stringsAsFactors = FALSE
   )
 }
@@ -51,9 +52,9 @@ convert_near_field_fraction <- function(fraction, q_ref, q) {
 #' Set literature-based near-field fractions
 #'
 #' @description
-#' Sets `near_field_fraction_<setting>` for the household, workplace, school
-#' and leisure settings to one of three literature-based presets, or back to
-#' 0.
+#' Sets `near_field_fraction_<setting>` for the household, workplace, school,
+#' leisure and community settings to one of three literature-based presets,
+#' or back to 0.
 #'
 #' The near-field fraction \eqn{\phi_s} of a setting is the share of its
 #' baseline transmission that happens at close range to an infectious
@@ -73,6 +74,7 @@ convert_near_field_fraction <- function(fraction, q_ref, q) {
 #' | workplace | 0.15    | 0.3         | 0.5      |
 #' | school    | 0.1     | 0.2         | 0.3      |
 #' | leisure   | 0.25    | 0.4         | 0.55     |
+#' | community | 0.4     | 0.6         | 0.8      |
 #'
 #' `"central"` is the best estimate, and `"low"` and `"high"` give the range
 #' for sensitivity analyses. `"none"` sets every fraction to 0, the default in
@@ -102,6 +104,13 @@ convert_near_field_fraction <- function(fraction, q_ref, q) {
 #' household at 0.5 ACH has a clean air per person of 15.8 L/s, and its
 #' central value of 0.6 becomes about 0.39.
 #'
+#' The community is a single location that contains everyone, and it has no
+#' ventilation in Helios. Its presets have no reference ventilation, so they
+#' are used as they are: the function never warns about the community, and
+#' `adjust_for_ventilation` leaves it unchanged. No location-level
+#' intervention acts on the community, so `near_field_fraction_community`
+#' only matters when a mask's near- and far-field efficacies differ.
+#'
 #' **Call order:** call this function after [set_default_ach()],
 #' [set_setting_specific_ach()] and any `volume_per_person_<setting>` or
 #' `wells_riley_decay_rate` overrides, because it reads the ventilation when
@@ -117,8 +126,9 @@ convert_near_field_fraction <- function(fraction, q_ref, q) {
 #' their reference.
 #'
 #' @return The input `parameters_list` with `near_field_fraction_household`,
-#' `near_field_fraction_workplace`, `near_field_fraction_school` and
-#' `near_field_fraction_leisure` set. No other parameter changes.
+#' `near_field_fraction_workplace`, `near_field_fraction_school`,
+#' `near_field_fraction_leisure` and `near_field_fraction_community` set. No
+#' other parameter changes.
 #'
 #' @references
 #' Li A, Yen H-L, Leung NHL, Tang JW, Li Y (2026). Influenza A (H1N1) and
@@ -180,14 +190,18 @@ set_near_field_fractions <- function(parameters_list,
       fraction <- 0
     } else {
       fraction <- presets[[preset]][i]
-      q <- clean_air_per_person(parameters_list, setting)
-      if (adjust_for_ventilation) {
-        fraction <- convert_near_field_fraction(fraction, q_ref[i], q)
-      } else if (abs(q / q_ref[i] - 1) > 0.25) {
-        far_from_reference <- c(
-          far_from_reference,
-          sprintf("%s (%.1f L/s per person, against %.1f)", setting, q, q_ref[i])
-        )
+      # A setting without a reference ventilation (the community, which has no ventilation in
+      # Helios) keeps its preset as it is, so there is nothing to check or convert.
+      if (!is.na(q_ref[i])) {
+        q <- clean_air_per_person(parameters_list, setting)
+        if (adjust_for_ventilation) {
+          fraction <- convert_near_field_fraction(fraction, q_ref[i], q)
+        } else if (abs(q / q_ref[i] - 1) > 0.25) {
+          far_from_reference <- c(
+            far_from_reference,
+            sprintf("%s (%.1f L/s per person, against %.1f)", setting, q, q_ref[i])
+          )
+        }
       }
     }
     parameters_list[[paste0("near_field_fraction_", setting)]] <- fraction

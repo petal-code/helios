@@ -24,13 +24,14 @@ their reference.}
 }
 \value{
 The input \code{parameters_list} with \code{near_field_fraction_household},
-\code{near_field_fraction_workplace}, \code{near_field_fraction_school} and
-\code{near_field_fraction_leisure} set. No other parameter changes.
+\code{near_field_fraction_workplace}, \code{near_field_fraction_school},
+\code{near_field_fraction_leisure} and \code{near_field_fraction_community} set. No
+other parameter changes.
 }
 \description{
-Sets \verb{near_field_fraction_<setting>} for the household, workplace, school
-and leisure settings to one of three literature-based presets, or back to
-0.
+Sets \verb{near_field_fraction_<setting>} for the household, workplace, school,
+leisure and community settings to one of three literature-based presets,
+or back to 0.
 
 The near-field fraction \eqn{\phi_s} of a setting is the share of its
 baseline transmission that happens at close range to an infectious
@@ -48,6 +49,7 @@ The presets are the same for every archetype:\tabular{llll}{
    workplace \tab 0.15 \tab 0.3 \tab 0.5 \cr
    school \tab 0.1 \tab 0.2 \tab 0.3 \cr
    leisure \tab 0.25 \tab 0.4 \tab 0.55 \cr
+   community \tab 0.4 \tab 0.6 \tab 0.8 \cr
 }
 
 
@@ -78,6 +80,13 @@ The near-field dose doesn't depend on ventilation and the far-field dose
 scales as \eqn{1 / q}, so the odds scale with \eqn{q}. For example, a
 household at 0.5 ACH has a clean air per person of 15.8 L/s, and its
 central value of 0.6 becomes about 0.39.
+
+The community is a single location that contains everyone, and it has no
+ventilation in Helios. Its presets have no reference ventilation, so they
+are used as they are: the function never warns about the community, and
+\code{adjust_for_ventilation} leaves it unchanged. No location-level
+intervention acts on the community, so \code{near_field_fraction_community}
+only matters when a mask's near- and far-field efficacies differ.
 
 \strong{Call order:} call this function after \code{\link[=set_default_ach]{set_default_ach()}},
 \code{\link[=set_setting_specific_ach]{set_setting_specific_ach()}} and any \verb{volume_per_person_<setting>} or
