@@ -60,7 +60,7 @@ run_simulation <- function(parameters_list, state = NULL) {
   if (!("seed" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called seed")
   }
-  set.seed(parameters_list$seed)
+  seed_rng(parameters_list$seed)
 
   # Generate the model variables:
   variables_list <- create_variables(parameters_list)

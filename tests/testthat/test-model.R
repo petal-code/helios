@@ -1,3 +1,23 @@
+small_test_parameters <- function(simulation_time) {
+  parameters <- get_parameters(overrides = list(
+    simulation_time = simulation_time,
+    seed = 1,
+    human_population = 1000,
+    number_initial_S = 990,
+    number_initial_E = 10
+  ))
+  parameters
+}
+
+test_that("run_simulation() is reproducible for a given seed", {
+  parameters <- small_test_parameters(simulation_time = 5)
+
+  first <- run_simulation(parameters)$result
+  second <- run_simulation(parameters)$result
+
+  expect_identical(first, second)
+})
+
 test_that("run_simulations_from_table() errors when the parameter_table input contains unrecognised column names", {
   # Set up example parameter table input:
   parameter_table <- data.frame(
@@ -85,4 +105,59 @@ test_that("run_simulations_from_table() run_simulations_from_table() returns lis
 
   # Check that the length of the output matches the number of rows in the parameter table
   expect_length(object = simulation_output[[1]], n = nrow(parameter_table))
+})
+
+test_that("runs sharing a seed match until far UVC switches on, whatever the coverage type", {
+  aqi_parameters <- function(coverage_type) {
+    parameters <- small_test_parameters(simulation_time = 10)
+    for (setting in c("school", "workplace", "household", "leisure")) {
+      parameters <- set_setting_specific_riskiness(
+        parameters,
+        setting = setting,
+        mean = 0,
+        sd = 0.4,
+        min = 0.4,
+        max = 2.5
+      )
+    }
+    set_uvc(
+      parameters,
+      setting = "joint",
+      coverage = 0.4,
+      coverage_target = "square_footage",
+      coverage_type = coverage_type,
+      efficacy = 0.8,
+      timestep = 11
+    )
+  }
+
+  random <- run_simulation(aqi_parameters("random"))$result
+  targeted <- run_simulation(aqi_parameters("targeted_riskiness"))$result
+
+  # Allocation draws from its own stream, so the runs are identical before
+  # far UVC switches on at timestep 11:
+  before <- random$timestep < 11
+  expect_equal(random[before, ], targeted[before, ])
+})
+
+test_that("with zero efficacy, random and targeted allocation give identical runs", {
+  zero_efficacy_parameters <- function(coverage_type) {
+    parameters <- small_test_parameters(simulation_time = 10)
+    set_uvc(
+      parameters,
+      setting = "joint",
+      coverage = 0.4,
+      coverage_target = "square_footage",
+      coverage_type = coverage_type,
+      efficacy = 0,
+      timestep = 1
+    )
+  }
+
+  # Allocation differs, but with zero efficacy it has no effect, so the whole
+  # run must match when the main random stream is shared:
+  expect_equal(
+    run_simulation(zero_efficacy_parameters("random"))$result,
+    run_simulation(zero_efficacy_parameters("targeted_riskiness"))$result
+  )
 })

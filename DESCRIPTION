@@ -34,9 +34,9 @@ Imports:
     individual,
     dplyr,
     EnvStats,
-    dqrng
+    dqrng (>= 0.4.0)
 Remotes:
-    mrc-ide/individual@feat/logi_size
+    mrc-ide/individual@v0.1.19
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 VignetteBuilder: knitr
