@@ -162,12 +162,10 @@ create_variables <- function(parameters_list) {
   # length(parameters_list$leisure_setting_sizes) because the indices in actual_assigned_leisure_settings
   # are missing the values from leisure_setting_not_assigned_to_anyone.
 
-  ## Creating initial CategoricalVariable tracking leisure location an individiual goes to on a given day, which we will dynamically update
-  specific_day_leisure_variable <- individual::CategoricalVariable$new(
-    categories = as.character(assigned_leisure_locations[order(
-      assigned_leisure_locations
-    )]),
-    initial_values = rep(as.character(0), parameters_list$human_population)
+  # The leisure location each individual visits on the current day (0 = none, otherwise numbered
+  # 1..num_leisure), which the S -> E process samples at the start of each day
+  specific_day_leisure_variable <- individual::IntegerVariable$new(
+    initial_values = rep(0L, parameters_list$human_population)
   )
 
   # Return the list of model variables
