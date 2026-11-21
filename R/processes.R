@@ -165,12 +165,22 @@ create_SE_process <- function(
       far_field = parameters_list$mask_outward_far_field_efficacy,
       near_field = parameters_list$mask_outward_near_field_efficacy
     )
+    # The settings where masks are worn. Elsewhere, wearers have neither their mask's protection
+    # nor its source control.
+    settings <- c("household", "workplace", "school", "leisure", "community")
+    masked_settings <- settings[vapply(
+      settings, function(setting) isTRUE(parameters_list[[paste0("mask_", setting)]]), logical(1)
+    )]
   }
 
   # The FOI on each individual from the locations of `setting` at timestep t, from the setting's
   # near-field fraction, each field's riskiness and location efficacy at t, and the effect of the
-  # masks worn at t from mask_effects() (NULL without masks)
+  # masks worn at t from mask_effects() (NULL without masks). Masks are ignored in settings where
+  # they aren't worn.
   FOI_from <- function(setting, t, location, infectious, beta, size, masks) {
+    if (!is.null(masks) && !setting %in% masked_settings) {
+      masks <- NULL
+    }
     near_field_fraction <- parameters_list[[paste0("near_field_fraction_", setting)]]
     fields <- setting_fields(population_data, intervention_data, setting, t)
     setting_FOI(
@@ -223,7 +233,7 @@ create_SE_process <- function(
     # Whether each individual wears a mask today (1) or not (0). It's drawn at the first timestep
     # with masks, and then at the start of each day, after the leisure visits and from the same
     # stream. With nobody to draw for, it doesn't change after the first timestep. The masks act in
-    # every setting, the community included.
+    # each setting where masks are worn, and in none of the others.
     masks <- NULL
     masks_worn_now <- mask_active && t >= first_mask_timestep
     if (masks_worn_now) {
@@ -268,7 +278,7 @@ create_SE_process <- function(
     #=== Community FOI ===#
     #=====================#
     # The community is a single location that contains everyone, so its FOI is the same for every
-    # individual unless masks make it differ
+    # individual unless masks worn in the community make it differ
     community_FOI <- FOI_from("community", t, NULL, I, beta_community_t, N, masks)
 
     #=== Total FOI ===#

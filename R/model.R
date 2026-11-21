@@ -68,7 +68,8 @@
 #' When \code{mask_active = TRUE}, additional columns are included:
 #'   \itemize{
 #'     \item \code{mask_worn_count}: The number of individuals wearing a mask at
-#'       each timestep (0 until \code{mask_timestep}).
+#'       each timestep, in the settings where masks are worn (0 until
+#'       \code{mask_timestep}).
 #'     \item \code{E_new_mask_willing}: The new infections (as in \code{E_new})
 #'       among individuals willing to wear a mask, whose daily probability of
 #'       wearing one is above 0.
@@ -89,7 +90,7 @@
 #'       setting contacts across all individuals at each timestep.
 #'     \item \code{FOI_community}: The maximum force of infection from the
 #'       community across all individuals at each timestep. It's the same for
-#'       every individual unless masks are worn.
+#'       every individual unless masks are worn in the community.
 #'     \item \code{FOI_total}: The maximum total force of infection (sum across
 #'       all settings) experienced by any individual at each timestep.
 #'   }

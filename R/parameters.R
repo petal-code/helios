@@ -111,8 +111,9 @@
 #' * `intervention_<s>_coverage_type`: how locations are selected for coverage. Either "random" (uniform sampling) or "targeted_riskiness" (locations ranked in decreasing order of far-field riskiness). Default = NULL
 #' * `intervention_<s>_timestep`: first simulation timestep at which the intervention's efficacy is applied in the FOI calculation. Default = NULL
 #'
-#' Mask Parameters (masks are worn in every setting, the community included. Each individual has a daily probability of wearing a mask, fixed for the run, and each day either wears one in every setting or in none):
+#' Mask Parameters (each individual has a daily probability of wearing a mask, fixed for the run, and each day either wears one in every setting with masks or in none):
 #' * `mask_active`: TRUE to model mask wearing. Default = FALSE
+#' * `mask_<setting>`: TRUE if masks are worn in `<setting>`, one of `household`, `workplace`, `school`, `leisure` or `community`. In a setting without masks, a wearer neither has their mask's protection nor reduces their own transmission. When `mask_active` is TRUE, at least one setting must have masks. Default = FALSE for `mask_household` and TRUE for the other settings
 #' * `mask_timestep`: masks are worn at the timesteps after this one, so 0 means from the start. A single number of at least 0, required when `mask_active` is TRUE. Default = NULL
 #' * `mask_willing_fraction`: share of individuals who ever wear a mask, in `[0, 1]`. Default = 1
 #' * `mask_daily_probability`: probability that an individual who is willing to wear a mask wears one on a given day, in `[0, 1]`. Default = 1 (perfect adherence)
@@ -268,6 +269,11 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     # Mask parameters. The timestep and the efficacies have no defaults, so they must be set
     # when masks are active.
     mask_active = FALSE,
+    mask_household = FALSE,
+    mask_workplace = TRUE,
+    mask_school = TRUE,
+    mask_leisure = TRUE,
+    mask_community = TRUE,
     mask_timestep = NULL,
     mask_willing_fraction = 1,
     mask_daily_probability = 1,
@@ -464,14 +470,20 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     "mask_outward_far_field_efficacy",
     "mask_outward_near_field_efficacy"
   )
-  if (!isTRUE(parameters$mask_active) && !isFALSE(parameters$mask_active)) {
-    stop("mask_active must be TRUE or FALSE")
+  mask_settings <- paste0("mask_", c("household", "workplace", "school", "leisure", "community"))
+  for (name in c("mask_active", mask_settings)) {
+    if (!isTRUE(parameters[[name]]) && !isFALSE(parameters[[name]])) {
+      stop(name, " must be TRUE or FALSE")
+    }
   }
   if (parameters$mask_active) {
     for (name in c("mask_timestep", mask_efficacies)) {
       if (is.null(parameters[[name]])) {
         stop(name, " must be specified if mask_active is TRUE")
       }
+    }
+    if (!any(unlist(parameters[mask_settings]))) {
+      stop("at least one of ", paste(mask_settings, collapse = ", "), " must be TRUE if mask_active is TRUE")
     }
   }
   if (

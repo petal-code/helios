@@ -128,9 +128,10 @@ Intervention Parameters (populated by \code{set_intervention_ach()}; users do no
 \item \verb{intervention_<s>_timestep}: first simulation timestep at which the intervention's efficacy is applied in the FOI calculation. Default = NULL
 }
 
-Mask Parameters (masks are worn in every setting, the community included. Each individual has a daily probability of wearing a mask, fixed for the run, and each day either wears one in every setting or in none):
+Mask Parameters (each individual has a daily probability of wearing a mask, fixed for the run, and each day either wears one in every setting with masks or in none):
 \itemize{
 \item \code{mask_active}: TRUE to model mask wearing. Default = FALSE
+\item \verb{mask_<setting>}: TRUE if masks are worn in \verb{<setting>}, one of \code{household}, \code{workplace}, \code{school}, \code{leisure} or \code{community}. In a setting without masks, a wearer neither has their mask's protection nor reduces their own transmission. When \code{mask_active} is TRUE, at least one setting must have masks. Default = FALSE for \code{mask_household} and TRUE for the other settings
 \item \code{mask_timestep}: masks are worn at the timesteps after this one, so 0 means from the start. A single number of at least 0, required when \code{mask_active} is TRUE. Default = NULL
 \item \code{mask_willing_fraction}: share of individuals who ever wear a mask, in \verb{[0, 1]}. Default = 1
 \item \code{mask_daily_probability}: probability that an individual who is willing to wear a mask wears one on a given day, in \verb{[0, 1]}. Default = 1 (perfect adherence)

@@ -255,22 +255,26 @@ test_that("mask_effects() weights the masked infectious individuals and protects
   )
 })
 
-# Runs a simulation of 10 days with masks from timestep 5, worn by everyone unless `...` says
-# otherwise, and with each mask efficacy given in `...`. It starts with 10 infectious individuals,
-# and every setting but schools has some near-field transmission.
+# Runs a simulation of 10 days with masks from timestep 5, worn by everyone in every setting unless
+# `...` says otherwise, and with each mask efficacy given in `...`. It starts with 10 infectious
+# individuals, and every setting but schools has some near-field transmission.
 simulate_with_masks <- function(...) {
-  parameters_list <- mask_parameters(
-    number_initial_S = 980,
-    number_initial_I = 10,
-    near_field_fraction_household = 0.5,
-    near_field_fraction_workplace = 0.4,
-    near_field_fraction_leisure = 0.5,
-    near_field_fraction_community = 0.3,
-    render_diagnostics = TRUE,
-    simulation_time = 10,
-    mask_timestep = 4,
-    ...
-  )
+  # modifyList() so that `...` can override these, mask_household included
+  parameters_list <- do.call(mask_parameters, modifyList(
+    list(
+      mask_household = TRUE,
+      number_initial_S = 980,
+      number_initial_I = 10,
+      near_field_fraction_household = 0.5,
+      near_field_fraction_workplace = 0.4,
+      near_field_fraction_leisure = 0.5,
+      near_field_fraction_community = 0.3,
+      render_diagnostics = TRUE,
+      simulation_time = 10,
+      mask_timestep = 4
+    ),
+    list(...)
+  ))
   run_simulation(parameters_list)$result
 }
 
@@ -290,6 +294,25 @@ test_that("masks scale the FOI from every setting by what they let through", {
   # Masks start at timestep 5, when both runs still have the same infectious individuals:
   expect_true(all(without_masks[5, FOI] > 0))
   expect_equal(with_masks[5, FOI], 0.25 * without_masks[5, FOI])
+})
+
+test_that("masks change nothing, inward or outward, in a setting where they aren't worn", {
+  without_masks <- simulate_with_masks(mask_active = FALSE)
+  masked <- paste0("FOI_", c("workplace", "leisure", "community"))
+  # Masks that only protect the wearer, and masks that only reduce the wearer's transmission:
+  inward_only <- list(mask_outward_far_field_efficacy = 0, mask_outward_near_field_efficacy = 0)
+  outward_only <- list(mask_inward_far_field_efficacy = 0, mask_inward_near_field_efficacy = 0)
+  for (efficacy in list(inward_only, outward_only)) {
+    with_masks <- do.call(
+      simulate_with_masks,
+      c(list(mask_household = FALSE, mask_school = FALSE), efficacy)
+    )
+    # At timestep 5, both runs still have the same infectious individuals
+    expect_true(all(without_masks[5, c("FOI_household", "FOI_school", masked)] > 0))
+    expect_identical(with_masks[5, "FOI_household"], without_masks[5, "FOI_household"])
+    expect_identical(with_masks[5, "FOI_school"], without_masks[5, "FOI_school"])
+    expect_equal(with_masks[5, masked], 0.5 * without_masks[5, masked])
+  }
 })
 
 test_that("masks that stop all transmission inward or outward stop all new infections", {

@@ -239,6 +239,30 @@ test_that("get_parameters() checks the values of the mask parameters", {
   )
 })
 
+mask_settings <- paste0("mask_", c("household", "workplace", "school", "leisure", "community"))
+
+test_that("get_parameters() checks the settings where masks are worn", {
+  for (name in mask_settings) {
+    for (value in list(NA, 1, "TRUE", c(TRUE, FALSE), NULL)) {
+      expect_error(
+        get_parameters(overrides = setNames(list(value), name)),
+        paste(name, "must be TRUE or FALSE")
+      )
+    }
+  }
+  expect_true(get_parameters(overrides = modifyList(masks_on, list(mask_household = TRUE)))$mask_household)
+
+  # Masks must be worn somewhere when they're active, but not when they aren't:
+  nowhere <- setNames(rep(list(FALSE), length(mask_settings)), mask_settings)
+  expect_error(
+    get_parameters(overrides = modifyList(masks_on, nowhere)),
+    "at least one of mask_household, .* must be TRUE if mask_active is TRUE"
+  )
+  expect_no_error(get_parameters(overrides = nowhere))
+  only_household <- modifyList(nowhere, list(mask_household = TRUE))
+  expect_no_error(get_parameters(overrides = modifyList(masks_on, only_household)))
+})
+
 test_that("get_parameters() errors when an unrecognised archetype is input", {
   expect_error(get_parameters(archetype = "floo"), "archetype not recognised")
 })
